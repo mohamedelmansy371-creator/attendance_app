@@ -9,124 +9,146 @@ st.set_page_config(page_title="تسجيل الحضور الجامعي الذكي
 
 st.title("📌 نظام تسجيل الحضور المقيد جغرافياً")
 st.write(
-    "يرجى إدخال بياناتك ثم الضغط على زر تحديد الموقع للتحقق من تواجدك داخل"
-    " القاعة."
+    "يرجى كتابة اسمك ورقمك الجامعي، ثم الضغط على زر تحديد الموقع والتسجيل."
 )
 
 # --- إحداثيات قاعة المحاضرات الخاصة بك ---
-CLASS_LAT = 30.293615  # خط العرض للقاعة
-CLASS_LON = 31.245996  # خط الطول للقاعة
+CLASS_LAT = 30.4682  # خط العرض للقاعة
+CLASS_LON = 31.1856  # خط الطول للقاعة
 ALLOWED_RADIUS_METERS = 30  # مسافة السماح بالمتر
 
+# واجهة المدخلات وزر الجي بي إس المدمج
+form_html = f"""
+<div style="font-family: Tahoma, sans-serif; padding: 10px; direction: rtl; background-color: #f9f9f9; border-radius: 10px; border: 1px solid #ddd;">
+    <div style="margin-bottom: 15px;">
+        <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">اسم الطالب الثلاثي:</label>
+        <input type="text" id="s_name" placeholder="أدخل اسمك الثلاثي هنا" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box;">
+    </div>
+    
+    <div style="margin-bottom: 15px;">
+        <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">الرقم الجامعي / الأكاديمي (أرقام إنجليزية مثل 1234):</label>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="s_id" placeholder="أدخل الرقم بالأرقام الإنجليزية" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box;">
+    </div>
 
-# دالة حساب المسافة بالأمتار
-def calculate_distance(lat1, lon1, lat2, lon2):
-  R = 6371000
-  phi1 = math.radians(lat1)
-  phi2 = math.radians(lat2)
-  delta_phi = math.radians(lat2 - lat1)
-  delta_lambda = math.radians(lon2 - lon1)
-  a = (
-      math.sin(delta_phi / 2) ** 2
-      + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2) ** 2
-  )
-  c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-  return R * c
-
-
-# مدخلات الطالب
-student_name = st.text_input("اسم الطالب الثلاثي")
-student_id = st.text_input("كود الطالب")
-
-st.markdown("---")
-st.write("📍 **التحقق من الموقع الجغرافي:**")
-
-# استخدام جافا سكريبت لجلب إحداثيات هاتف الطالب مباشرة بطريقة آمنة وفعالة
-location_code = """
-<div style="text-align: center; margin: 10px;">
-    <button onclick="getLocation()" style="background-color: #ff4b4b; color: white; padding: 12px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%;">📍 اضغط هنا لتحديد موقعك الحالي تلقائياً</button>
-    <p id="status" style="margin-top: 10px; font-weight: bold; color: #333;"></p>
+    <button onclick="verifyAndRegister()" style="background-color: #ff4b4b; color: white; padding: 14px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%;">📍 تحديد الموقع وتسجيل الحضور</button>
+    
+    <p id="msg" style="margin-top: 15px; font-weight: bold; text-align: center; font-size: 15px;"></p>
 </div>
 
 <script>
-function getLocation() {
-    const status = document.getElementById("status");
-    if (!navigator.geolocation) {
-        status.innerHTML = "متصفحك لا يدعم تحديد الموقع الجغرافي.";
+const CLASS_LAT = {CLASS_LAT};
+const CLASS_LON = {CLASS_LON};
+const ALLOWED_RADIUS = {ALLOWED_RADIUS_METERS};
+
+function calculateDistance(lat1, lon1, lat2, lon2) {{
+    const R = 6371000;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}}
+
+function verifyAndRegister() {{
+    const name = document.getElementById("s_name").value.trim();
+    const id = document.getElementById("s_id").value.trim();
+    const msg = document.getElementById("msg");
+
+    if (!name || !id) {{
+        msg.style.color = "red";
+        msg.innerHTML = "❌ الرجاء إدخال الاسم والرقم الجامعي أولاً!";
         return;
-    }
-    
-    status.innerHTML = "جاري تحديد موقعك، يرجى الانتظار والسماح بالصلوحية...";
+    }}
+
+    if (!navigator.geolocation) {{
+        msg.style.color = "red";
+        msg.innerHTML = "❌ متصفح هاتفك لا يدعم تحديد الموقع الجغرافي.";
+        return;
+    }}
+
+    msg.style.color = "blue";
+    msg.innerHTML = "⏳ جاري تحديد موقعك بدقة، يرجى الانتظار والسماح بالصلاحية...";
+
     navigator.geolocation.getCurrentPosition(
-        (position) => {
+        (position) => {{
             const lat = position.coords.latitude;
             const lon = position.coords.longitude;
-            status.innerHTML = "✅ تم تحديد الموقع بنجاح! جاري التسجيل...";
-            
-            // إعادة توجيه الإحداثيات تلقائياً إلى تطبيق ستريمليت
-            const streamlit_url = window.location.href.split('?')[0];
-            window.location.href = `${streamlit_url}?lat=${lat}&lon=${lon}`;
+            const distance = calculateDistance(CLASS_LAT, CLASS_LON, lat, lon);
+
+            if (distance <= ALLOWED_RADIUS) {{
+                msg.style.color = "green";
+                msg.innerHTML = "✅ تم التحقق من تواجدك داخل القاعة (" + Math.round(distance) + " متر). جاري الحفظ...";
+                
+                const baseUrl = window.parent.location.href.split('?')[0];
+                window.parent.location.href = baseUrl + "?name=" + encodeURIComponent(name) + "&id=" + encodeURIComponent(id) + "&lat=" + lat + "&lon=" + lon;
+            }} else {{
+                msg.style.color = "red";
+                msg.innerHTML = "❌ عذراً، لم يتم تسجيل حضورك! أنت خارج النطاق المحدد (المسافة: " + Math.round(distance) + " متر والمسموح 30 متر).";
+            }}
         },
-        () => {
-            status.innerHTML = "❌ فشل تحديد الموقع. تأكد من تفعيل الـ GPS والسماح للمتصفح.";
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        (error) => {{
+            msg.style.color = "red";
+            msg.innerHTML = "❌ فشل تحديد الموقع. تأكد من تفعيل الـ GPS والسماح للمتصفح بالوصول لموقعك.";
+        }},
+        {{ enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }}
     );
-}
+}}
 </script>
 """
 
-components.html(location_code, height=120)
+components.html(form_html, height=330)
 
-# استقبال الإحداثيات المرسلة من متصفح الطالب
+# استقبال البيانات المسجلة والتحقق منها في الخلفية لحفظها بالسجل
 query_params = st.query_params
-user_lat = query_params.get("lat")
-user_lon = query_params.get("lon")
+name_param = query_params.get("name")
+id_param = query_params.get("id")
+lat_param = query_params.get("lat")
+lon_param = query_params.get("lon")
 
-if user_lat and user_lon:
+if name_param and id_param and lat_param and lon_param:
   try:
-    u_lat = float(user_lat)
-    u_lon = float(user_lon)
+    u_lat = float(lat_param)
+    u_lon = float(lon_param)
 
-    if not student_name or not student_id:
-      st.warning(
-          "⚠️ يرجى كتابة (اسم الطالب) و(الرقم الجامعي) في الخانات بالأعلى أولاً"
-          " قبل الضغط على زر تحديد الموقع!"
+    # حساب المسافة للتأكد أماناً على السيرفر
+    R = 6371000
+    phi1 = math.radians(CLASS_LAT)
+    phi2 = math.radians(u_lat)
+    delta_phi = math.radians(u_lat - CLASS_LAT)
+    delta_lambda = math.radians(u_lon - CLASS_LON)
+    a = (
+        math.sin(delta_phi / 2) ** 2
+        + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2) ** 2
+    )
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    distance = R * c
+
+    if distance <= ALLOWED_RADIUS_METERS:
+      timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+      new_data = pd.DataFrame(
+          [[name_param, id_param, timestamp]],
+          columns=["الاسم", "الرقم الجامعي", "وقت التسجيل"],
       )
-    else:
-      distance = calculate_distance(CLASS_LAT, CLASS_LON, u_lat, u_lon)
 
-      if distance <= ALLOWED_RADIUS_METERS:
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        new_data = pd.DataFrame(
-            [[student_name, student_id, timestamp]],
-            columns=["الاسم", "الرقم الجامعي", "وقت التسجيل"],
-        )
-
-        try:
-          df = pd.read_csv("attendance_log.csv")
-          # منع تكرار نفس الرقم الجامعي في نفس المحاضرة
-          if student_id not in df["الرقم الجامعي"].astype(str).values:
-            df = pd.concat([df, new_data], ignore_index=True)
-            df.to_csv("attendance_log.csv", index=False)
-            st.success(
-                f"🎉 أهلاً بك يا {student_name}. تم التحقق من تواجدك داخل القاعة"
-                f" (المسافة: {round(distance)} متر) وتسجيل حضورك بنجاح!"
-            )
-          else:
-            st.info("ℹ️ أنت مسجل مسبقاً في كشف الحضور.")
-        except FileNotFoundError:
-          new_data.to_csv("attendance_log.csv", index=False)
+      try:
+        df = pd.read_csv("attendance_log.csv")
+        if id_param not in df["الرقم الجامعي"].astype(str).values:
+          df = pd.concat([df, new_data], ignore_index=True)
+          df.to_csv("attendance_log.csv", index=False)
           st.success(
-              f"🎉 أهلاً بك يا {student_name}. تم تسجيل حضورك بنجاح داخل القاعة!"
+              f"🎉 أهلاً بك يا {name_param}. تم التحقق من تواجدك داخل القاعة"
+              f" بنجاح وتسجيل حضورك!"
           )
-      else:
-        st.error(
-            f"❌ عذراً يا {student_name}، أنت خارج نطاق القاعة الدراسية! المسافة"
-            f" المقاسة: {round(distance)} متراً (الحد المسموح: {ALLOWED_RADIUS_METERS}"
-            " متر)."
+        else:
+          st.info(f"ℹ️ الطالب {name_param} مسجل مسبقاً في كشف الحضور.")
+      except FileNotFoundError:
+        new_data.to_csv("attendance_log.csv", index=False)
+        st.success(
+            f"🎉 أهلاً بك يا {name_param}. تم تسجيل حضورك بنجاح داخل القاعة!"
         )
-  except ValueError:
+  except Exception as e:
     pass
 
 st.divider()
