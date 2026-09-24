@@ -13,8 +13,8 @@ st.write(
 )
 
 # --- إحداثيات قاعة المحاضرات الخاصة بك ---
-CLASS_LAT = 30.4682  # خط العرض للقاعة
-CLASS_LON = 31.1856  # خط الطول للقاعة
+CLASS_LAT = 30.718843  # خط العرض للقاعة
+CLASS_LON = 31.244744  # خط الطول للقاعة
 ALLOWED_RADIUS_METERS = 30  # مسافة السماح بالمتر
 
 # واجهة المدخلات وزر الجي بي إس المدمج
@@ -27,7 +27,7 @@ form_html = (
     </div>
     
     <div style="margin-bottom: 15px;">
-        <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">كود الطالب (يجب أن يكون مكون من 8 أرقام مثل 28163253):</label>
+        <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">الرقم الجامعي / الأكاديمي (يجب أن يكون مكون من 8 أرقام مثل 28231431):</label>
         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="s_id" placeholder="أدخل 8 أرقام بالضبط" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box;">
     </div>
 
@@ -92,7 +92,7 @@ function verifyAndRegister() {
                 window.parent.location.href = baseUrl + "?name=" + encodeURIComponent(name) + "&id=" + encodeURIComponent(id) + "&lat=" + lat + "&lon=" + lon;
             } else {
                 msg.style.color = "red";
-                msg.innerHTML = "❌ عذراً، لم يتم تسجيل حضورك! أنت خارج النطاق المحدد (المسافة: " + Math.round(distance) + " متر والمسموح 30 متر).";
+                msg.innerHTML = "❌ عذراً، لم يتم تسجيل حضورك! أنت خارج النطاق المحدد";
             }
         },
         (error) => {
