@@ -13,9 +13,42 @@ st.write(
 )
 
 # --- إحداثيات قاعة المحاضرات الخاصة بك ---
-CLASS_LAT = 30.719011  # خط العرض للقاعة
-CLASS_LON = 31.244706  # خط الطول للقاعة
-ALLOWED_RADIUS_METERS = 100  # مسافة السماح
+CLASS_LAT = 30.4682  # خط العرض للقاعة
+CLASS_LON = 31.1856  # خط الطول للقاعة
+ALLOWED_RADIUS_METERS = 100  # مسافة السماح بالمتر
+
+# استقبال وحفظ البيانات في البداية فور إعادة تحميل الصفحة
+if "reg_name" in st.query_params and "reg_id" in st.query_params:
+  reg_name = st.query_params["reg_name"]
+  reg_id = str(st.query_params["reg_id"])
+
+  if len(reg_id) == 8 and reg_id.isdigit():
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    try:
+      df = pd.read_csv("attendance_log.csv")
+    except FileNotFoundError:
+      df = pd.DataFrame(columns=["الاسم", "الرقم الجامعي", "وقت التسجيل"])
+
+    # توحيد نوع البيانات إلى نص لضمان المقارنة الصحيحة
+    df["الرقم الجامعي"] = df["الرقم الجامعي"].astype(str)
+
+    if reg_id not in df["الرقم الجامعي"].values:
+      new_row = pd.DataFrame(
+          [[reg_name, reg_id, timestamp]],
+          columns=["الاسم", "الرقم الجامعي", "وقت التسجيل"],
+      )
+      df = pd.concat([df, new_row], ignore_index=True)
+      df.to_csv("attendance_log.csv", index=False)
+      st.success(
+          f"🎉 تم تسجيل الطالب ({reg_name}) برقم ({reg_id}) في السجل بنجاح!"
+      )
+    else:
+      st.info(f"ℹ️ الطالب ذو الرقم ({reg_id}) مسجل مسبقاً في كشف الحضور.")
+
+    # مسح البارامترات من الرابط وتحديث الصفحة فوراً لظهر الاسم بالجدول
+    st.query_params.clear()
+    st.rerun()
 
 # واجهة المدخلات وزر الجي بي إس المدمج
 form_html = (
@@ -86,11 +119,10 @@ function verifyAndRegister() {
 
             if (distance <= ALLOWED_RADIUS) {
                 msg.style.color = "green";
-                msg.innerHTML = "✅ تم التحقق من تواجدك داخل النطاق (المسافة: " + Math.round(distance) + " متر). جاري تسجيل الحضور...";
+                msg.innerHTML = "✅ تم التحقق من تواجدك داخل النطاق (المسافة: " + Math.round(distance) + " متر). جاري حفظ الحضور...";
                 
-                // استخدام آلية آمنة لتمرير البيانات وحفظها فوراً دون فقدان
                 const baseUrl = window.parent.location.href.split('?')[0];
-                window.parent.location.href = baseUrl + "?reg_name=" + encodeURIComponent(name) + "&reg_id=" + encodeURIComponent(id) + "&reg_dist=" + Math.round(distance);
+                window.parent.location.href = baseUrl + "?reg_name=" + encodeURIComponent(name) + "&reg_id=" + encodeURIComponent(id);
             } else {
                 msg.style.color = "red";
                 msg.innerHTML = "❌ عذراً، لم يتم تسجيل حضورك! أنت خارج النطاق (المسافة: " + Math.round(distance) + " متر والمسموح 100 متر).";
@@ -111,43 +143,6 @@ function verifyAndRegister() {
 )
 
 components.html(form_html, height=360)
-
-# استقبال البيانات وحفظها بشكل مباشر ودائم في ملف الـ CSV
-query_params = st.query_params
-reg_name = query_params.get("reg_name")
-reg_id = query_params.get("reg_id")
-
-if reg_name and reg_id:
-  try:
-    # التأكد من صحة الرقم (8 أرقام) من جهة السيرفر
-    if len(str(reg_id)) == 8 and str(reg_id).isdigit():
-      timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-      # قراءة أو إنشاء ملف السجل
-      try:
-        df = pd.read_csv("attendance_log.csv")
-      except FileNotFoundError:
-        df = pd.DataFrame(columns=["الاسم", "الرقم الجامعي", "وقت التسجيل"])
-
-      # التحقق مما إذا كان الطالب قد تسجل مسبقاً
-      if reg_id not in df["الرقم الجامعي"].astype(str).values:
-        new_row = pd.DataFrame(
-            [[reg_name, reg_id, timestamp]],
-            columns=["الاسم", "الرقم الجامعي", "وقت التسجيل"],
-        )
-        df = pd.concat([df, new_row], ignore_index=True)
-        df.to_csv("attendance_log.csv", index=False)
-        st.success(
-            f"🎉 أهلاً بك يا {reg_name} (رقم: {reg_id}). تم تسجيل حضورك بنجاح في"
-            " السجل!"
-        )
-      else:
-        st.info(f"ℹ️ الطالب {reg_name} مسجل مسبقاً في كشف الحضور بالفعل.")
-
-      # تنظيف رابط الصفحة بعد الحفظ لتجنب التكرار عند التحديث
-      st.query_params.clear()
-  except Exception as e:
-    st.error(f"حدث خطأ أثناء الحفظ: {e}")
 
 st.divider()
 
