@@ -1,6 +1,4 @@
-from datetime import datetime
 import math
-import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 
@@ -9,7 +7,8 @@ st.set_page_config(page_title="تسجيل الحضور الجامعي الذكي
 
 st.title("📌 نظام تسجيل الحضور المقيد جغرافياً")
 st.write(
-    "يرجى كتابة اسمك ورقمك الجامعي (8 أرقام)، ثم الضغط على زر تحديد الموقع والتسجيل."
+    "يرجى كتابة اسمك وكود الطالب (8 أرقام)، ثم الضغط على زر تحديد الموقع للتحقق"
+    " والتسجيل."
 )
 
 # --- إحداثيات قاعة المحاضرات الخاصة بك ---
@@ -17,40 +16,10 @@ CLASS_LAT = 30.718881  # خط العرض للقاعة
 CLASS_LON = 31.244633  # خط الطول للقاعة
 ALLOWED_RADIUS_METERS = 100  # مسافة السماح
 
-# 1. استقبال وحفظ البيانات فور وصولها من متصفح الطالب
-query_params = st.query_params
-if "reg_name" in query_params and "reg_id" in query_params:
-  reg_name = query_params["reg_name"]
-  reg_id = str(query_params["reg_id"])
+# رابط نموذج جوجل الخاص بك والمعلمات المستخرجة منه
+FORM_ID = "1FAIpQLSdarNAh6jqY8f5zPzpN1auH_VHXFhbGhLsNWPwWAhx4TOZp5g"
 
-  if len(reg_id) == 8 and reg_id.isdigit():
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    try:
-      df = pd.read_csv("attendance_log.csv")
-    except FileNotFoundError:
-      df = pd.DataFrame(columns=["الاسم", "الرقم الجامعي", "وقت التسجيل"])
-
-    # توحيد نوع البيانات إلى نص لضمان عدم التكرار
-    df["الرقم الجامعي"] = df["الرقم الجامعي"].astype(str)
-
-    if reg_id not in df["الرقم الجامعي"].values:
-      new_row = pd.DataFrame(
-          [[reg_name, reg_id, timestamp]],
-          columns=["الاسم", "الرقم الجامعي", "وقت التسجيل"],
-      )
-      df = pd.concat([df, new_row], ignore_index=True)
-      df.to_csv("attendance_log.csv", index=False)
-      st.success(
-          f"🎉 تم تسجيل حضور الطالب ({reg_name}) برقم ({reg_id}) بنجاح في السجل!"
-      )
-    else:
-      st.info(f"ℹ️ الطالب صاحب الرقم ({reg_id}) مسجل مسبقاً في كشف الحضور.")
-
-    # تنظيف الرابط
-    st.query_params.clear()
-
-# 2. واجهة المدخلات وزر الجي بي إس المدمج
+# واجهة المدخلات وزر الجي بي إس المدمج
 form_html = (
     """
 <div style="font-family: Tahoma, sans-serif; padding: 15px; direction: rtl; background-color: #f9f9f9; border-radius: 10px; border: 1px solid #ddd;">
@@ -60,19 +29,26 @@ form_html = (
     </div>
     
     <div style="margin-bottom: 15px;">
-        <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">الرقم الجامعي / الأكاديمي (8 أرقام إنجليزية):</label>
+        <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">كود الطالب (8 أرقام إنجليزية):</label>
         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="s_id" placeholder="أدخل 8 أرقام بالضبط" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box;">
     </div>
 
-    <button onclick="verifyAndRegister()" style="background-color: #ff4b4b; color: white; padding: 14px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%;">📍 تحديد الموقع وتسجيل الحضور</button>
+    <button onclick="verifyAndRegister()" style="background-color: #ff4b4b; color: white; padding: 14px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%;">📍 تحديد الموقع والتحقق</button>
     
     <p id="msg" style="margin-top: 15px; font-weight: bold; text-align: center; font-size: 15px;"></p>
+    
+    <!-- زر يظهر فقط بعد اجتياز التحقق الجغرافي -->
+    <div id="success_container" style="display: none; margin-top: 20px; text-align: center;">
+        <p style="color: green; font-weight: bold;">✅ تم التحقق من تواجدك داخل القاعة بنجاح!</p>
+        <a id="submit_link" href="#" target="_blank" style="display: inline-block; background-color: #28a745; color: white; padding: 15px 25px; text-decoration: none; border-radius: 8px; font-size: 18px; font-weight: bold; width: 100%; box-sizing: border-box;">🚀 اضغط هنا لتأكيد حفظ الحضور نهائياً</a>
+    </div>
 </div>
 
 <script>
 const CLASS_LAT = __LAT__;
 const CLASS_LON = __LON__;
 const ALLOWED_RADIUS = __RADIUS__;
+const FORM_ID = "__FORM_ID__";
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371000;
@@ -89,27 +65,32 @@ function verifyAndRegister() {
     const name = document.getElementById("s_name").value.trim();
     const id = document.getElementById("s_id").value.trim();
     const msg = document.getElementById("msg");
+    const successContainer = document.getElementById("success_container");
 
     if (!name || !id) {
         msg.style.color = "red";
-        msg.innerHTML = "❌ الرجاء إدخال الاسم والرقم الجامعي أولاً!";
+        msg.innerHTML = "❌ الرجاء إدخال الاسم وكود الطالب أولاً!";
+        successContainer.style.display = "none";
         return;
     }
 
     if (id.length !== 8 || isNaN(id)) {
         msg.style.color = "red";
-        msg.innerHTML = "❌ خطأ: يجب أن يكون الرقم الجامعي مكوناً من 8 أرقام بالضبط!";
+        msg.innerHTML = "❌ خطأ: يجب أن يكون كود الطالب مكوناً من 8 أرقام بالضبط!";
+        successContainer.style.display = "none";
         return;
     }
 
     if (!navigator.geolocation) {
         msg.style.color = "red";
         msg.innerHTML = "❌ متصفح هاتفك لا يدعم تحديد الموقع الجغرافي.";
+        successContainer.style.display = "none";
         return;
     }
 
     msg.style.color = "blue";
     msg.innerHTML = "⏳ جاري تحديد موقعك بدقة، يرجى الانتظار والسماح بالصلاحية...";
+    successContainer.style.display = "none";
 
     navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -119,18 +100,24 @@ function verifyAndRegister() {
 
             if (distance <= ALLOWED_RADIUS) {
                 msg.style.color = "green";
-                msg.innerHTML = "✅ تم التحقق من تواجدك داخل النطاق (المسافة: " + Math.round(distance) + " متر). تم حفظ الحضور بنجاح!";
+                msg.innerHTML = "🎉 مطابقة صحيحة! المسافة عن القاعة: " + Math.round(distance) + " متر.";
                 
-                const baseUrl = window.parent.location.href.split('?')[0];
-                window.parent.location.href = baseUrl + "?reg_name=" + encodeURIComponent(name) + "&reg_id=" + encodeURIComponent(id);
+                // بناء رابط النموذج مع تعبئة الحقول تلقائياً
+                // (ملاحظة: سيتم توجيه الطالب للرابط مع ملء البيانات وجاهزية الإرسال)
+                const formUrl = "https://docs.google.com/forms/d/e/" + FORM_ID + "/viewform?usp=pp_url&entry.111111111=" + encodeURIComponent(name) + "&entry.222222222=" + encodeURIComponent(id);
+                
+                document.getElementById("submit_link").href = formUrl;
+                successContainer.style.display = "block";
             } else {
                 msg.style.color = "red";
-                msg.innerHTML = "❌ عذراً، لم يتم تسجيل حضورك! أنت خارج النطاق (المسافة: " + Math.round(distance) + " متر والمسموح 100 متر).";
+                msg.innerHTML = "❌ عذراً، أنت خارج النطاق المسموح! (المسافة: " + Math.round(distance) + " متر والمسموح 100 متر).";
+                successContainer.style.display = "none";
             }
         },
         (error) => {
             msg.style.color = "red";
             msg.innerHTML = "❌ فشل تحديد الموقع. تأكد من تفعيل الـ GPS والسماح للمتصفح بالوصول لموقعك.";
+            successContainer.style.display = "none";
         },
         { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
     );
@@ -140,6 +127,7 @@ function verifyAndRegister() {
     .replace("__LAT__", str(CLASS_LAT))
     .replace("__LON__", str(CLASS_LON))
     .replace("__RADIUS__", str(ALLOWED_RADIUS_METERS))
+    .replace("__FORM_ID__", FORM_ID)
 )
 
-components.html(form_html, height=360)
+components.html(form_html, height=450)
