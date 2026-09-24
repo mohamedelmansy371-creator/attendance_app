@@ -27,7 +27,7 @@ form_html = (
     </div>
     
     <div style="margin-bottom: 15px;">
-        <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">الرقم الجامعي / الأكاديمي (أرقام إنجليزية مثل 1234):</label>
+        <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">الرقم الجامعي / الأكاديمي (أرقام مثل 1234):</label>
         <input type="text" inputmode="numeric" pattern="[0-9]*" id="s_id" placeholder="أدخل الرقم بالأرقام الإنجليزية" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box;">
     </div>
 
