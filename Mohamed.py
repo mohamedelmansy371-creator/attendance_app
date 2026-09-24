@@ -147,7 +147,7 @@ if reg_name and reg_id:
       # تنظيف رابط الصفحة بعد الحفظ لتجنب التكرار عند التحديث
       st.query_params.clear()
   except Exception as e:
-    st.error(f حدث خطأ أثناء الحفظ: {e})
+    st.error(f"حدث خطأ أثناء الحفظ: {e}")
 
 st.divider()
 
