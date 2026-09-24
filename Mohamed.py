@@ -18,7 +18,8 @@ CLASS_LON = 31.1856  # خط الطول للقاعة
 ALLOWED_RADIUS_METERS = 30  # مسافة السماح بالمتر
 
 # واجهة المدخلات وزر الجي بي إس المدمج
-form_html = """
+form_html = (
+    """
 <div style="font-family: Tahoma, sans-serif; padding: 10px; direction: rtl; background-color: #f9f9f9; border-radius: 10px; border: 1px solid #ddd;">
     <div style="margin-bottom: 15px;">
         <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">اسم الطالب الثلاثي:</label>
@@ -36,9 +37,9 @@ form_html = """
 </div>
 
 <script>
-const CLASS_LAT = {lat};
-const CLASS_LON = {lon};
-const ALLOWED_RADIUS = {radius};
+const CLASS_LAT = __LAT__;
+const CLASS_LON = __LON__;
+const ALLOWED_RADIUS = __RADIUS__;
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371000;
@@ -96,8 +97,10 @@ function verifyAndRegister() {
     );
 }
 </script>
-""".format(
-    lat=CLASS_LAT, lon=CLASS_LON, radius=ALLOWED_RADIUS_METERS
+"""
+    .replace("__LAT__", str(CLASS_LAT))
+    .replace("__LON__", str(CLASS_LON))
+    .replace("__RADIUS__", str(ALLOWED_RADIUS_METERS))
 )
 
 components.html(form_html, height=330)
