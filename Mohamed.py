@@ -9,7 +9,7 @@ st.set_page_config(page_title="تسجيل الحضور الجامعي الذكي
 
 st.title("📌 نظام تسجيل الحضور المقيد جغرافياً")
 st.write(
-    "يرجى كتابة اسمك ورقمك الجامعي، ثم الضغط على زر تحديد الموقع والتسجيل."
+    "يرجى كتابة اسمك ورقمك الجامعي (8 أرقام)، ثم الضغط على زر تحديد الموقع والتسجيل."
 )
 
 # --- إحداثيات قاعة المحاضرات الخاصة بك ---
@@ -27,8 +27,8 @@ form_html = (
     </div>
     
     <div style="margin-bottom: 15px;">
-        <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">كود الطالب (أرقام مثل 1234):</label>
-        <input type="text" inputmode="numeric" pattern="[0-9]*" id="s_id" placeholder="أدخل الرقم بالأرقام الإنجليزية" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box;">
+        <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">الرقم الجامعي / الأكاديمي (يجب أن يكون 8 أرقام إنجليزية):</label>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="s_id" placeholder="أدخل 8 أرقام بالضبط" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box;">
     </div>
 
     <button onclick="verifyAndRegister()" style="background-color: #ff4b4b; color: white; padding: 14px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%;">📍 تحديد الموقع وتسجيل الحضور</button>
@@ -60,6 +60,12 @@ function verifyAndRegister() {
     if (!name || !id) {
         msg.style.color = "red";
         msg.innerHTML = "❌ الرجاء إدخال الاسم والرقم الجامعي أولاً!";
+        return;
+    }
+
+    if (id.length !== 8 || isNaN(id)) {
+        msg.style.color = "red";
+        msg.innerHTML = "❌ خطأ: يجب أن يكون الرقم الجامعي مكوناً من 8 أرقام بالضبط!";
         return;
     }
 
@@ -103,7 +109,7 @@ function verifyAndRegister() {
     .replace("__RADIUS__", str(ALLOWED_RADIUS_METERS))
 )
 
-components.html(form_html, height=330)
+components.html(form_html, height=350)
 
 # استقبال البيانات المسجلة والتحقق منها في الخلفية لحفظها بالسجل
 query_params = st.query_params
@@ -117,42 +123,43 @@ if name_param and id_param and lat_param and lon_param:
     u_lat = float(lat_param)
     u_lon = float(lon_param)
 
-    # حساب المسافة للتأكد أماناً على السيرفر
-    R = 6371000
-    phi1 = math.radians(CLASS_LAT)
-    phi2 = math.radians(u_lat)
-    delta_phi = math.radians(u_lat - CLASS_LAT)
-    delta_lambda = math.radians(u_lon - CLASS_LON)
-    a = (
-        math.sin(delta_phi / 2) ** 2
-        + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2) ** 2
-    )
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-    distance = R * c
-
-    if distance <= ALLOWED_RADIUS_METERS:
-      timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-      new_data = pd.DataFrame(
-          [[name_param, id_param, timestamp]],
-          columns=["الاسم", "الرقم الجامعي", "وقت التسجيل"],
+    # التحقق الأمني الإضافي على السيرفر بأن الرقم 8 أرقام
+    if len(str(id_param)) == 8 and str(id_param).isdigit():
+      R = 6371000
+      phi1 = math.radians(CLASS_LAT)
+      phi2 = math.radians(u_lat)
+      delta_phi = math.radians(u_lat - CLASS_LAT)
+      delta_lambda = math.radians(u_lon - CLASS_LON)
+      a = (
+          math.sin(delta_phi / 2) ** 2
+          + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2) ** 2
       )
+      c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+      distance = R * c
 
-      try:
-        df = pd.read_csv("attendance_log.csv")
-        if id_param not in df["الرقم الجامعي"].astype(str).values:
-          df = pd.concat([df, new_data], ignore_index=True)
-          df.to_csv("attendance_log.csv", index=False)
-          st.success(
-              f"🎉 أهلاً بك يا {name_param}. تم التحقق من تواجدك داخل القاعة"
-              f" بنجاح وتسجيل حضورك!"
-          )
-        else:
-          st.info(f"ℹ️ الطالب {name_param} مسجل مسبقاً في كشف الحضور.")
-      except FileNotFoundError:
-        new_data.to_csv("attendance_log.csv", index=False)
-        st.success(
-            f"🎉 أهلاً بك يا {name_param}. تم تسجيل حضورك بنجاح داخل القاعة!"
+      if distance <= ALLOWED_RADIUS_METERS:
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        new_data = pd.DataFrame(
+            [[name_param, id_param, timestamp]],
+            columns=["الاسم", "الرقم الجامعي", "وقت التسجيل"],
         )
+
+        try:
+          df = pd.read_csv("attendance_log.csv")
+          if id_param not in df["الرقم الجامعي"].astype(str).values:
+            df = pd.concat([df, new_data], ignore_index=True)
+            df.to_csv("attendance_log.csv", index=False)
+            st.success(
+                f"🎉 أهلاً بك يا {name_param}. تم التحقق من تواجدك داخل القاعة"
+                f" بنجاح وتسجيل حضورك!"
+            )
+          else:
+            st.info(f"ℹ️ الطالب {name_param} مسجل مسبقاً في كشف الحضور.")
+        except FileNotFoundError:
+          new_data.to_csv("attendance_log.csv", index=False)
+          st.success(
+              f"🎉 أهلاً بك يا {name_param}. تم تسجيل حضورك بنجاح داخل القاعة!"
+          )
   except Exception as e:
     pass
 
