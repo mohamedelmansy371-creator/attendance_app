@@ -18,7 +18,7 @@ CLASS_LON = 31.1856  # خط الطول للقاعة
 ALLOWED_RADIUS_METERS = 30  # مسافة السماح بالمتر
 
 # واجهة المدخلات وزر الجي بي إس المدمج
-form_html = f"""
+form_html = """
 <div style="font-family: Tahoma, sans-serif; padding: 10px; direction: rtl; background-color: #f9f9f9; border-radius: 10px; border: 1px solid #ddd;">
     <div style="margin-bottom: 15px;">
         <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">اسم الطالب الثلاثي:</label>
@@ -36,11 +36,11 @@ form_html = f"""
 </div>
 
 <script>
-const CLASS_LAT = {CLASS_LAT};
-const CLASS_LON = {CLASS_LON};
-const ALLOWED_RADIUS = {ALLOWED_RADIUS_METERS};
+const CLASS_LAT = {lat};
+const CLASS_LON = {lon};
+const ALLOWED_RADIUS = {radius};
 
-function calculateDistance(lat1, lon1, lat2, lon2) {{
+function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371000;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
@@ -49,54 +49,56 @@ function calculateDistance(lat1, lon1, lat2, lon2) {{
               Math.sin(dLon/2) * Math.sin(dLon/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
-}}
+}
 
-function verifyAndRegister() {{
+function verifyAndRegister() {
     const name = document.getElementById("s_name").value.trim();
     const id = document.getElementById("s_id").value.trim();
     const msg = document.getElementById("msg");
 
-    if (!name || !id) {{
+    if (!name || !id) {
         msg.style.color = "red";
         msg.innerHTML = "❌ الرجاء إدخال الاسم والرقم الجامعي أولاً!";
         return;
-    }}
+    }
 
-    if (!navigator.geolocation) {{
+    if (!navigator.geolocation) {
         msg.style.color = "red";
         msg.innerHTML = "❌ متصفح هاتفك لا يدعم تحديد الموقع الجغرافي.";
         return;
-    }}
+    }
 
     msg.style.color = "blue";
     msg.innerHTML = "⏳ جاري تحديد موقعك بدقة، يرجى الانتظار والسماح بالصلاحية...";
 
     navigator.geolocation.getCurrentPosition(
-        (position) => {{
+        (position) => {
             const lat = position.coords.latitude;
             const lon = position.coords.longitude;
             const distance = calculateDistance(CLASS_LAT, CLASS_LON, lat, lon);
 
-            if (distance <= ALLOWED_RADIUS) {{
+            if (distance <= ALLOWED_RADIUS) {
                 msg.style.color = "green";
                 msg.innerHTML = "✅ تم التحقق من تواجدك داخل القاعة (" + Math.round(distance) + " متر). جاري الحفظ...";
                 
                 const baseUrl = window.parent.location.href.split('?')[0];
                 window.parent.location.href = baseUrl + "?name=" + encodeURIComponent(name) + "&id=" + encodeURIComponent(id) + "&lat=" + lat + "&lon=" + lon;
-            }} else {{
+            } else {
                 msg.style.color = "red";
                 msg.innerHTML = "❌ عذراً، لم يتم تسجيل حضورك! أنت خارج النطاق المحدد (المسافة: " + Math.round(distance) + " متر والمسموح 30 متر).";
-            }}
+            }
         },
-        (error) => {{
+        (error) => {
             msg.style.color = "red";
             msg.innerHTML = "❌ فشل تحديد الموقع. تأكد من تفعيل الـ GPS والسماح للمتصفح بالوصول لموقعك.";
-        }},
-        {{ enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }}
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
-}}
+}
 </script>
-"""
+""".format(
+    lat=CLASS_LAT, lon=CLASS_LON, radius=ALLOWED_RADIUS_METERS
+)
 
 components.html(form_html, height=330)
 
