@@ -27,7 +27,7 @@ form_html = (
     </div>
     
     <div style="margin-bottom: 15px;">
-        <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">كود الطالب (مكون من 8 أرقام مثل 28532471):</label>
+        <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">كود الطالب (ركز في إدخال الكود حيث ان حضورك كله يعتمد على إدخاله بشكل صحيح والكود مكون من 8 أرقام مثل 28532471):</label>
         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="s_id" placeholder="أدخل 8 أرقام بالضبط" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box;">
     </div>
 
