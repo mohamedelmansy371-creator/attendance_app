@@ -47,9 +47,8 @@ if "reg_name" in query_params and "reg_id" in query_params:
     else:
       st.info(f"ℹ️ الطالب صاحب الرقم ({reg_id}) مسجل مسبقاً في كشف الحضور.")
 
-    # تنظيف الرابط وتحديث الصفحة فوراً لعرض الاسم في الجدول
+    # تنظيف الرابط
     st.query_params.clear()
-    st.rerun()
 
 # 2. واجهة المدخلات وزر الجي بي إس المدمج
 form_html = (
@@ -144,23 +143,3 @@ function verifyAndRegister() {
 )
 
 components.html(form_html, height=360)
-
-st.divider()
-
-# --- لوحة تحكم الأستاذ (عرض السجل وتحميله) ---
-st.subheader("👨‍🏫 لوحة تحكم الأستاذ (سجل الحضور)")
-
-try:
-  log_df = pd.read_csv("attendance_log.csv")
-  st.write(f"إجمالي الطلاب الحاضرين: **{len(log_df)}** طالب")
-  st.dataframe(log_df, use_container_width=True)
-
-  csv = log_df.to_csv(index=False).encode("utf-8-sig")
-  st.download_button(
-      label="📥 تحميل كشف الحضور (CSV)",
-      data=csv,
-      file_name="attendance.csv",
-      mime="text/csv",
-  )
-except FileNotFoundError:
-  st.info("لا توجد سجلات حضور مسجلة حتى الآن. سيظهر هنا أسماء الطلاب فور تسجيلهم.")
