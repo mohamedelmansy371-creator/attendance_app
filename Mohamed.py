@@ -13,21 +13,21 @@ st.write(
 )
 
 # --- إحداثيات قاعة المحاضرات الخاصة بك ---
-CLASS_LAT = 30.718  # خط العرض للقاعة
-CLASS_LON = 31.244  # خط الطول للقاعة
-ALLOWED_RADIUS_METERS = 30  # مسافة السماح بالمتر
+CLASS_LAT = 30.4682  # خط العرض للقاعة
+CLASS_LON = 31.1856  # خط الطول للقاعة
+ALLOWED_RADIUS_METERS = 100  # تم زيادة مسافة السماح إلى 100 متر لاستيعاب تباين الـ GPS داخل المباني
 
 # واجهة المدخلات وزر الجي بي إس المدمج
 form_html = (
     """
-<div style="font-family: Tahoma, sans-serif; padding: 10px; direction: rtl; background-color: #f9f9f9; border-radius: 10px; border: 1px solid #ddd;">
+<div style="font-family: Tahoma, sans-serif; padding: 15px; direction: rtl; background-color: #f9f9f9; border-radius: 10px; border: 1px solid #ddd;">
     <div style="margin-bottom: 15px;">
         <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">اسم الطالب الثلاثي:</label>
         <input type="text" id="s_name" placeholder="أدخل اسمك الثلاثي هنا" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box;">
     </div>
     
     <div style="margin-bottom: 15px;">
-        <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">الرقم الجامعي / الأكاديمي (يجب أن يكون مكون من 8 أرقام مثل 28231431):</label>
+        <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">الرقم الجامعي / الأكاديمي (8 أرقام إنجليزية):</label>
         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="s_id" placeholder="أدخل 8 أرقام بالضبط" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box;">
     </div>
 
@@ -86,20 +86,20 @@ function verifyAndRegister() {
 
             if (distance <= ALLOWED_RADIUS) {
                 msg.style.color = "green";
-                msg.innerHTML = "✅ تم التحقق من تواجدك داخل القاعة (" + Math.round(distance) + " متر). جاري الحفظ...";
+                msg.innerHTML = "✅ تم التحقق من تواجدك داخل النطاق (المسافة: " + Math.round(distance) + " متر). جاري الحفظ...";
                 
                 const baseUrl = window.parent.location.href.split('?')[0];
                 window.parent.location.href = baseUrl + "?name=" + encodeURIComponent(name) + "&id=" + encodeURIComponent(id) + "&lat=" + lat + "&lon=" + lon;
             } else {
                 msg.style.color = "red";
-                msg.innerHTML = "❌ عذراً، لم يتم تسجيل حضورك! أنت خارج النطاق المحدد";
+                msg.innerHTML = "❌ عذراً، لم يتم تسجيل حضورك! أنت خارج النطاق (المسافة المقاسة: " + Math.round(distance) + " متر، والحد المسموح 100 متر).";
             }
         },
         (error) => {
             msg.style.color = "red";
             msg.innerHTML = "❌ فشل تحديد الموقع. تأكد من تفعيل الـ GPS والسماح للمتصفح بالوصول لموقعك.";
         },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
     );
 }
 </script>
@@ -109,7 +109,7 @@ function verifyAndRegister() {
     .replace("__RADIUS__", str(ALLOWED_RADIUS_METERS))
 )
 
-components.html(form_html, height=350)
+components.html(form_html, height=360)
 
 # استقبال البيانات المسجلة والتحقق منها في الخلفية لحفظها بالسجل
 query_params = st.query_params
@@ -123,7 +123,6 @@ if name_param and id_param and lat_param and lon_param:
     u_lat = float(lat_param)
     u_lon = float(lon_param)
 
-    # التحقق الأمني الإضافي على السيرفر بأن الرقم 8 أرقام
     if len(str(id_param)) == 8 and str(id_param).isdigit():
       R = 6371000
       phi1 = math.radians(CLASS_LAT)
@@ -151,7 +150,7 @@ if name_param and id_param and lat_param and lon_param:
             df.to_csv("attendance_log.csv", index=False)
             st.success(
                 f"🎉 أهلاً بك يا {name_param}. تم التحقق من تواجدك داخل القاعة"
-                f" بنجاح وتسجيل حضورك!"
+                f" (المسافة: {round(distance)} متر) وتسجيل حضورك بنجاح!"
             )
           else:
             st.info(f"ℹ️ الطالب {name_param} مسجل مسبقاً في كشف الحضور.")
@@ -166,7 +165,7 @@ if name_param and id_param and lat_param and lon_param:
 st.divider()
 
 # --- لوحة تحكم الأستاذ ---
-st.subheader("👨‍🏫 لوحة تحكم الأستاذ (سجل الحضور)")
+st.subheader("👨‍شاهِد لوحة تحكم الأستاذ (سجل الحضور)")
 
 try:
   log_df = pd.read_csv("attendance_log.csv")
