@@ -13,9 +13,9 @@ st.write(
 )
 
 # --- إحداثيات قاعة المحاضرات الخاصة بك ---
-CLASS_LAT = 30.718867  # خط العرض للقاعة
-CLASS_LON = 31.244691  # خط الطول للقاعة
-ALLOWED_RADIUS_METERS = 100  # تم زيادة مسافة السماح إلى 100 متر لاستيعاب تباين الـ GPS داخل المباني
+CLASS_LAT = 30.4682  # خط العرض للقاعة
+CLASS_LON = 31.1856  # خط الطول للقاعة
+ALLOWED_RADIUS_METERS = 100  # مسافة السماح
 
 # واجهة المدخلات وزر الجي بي إس المدمج
 form_html = (
@@ -27,7 +27,7 @@ form_html = (
     </div>
     
     <div style="margin-bottom: 15px;">
-        <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">كود الطالب (ركز في إدخال الكود حيث ان حضورك كله يعتمد على إدخاله بشكل صحيح والكود مكون من 8 أرقام مثل 28532471):</label>
+        <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">الرقم الجامعي / الأكاديمي (8 أرقام إنجليزية):</label>
         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="s_id" placeholder="أدخل 8 أرقام بالضبط" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box;">
     </div>
 
@@ -86,13 +86,14 @@ function verifyAndRegister() {
 
             if (distance <= ALLOWED_RADIUS) {
                 msg.style.color = "green";
-                msg.innerHTML = "✅ تم التحقق من تواجدك داخل النطاق (المسافة: " + Math.round(distance) + " متر). جاري الحفظ...";
+                msg.innerHTML = "✅ تم التحقق من تواجدك داخل النطاق (المسافة: " + Math.round(distance) + " متر). جاري تسجيل الحضور...";
                 
+                // استخدام آلية آمنة لتمرير البيانات وحفظها فوراً دون فقدان
                 const baseUrl = window.parent.location.href.split('?')[0];
-                window.parent.location.href = baseUrl + "?name=" + encodeURIComponent(name) + "&id=" + encodeURIComponent(id) + "&lat=" + lat + "&lon=" + lon;
+                window.parent.location.href = baseUrl + "?reg_name=" + encodeURIComponent(name) + "&reg_id=" + encodeURIComponent(id) + "&reg_dist=" + Math.round(distance);
             } else {
                 msg.style.color = "red";
-                msg.innerHTML = "❌ عذراً، لم يتم تسجيل حضورك! أنت خارج النطاق (المسافة المقاسة: " + Math.round(distance) + " متر، والحد المسموح 100 متر).";
+                msg.innerHTML = "❌ عذراً، لم يتم تسجيل حضورك! أنت خارج النطاق (المسافة: " + Math.round(distance) + " متر والمسموح 100 متر).";
             }
         },
         (error) => {
@@ -111,68 +112,54 @@ function verifyAndRegister() {
 
 components.html(form_html, height=360)
 
-# استقبال البيانات المسجلة والتحقق منها في الخلفية لحفظها بالسجل
+# استقبال البيانات وحفظها بشكل مباشر ودائم في ملف الـ CSV
 query_params = st.query_params
-name_param = query_params.get("name")
-id_param = query_params.get("id")
-lat_param = query_params.get("lat")
-lon_param = query_params.get("lon")
+reg_name = query_params.get("reg_name")
+reg_id = query_params.get("reg_id")
 
-if name_param and id_param and lat_param and lon_param:
+if reg_name and reg_id:
   try:
-    u_lat = float(lat_param)
-    u_lon = float(lon_param)
+    # التأكد من صحة الرقم (8 أرقام) من جهة السيرفر
+    if len(str(reg_id)) == 8 and str(reg_id).isdigit():
+      timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    if len(str(id_param)) == 8 and str(id_param).isdigit():
-      R = 6371000
-      phi1 = math.radians(CLASS_LAT)
-      phi2 = math.radians(u_lat)
-      delta_phi = math.radians(u_lat - CLASS_LAT)
-      delta_lambda = math.radians(u_lon - CLASS_LON)
-      a = (
-          math.sin(delta_phi / 2) ** 2
-          + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2) ** 2
-      )
-      c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-      distance = R * c
+      # قراءة أو إنشاء ملف السجل
+      try:
+        df = pd.read_csv("attendance_log.csv")
+      except FileNotFoundError:
+        df = pd.DataFrame(columns=["الاسم", "الرقم الجامعي", "وقت التسجيل"])
 
-      if distance <= ALLOWED_RADIUS_METERS:
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        new_data = pd.DataFrame(
-            [[name_param, id_param, timestamp]],
+      # التحقق مما إذا كان الطالب قد تسجل مسبقاً
+      if reg_id not in df["الرقم الجامعي"].astype(str).values:
+        new_row = pd.DataFrame(
+            [[reg_name, reg_id, timestamp]],
             columns=["الاسم", "الرقم الجامعي", "وقت التسجيل"],
         )
+        df = pd.concat([df, new_row], ignore_index=True)
+        df.to_csv("attendance_log.csv", index=False)
+        st.success(
+            f"🎉 أهلاً بك يا {reg_name} (رقم: {reg_id}). تم تسجيل حضورك بنجاح في"
+            " السجل!"
+        )
+      else:
+        st.info(f"ℹ️ الطالب {reg_name} مسجل مسبقاً في كشف الحضور بالفعل.")
 
-        try:
-          df = pd.read_csv("attendance_log.csv")
-          if id_param not in df["الرقم الجامعي"].astype(str).values:
-            df = pd.concat([df, new_data], ignore_index=True)
-            df.to_csv("attendance_log.csv", index=False)
-            st.success(
-                f"🎉 أهلاً بك يا {name_param}. تم التحقق من تواجدك داخل القاعة"
-                f" (المسافة: {round(distance)} متر) وتسجيل حضورك بنجاح!"
-            )
-          else:
-            st.info(f"ℹ️ الطالب {name_param} مسجل مسبقاً في كشف الحضور.")
-        except FileNotFoundError:
-          new_data.to_csv("attendance_log.csv", index=False)
-          st.success(
-              f"🎉 أهلاً بك يا {name_param}. تم تسجيل حضورك بنجاح داخل القاعة!"
-          )
+      # تنظيف رابط الصفحة بعد الحفظ لتجنب التكرار عند التحديث
+      st.query_params.clear()
   except Exception as e:
-    pass
+    st.error(f حدث خطأ أثناء الحفظ: {e})
 
 st.divider()
 
-# --- لوحة تحكم الأستاذ ---
-st.subheader("👨‍شاهِد لوحة تحكم الأستاذ (سجل الحضور)")
+# --- لوحة تحكم الأستاذ (عرض السجل وتحميله) ---
+st.subheader("👨‍🏫 لوحة تحكم الأستاذ (سجل الحضور)")
 
 try:
   log_df = pd.read_csv("attendance_log.csv")
   st.write(f"إجمالي الطلاب الحاضرين: **{len(log_df)}** طالب")
-  st.dataframe(log_df)
+  st.dataframe(log_df, use_container_width=True)
 
-  csv = log_df.to_csv(index=False).encode("utf-8")
+  csv = log_df.to_csv(index=False).encode("utf-8-sig")
   st.download_button(
       label="📥 تحميل كشف الحضور (CSV)",
       data=csv,
@@ -180,4 +167,4 @@ try:
       mime="text/csv",
   )
 except FileNotFoundError:
-  st.info("لا توجد سجلات حضور مسجلة حتى الآن.")
+  st.info("لا توجد سجلات حضور مسجلة حتى الآن. سيظهر هنا أسماء الطلاب فور تسجيلهم.")
