@@ -36,7 +36,7 @@ def calculate_distance(lat1, lon1, lat2, lon2):
 
 # مدخلات الطالب
 student_name = st.text_input("اسم الطالب الثلاثي")
-student_id = st.text_input("الرقم الجامعي / الأكاديمي")
+student_id = st.text_input("كود الطالب")
 
 st.markdown("---")
 st.write("📍 **التحقق من الموقع الجغرافي:**")
