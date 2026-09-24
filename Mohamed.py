@@ -13,42 +13,17 @@ st.write(
 )
 
 # --- إحداثيات قاعة المحاضرات الخاصة بك ---
-CLASS_LAT = 30.718833  # خط العرض للقاعة
-CLASS_LON = 31.244533  # خط الطول للقاعة
+CLASS_LAT = 30.4682  # خط العرض للقاعة
+CLASS_LON = 31.1856  # خط الطول للقاعة
 ALLOWED_RADIUS_METERS = 100  # مسافة السماح بالمتر
 
-# استقبال وحفظ البيانات في البداية فور إعادة تحميل الصفحة
-if "reg_name" in st.query_params and "reg_id" in st.query_params:
-  reg_name = st.query_params["reg_name"]
-  reg_id = str(st.query_params["reg_id"])
-
-  if len(reg_id) == 8 and reg_id.isdigit():
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    try:
-      df = pd.read_csv("attendance_log.csv")
-    except FileNotFoundError:
-      df = pd.DataFrame(columns=["الاسم", "الرقم الجامعي", "وقت التسجيل"])
-
-    # توحيد نوع البيانات إلى نص لضمان المقارنة الصحيحة
-    df["الرقم الجامعي"] = df["الرقم الجامعي"].astype(str)
-
-    if reg_id not in df["الرقم الجامعي"].values:
-      new_row = pd.DataFrame(
-          [[reg_name, reg_id, timestamp]],
-          columns=["الاسم", "الرقم الجامعي", "وقت التسجيل"],
-      )
-      df = pd.concat([df, new_row], ignore_index=True)
-      df.to_csv("attendance_log.csv", index=False)
-      st.success(
-          f"🎉 تم تسجيل الطالب ({reg_name}) برقم ({reg_id}) في السجل بنجاح!"
-      )
-    else:
-      st.info(f"ℹ️ الطالب ذو الرقم ({reg_id}) مسجل مسبقاً في كشف الحضور.")
-
-    # مسح البارامترات من الرابط وتحديث الصفحة فوراً لظهر الاسم بالجدول
-    st.query_params.clear()
-    st.rerun()
+# تهيئة الذاكرة المؤقتة لجلسة الطالب
+if "verified" not in st.session_state:
+  st.session_state.verified = False
+if "student_name" not in st.session_state:
+  st.session_state.student_name = ""
+if "student_id" not in st.session_state:
+  st.session_state.student_id = ""
 
 # واجهة المدخلات وزر الجي بي إس المدمج
 form_html = (
@@ -64,7 +39,7 @@ form_html = (
         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="s_id" placeholder="أدخل 8 أرقام بالضبط" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box;">
     </div>
 
-    <button onclick="verifyAndRegister()" style="background-color: #ff4b4b; color: white; padding: 14px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%;">📍 تحديد الموقع وتسجيل الحضور</button>
+    <button onclick="verifyLocation()" style="background-color: #ff4b4b; color: white; padding: 14px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%;">📍 التحقق من التواجد بالقاعة</button>
     
     <p id="msg" style="margin-top: 15px; font-weight: bold; text-align: center; font-size: 15px;"></p>
 </div>
@@ -85,7 +60,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     return R * c;
 }
 
-function verifyAndRegister() {
+function verifyLocation() {
     const name = document.getElementById("s_name").value.trim();
     const id = document.getElementById("s_id").value.trim();
     const msg = document.getElementById("msg");
@@ -119,13 +94,14 @@ function verifyAndRegister() {
 
             if (distance <= ALLOWED_RADIUS) {
                 msg.style.color = "green";
-                msg.innerHTML = "✅ تم التحقق من تواجدك داخل النطاق (المسافة: " + Math.round(distance) + " متر). جاري حفظ الحضور...";
+                msg.innerHTML = "✅ تم التحقق من تواجدك داخل النطاق (المسافة: " + Math.round(distance) + " متر). انظر أسفل الشاشة لإتمام الحفظ!";
                 
+                // إرسال البيانات لتطبيق ستريمليت عبر إعادة توجيه مخفية لمرة واحدة وبسيطة
                 const baseUrl = window.parent.location.href.split('?')[0];
-                window.parent.location.href = baseUrl + "?reg_name=" + encodeURIComponent(name) + "&reg_id=" + encodeURIComponent(id);
+                window.parent.location.href = baseUrl + "?v_name=" + encodeURIComponent(name) + "&v_id=" + encodeURIComponent(id);
             } else {
                 msg.style.color = "red";
-                msg.innerHTML = "❌ عذراً، لم يتم تسجيل حضورك! أنت خارج النطاق (المسافة: " + Math.round(distance) + " متر والمسموح 100 متر).";
+                msg.innerHTML = "❌ عذراً، أنت خارج النطاق (المسافة: " + Math.round(distance) + " متر والمسموح 100 متر).";
             }
         },
         (error) => {
@@ -143,6 +119,53 @@ function verifyAndRegister() {
 )
 
 components.html(form_html, height=360)
+
+# استقبال البيانات بعد نجاح التحقق الجغرافي وتخزينها بالجلسة ليظهر زر الحفظ
+query_params = st.query_params
+if "v_name" in query_params and "v_id" in query_params:
+  st.session_state.student_name = query_params["v_name"]
+  st.session_state.student_id = str(query_params["v_id"])
+  st.session_state.verified = True
+  st.query_params.clear()
+
+# إذا تم التحقق بنجاح، نعرض زر الحفظ الفوري الواضح
+if st.session_state.verified:
+  st.success(
+      f"✨ مرحباً يا **{st.session_state.student_name}** (الرقم:"
+      f" {st.session_state.student_id}). تم التحقق من موقعك بنجاح!"
+  )
+  if st.button("📥 اضغط هنا لتأكيد وتسجيل حضورك الآن في السجل"):
+    if (
+        len(st.session_state.student_id) == 8
+        and st.session_state.student_id.isdigit()
+    ):
+      timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+      try:
+        df = pd.read_csv("attendance_log.csv")
+      except FileNotFoundError:
+        df = pd.DataFrame(columns=["الاسم", "الرقم الجامعي", "وقت التسجيل"])
+
+      df["الرقم الجامعي"] = df["الرقم الجامعي"].astype(str)
+
+      if st.session_state.student_id not in df["الرقم الجامعي"].values:
+        new_row = pd.DataFrame(
+            [[
+                st.session_state.student_name,
+                st.session_state.student_id,
+                timestamp,
+            ]],
+            columns=["الاسم", "الرقم الجامعي", "وقت التسجيل"],
+        )
+        df = pd.concat([df, new_row], ignore_index=True)
+        df.to_csv("attendance_log.csv", index=False)
+        st.success("🎉 تم حفظ حضورك في السجل بنجاح تام!")
+        # إعادة تعيين الحالة لإيقاف الزر
+        st.session_state.verified = False
+        st.rerun()
+      else:
+        st.warning("⚠️ هذا الرقم الجامعي مسجل مسبقاً في الكشف بالفعل.")
+        st.session_state.verified = False
 
 st.divider()
 
