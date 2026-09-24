@@ -1,7 +1,5 @@
 from datetime import datetime
 import math
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
@@ -19,52 +17,6 @@ CLASS_LAT = 30.718881  # خط العرض للقاعة
 CLASS_LON = 31.244633  # خط الطول للقاعة
 ALLOWED_RADIUS_METERS = 100  # مسافة السماح
 
-
-# دالة الاتصال بـ Google Sheets وحفظ البيانات
-def save_to_google_sheets(name, reg_id, timestamp):
-  try:
-    # إعداد الاعتمادات (يمكنك تخزين بيانات الـ JSON في Streamlit Secrets للأمان)
-    scope = [
-        "https://spreadsheets.google.com/feeds",
-        "https://www.googleapis.com/auth/drive",
-    ]
-
-    # قراءة بيانات الاعتماد من ملف سري أو إعدادات السيرفر
-    # ملاحظة: يمكنك وضع ملف الـ json الخاص بك في نفس المجلد أو ربطه عبر st.secrets
-    creds_dict = dict(st.secrets["gcp_service_account"])
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-    client = gspread.authorize(creds)
-
-    # فتح جدول البيانات باسمه أو الرابط
-    sheet = client.open("AttendanceLog").sheet1
-
-    # التحقق مما إذا كان الرقم الجامعي مسجلاً مسبقاً لمنع التكرار
-    existing_ids = sheet.col_values(2)  # العمود الثاني هو الرقم الجامعي
-    if str(reg_id) in [str(i) for i in existing_ids]:
-      return False, "مسجل مسبقاً"
-
-    # إضافة الصف الجديد مباشرة إلى جوجل شيت
-    sheet.append_row([name, str(reg_id), timestamp])
-    return True, "تم الحفظ"
-  except Exception as e:
-    # طريقة بديلة في حال لم تقم بإعداد الـ secrets بعد، سيتم الحفظ محلياً كاحتياط
-    try:
-      df = pd.read_csv("attendance_log.csv")
-    except FileNotFoundError:
-      df = pd.DataFrame(columns=["الاسم", "الرقم الجامعي", "وقت التسجيل"])
-
-    df["الرقم الجامعي"] = df["الرقم الجامعي"].astype(str)
-    if str(reg_id) not in df["الرقم الجامعي"].values:
-      new_row = pd.DataFrame(
-          [[name, str(reg_id), timestamp]],
-          columns=["الاسم", "الرقم الجامعي", "وقت التسجيل"],
-      )
-      df = pd.concat([df, new_row], ignore_index=True)
-      df.to_csv("attendance_log.csv", index=False)
-      return True, "تم الحفظ محلياً"
-    return False, "مسجل مسبقاً"
-
-
 # 1. استقبال وحفظ البيانات فور وصولها من متصفح الطالب
 query_params = st.query_params
 if "reg_name" in query_params and "reg_id" in query_params:
@@ -74,19 +26,32 @@ if "reg_name" in query_params and "reg_id" in query_params:
   if len(reg_id) == 8 and reg_id.isdigit():
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    success, msg = save_to_google_sheets(reg_name, reg_id, timestamp)
+    try:
+      df = pd.read_csv("attendance_log.csv")
+    except FileNotFoundError:
+      df = pd.DataFrame(columns=["الاسم", "الرقم الجامعي", "وقت التسجيل"])
 
-    if success:
+    # توحيد نوع البيانات إلى نص لضمان عدم التكرار
+    df["الرقم الجامعي"] = df["الرقم الجامعي"].astype(str)
+
+    if reg_id not in df["الرقم الجامعي"].values:
+      new_row = pd.DataFrame(
+          [[reg_name, reg_id, timestamp]],
+          columns=["الاسم", "الرقم الجامعي", "وقت التسجيل"],
+      )
+      df = pd.concat([df, new_row], ignore_index=True)
+      df.to_csv("attendance_log.csv", index=False)
       st.success(
-          f"🎉 تم تسجيل حضور الطالب ({reg_name}) برقم ({reg_id}) في السجل بنجاح!"
+          f"🎉 تم تسجيل حضور الطالب ({reg_name}) برقم ({reg_id}) بنجاح في السجل!"
       )
     else:
       st.info(f"ℹ️ الطالب صاحب الرقم ({reg_id}) مسجل مسبقاً في كشف الحضور.")
 
+    # تنظيف الرابط وتحديث الصفحة فوراً لعرض الاسم في الجدول
     st.query_params.clear()
     st.rerun()
 
-# 2. واجهة المدخلات وزر الجي بي إس المدمج (تم تعديل جملة جاري حفظ الحضور إلى تم حفظ الحضور)
+# 2. واجهة المدخلات وزر الجي بي إس المدمج
 form_html = (
     """
 <div style="font-family: Tahoma, sans-serif; padding: 15px; direction: rtl; background-color: #f9f9f9; border-radius: 10px; border: 1px solid #ddd;">
@@ -155,7 +120,6 @@ function verifyAndRegister() {
 
             if (distance <= ALLOWED_RADIUS) {
                 msg.style.color = "green";
-                // تم التعديل هنا بناءً على طلبك
                 msg.innerHTML = "✅ تم التحقق من تواجدك داخل النطاق (المسافة: " + Math.round(distance) + " متر). تم حفظ الحضور بنجاح!";
                 
                 const baseUrl = window.parent.location.href.split('?')[0];
@@ -187,18 +151,7 @@ st.divider()
 st.subheader("👨‍🏫 لوحة تحكم الأستاذ (سجل الحضور)")
 
 try:
-  # محاولة جلب البيانات من Google Sheets للعرض، وإذا حدث خطأ يتم عرض الملف المحلي
-  scope = [
-      "https://spreadsheets.google.com/feeds",
-      "https://www.googleapis.com/auth/drive",
-  ]
-  creds_dict = dict(st.secrets["gcp_service_account"])
-  creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-  client = gspread.authorize(creds)
-  sheet = client.open("AttendanceLog").sheet1
-  data = sheet.get_all_records()
-  log_df = pd.DataFrame(data)
-
+  log_df = pd.read_csv("attendance_log.csv")
   st.write(f"إجمالي الطلاب الحاضرين: **{len(log_df)}** طالب")
   st.dataframe(log_df, use_container_width=True)
 
@@ -209,19 +162,5 @@ try:
       file_name="attendance.csv",
       mime="text/csv",
   )
-except Exception:
-  # العرض من الملف المحلي كبديل احتياطي
-  try:
-    log_df = pd.read_csv("attendance_log.csv")
-    st.write(f"إجمالي الطلاب الحاضرين: **{len(log_df)}** طالب")
-    st.dataframe(log_df, use_container_width=True)
-
-    csv = log_df.to_csv(index=False).encode("utf-8-sig")
-    st.download_button(
-        label="📥 تحميل كشف الحضور (CSV)",
-        data=csv,
-        file_name="attendance.csv",
-        mime="text/csv",
-    )
-  except FileNotFoundError:
-    st.info("لا توجد سجلات حضور مسجلة حتى الآن. سيظهر هنا أسماء الطلاب فور تسجيلهم.")
+except FileNotFoundError:
+  st.info("لا توجد سجلات حضور مسجلة حتى الآن. سيظهر هنا أسماء الطلاب فور تسجيلهم.")
