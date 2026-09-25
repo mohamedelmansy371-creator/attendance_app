@@ -18,8 +18,8 @@ CLASS_LAT = 30.718881
 CLASS_LON = 31.244633
 ALLOWED_RADIUS_METERS = 100
 
-# رابط الـ Web App الجديد الخاص بك
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbKej_CzJ59waqv_-gbKHjNImyczpFtdgQ6f_ouJ1A5mUhNB6veETkcD1ANewYF81KiA/exec"
+# رابط الـ Web App الخاص بملف Google Sheets الخاص بك
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxvYZXJaC6rgpchmf2jN8TgzzrbukHmc-BiTGVtGBa2XzcJvwVo5oJGcN5LiEgX9j3v2A/exec"
 
 form_html = (
     """
@@ -205,7 +205,7 @@ function verifyAndSubmit() {
                 msg.style.color = "blue";
                 msg.innerHTML = "⏳ تم التحقق من الموقع، جاري إرسال وتسجيل الحضور...";
 
-                // بناء رابط الـ GET المباشر متضمنًا كافة البيانات
+                // بناء رابط الإرسال المباشر (GET Request) متضمنًا كافة البيانات
                 const targetUrl = SCRIPT_URL + 
                                   "?name=" + encodeURIComponent(name) +
                                   "&id=" + encodeURIComponent(id) +
@@ -218,7 +218,7 @@ function verifyAndSubmit() {
                                   "&lon=" + lon +
                                   "&dist=" + Math.round(distance);
 
-                // إرسال البيانات باستخدام عنصر Image لضمان التنفيذ الفوري وتفادي حظر متصفحات الهواتف للطلبات
+                // إرسال البيانات بخفية تامة باستخدام Image object لتجنب مشاكل الـ CORS وتحقيق استجابة فورية
                 const img = new Image();
                 img.src = targetUrl;
                 
