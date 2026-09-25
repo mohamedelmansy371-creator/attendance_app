@@ -29,6 +29,7 @@ def init_excel():
             "اسم الطالب",
             "كود الطالب",
             "اسم المادة",
+            "الشق الدراسي",
             "الفرقة",
             "التوجه",
             "المكان",
@@ -49,6 +50,7 @@ if "action" in query_params and query_params["action"] == "save":
   s_name = urllib.parse.unquote(query_params.get("name", ""))
   s_id = query_params.get("id", "")
   s_course = urllib.parse.unquote(query_params.get("course", ""))
+  s_section = urllib.parse.unquote(query_params.get("section", ""))
   s_year = urllib.parse.unquote(query_params.get("year", ""))
   s_track = urllib.parse.unquote(query_params.get("track", "غير متوفر"))
   s_loc = urllib.parse.unquote(query_params.get("loc", ""))
@@ -69,6 +71,7 @@ if "action" in query_params and query_params["action"] == "save":
           "اسم الطالب": s_name,
           "كود الطالب": str(s_id),
           "اسم المادة": s_course,
+          "الشق الدراسي": s_section,
           "الفرقة": s_year,
           "التوجه": s_track if s_year == "الفرقة الرابعة" else "غير مخصص",
           "المكان": s_loc,
@@ -81,7 +84,7 @@ if "action" in query_params and query_params["action"] == "save":
       df.to_excel(EXCEL_FILE, index=False)
       st.success(
           f"✅ تم تسجيل حضور الطالب: **{s_name}** (الكود: {s_id}) للمادة **{s_course}**"
-          f" بنجاح!"
+          f" ({s_section}) بنجاح!"
       )
       st.query_params.clear()
 
@@ -100,7 +103,44 @@ form_html = (
 
     <div style="margin-bottom: 12px;">
         <label style="font-weight: bold; display: block; margin-bottom: 4px; color: #333;">اسم المادة الدراسية:</label>
-        <input type="text" id="s_course" placeholder="أدخل اسم المادة" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; box-sizing: border-box;">
+        <select id="s_course" onchange="toggleSection()" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; box-sizing: border-box; background-color: white;">
+            <option value="">-- اختر المادة الدراسية --</option>
+            <option value="أساسيات هندسة النظم الزراعية والحيوية">أساسيات هندسة النظم الزراعية والحيوية</option>
+            <option value="رياضة هندسة">رياضة هندسة</option>
+            <option value="رياضة عام">رياضة عام</option>
+            <option value="ميكانيكا (ديناميكا - استاتيكا)">ميكانيكا (ديناميكا - استاتيكا)</option>
+            <option value="رسم هندسي (1)">رسم هندسي (1)</option>
+            <option value="رياضة تطبيقية">رياضة تطبيقية</option>
+            <option value="هيدروليكا وميكانيكا موائع">هيدروليكا وميكانيكا موائع</option>
+            <option value="نظرية آلات">نظرية آلات</option>
+            <option value="مقدمة في الحاسب الآلي">مقدمة في الحاسب الآلي</option>
+            <option value="انتقال حراري">انتقال حراري</option>
+            <option value="جرارات زراعية">جرارات زراعية</option>
+            <option value="تخطيط وتصميم المنشآت الزراعية">تخطيط وتصميم المنشآت الزراعية</option>
+            <option value="هندسة الري والصرف">هندسة الري والصرف</option>
+            <option value="هندسة البيوت المحمية">هندسة البيوت المحمية</option>
+            <option value="هندسة مزارع الإنتاج الحيواني والداجني">هندسة مزارع الإنتاج الحيواني والداجني</option>
+            <option value="التحكم البيئي في المنشآت الزراعية">التحكم البيئي في المنشآت الزراعية</option>
+            <option value="تصميم نظم الري">تصميم نظم الري</option>
+            <option value="تصميم آلات زراعية">تصميم آلات زراعية</option>
+            <option value="إدارة وتشغيل المزارع المائية">إدارة وتشغيل المزارع المائية</option>
+            <option value="ميكانيكا تربة">ميكانيكا تربة</option>
+            <option value="هيدروليكا الآبار والمضخات">هيدروليكا الآبار والمضخات</option>
+            <option value="تخطيط وتصميم نظم الصرف الحقلي">تخطيط وتصميم نظم الصرف الحقلي</option>
+            <option value="نظرية اهتزازات وتوازن">نظرية اهتزازات وتوازن</option>
+            <option value="معدات التسميد والمكافحة">معدات التسميد والمكافحة</option>
+            <option value="الخواص الطبيعية والهندسية للمنتجات الزراعية">الخواص الطبيعية والهندسية للمنتجات الزراعية</option>
+            <option value="هندسة تصنيع السماد العضوي المكمور">هندسة تصنيع السماد العضوي المكمور</option>
+        </select>
+    </div>
+
+    <div id="section_container" style="margin-bottom: 12px; display: none;">
+        <label style="font-weight: bold; display: block; margin-bottom: 4px; color: #333;">الشق الدراسي:</label>
+        <select id="s_section" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; box-sizing: border-box; background-color: white;">
+            <option value="">-- اختر الشق الدراسي --</option>
+            <option value="نظري">نظري</option>
+            <option value="عملي">عملي</option>
+        </select>
     </div>
 
     <div style="margin-bottom: 12px;">
@@ -157,6 +197,17 @@ const CLASS_LAT = __LAT__;
 const CLASS_LON = __LON__;
 const ALLOWED_RADIUS = __RADIUS__;
 
+function toggleSection() {
+    const course = document.getElementById("s_course").value;
+    const sectionContainer = document.getElementById("section_container");
+    if (course !== "") {
+        sectionContainer.style.display = "block";
+    } else {
+        sectionContainer.style.display = "none";
+        document.getElementById("s_section").value = "";
+    }
+}
+
 function toggleTrack() {
     const year = document.getElementById("s_year").value;
     const trackContainer = document.getElementById("track_container");
@@ -182,16 +233,17 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 function verifyLocation() {
     const name = document.getElementById("s_name").value.trim();
     const id = document.getElementById("s_id").value.trim();
-    const course = document.getElementById("s_course").value.trim();
+    const course = document.getElementById("s_course").value;
+    const section = document.getElementById("s_section").value;
     const year = document.getElementById("s_year").value;
     const track = document.getElementById("s_track").value;
     const loc = document.getElementById("s_loc").value;
     const msg = document.getElementById("msg");
     const successContainer = document.getElementById("success_container");
 
-    if (!name || !id || !course || !year || !loc) {
+    if (!name || !id || !course || !section || !year || !loc) {
         msg.style.color = "red";
-        msg.innerHTML = "❌ يرجى استيفاء جميع الحقول المطلوبة واختيار المكان والفرقة!";
+        msg.innerHTML = "❌ يرجى استيفاء جميع الحقول المطلوبة واختيار المادة والشق الدراسي والفرقة والمكان!";
         successContainer.style.display = "none";
         return;
     }
@@ -236,6 +288,7 @@ function verifyLocation() {
                                   "&name=" + encodeURIComponent(name) +
                                   "&id=" + encodeURIComponent(id) +
                                   "&course=" + encodeURIComponent(course) +
+                                  "&section=" + encodeURIComponent(section) +
                                   "&year=" + encodeURIComponent(year) +
                                   "&track=" + encodeURIComponent(track) +
                                   "&loc=" + encodeURIComponent(loc) +
@@ -267,4 +320,4 @@ function verifyLocation() {
     .replace("__RADIUS__", str(ALLOWED_RADIUS_METERS))
 )
 
-components.html(form_html, height=640)
+components.html(form_html, height=720)
