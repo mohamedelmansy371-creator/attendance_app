@@ -16,8 +16,8 @@ CLASS_LAT = 30.718881
 CLASS_LON = 31.244633
 ALLOWED_RADIUS_METERS = 100
 
-# رابط الـ Web App الخاص بك في Google Apps Script
-WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzaZdm-eixPTCmu4NQ49h9xF45hs2AGBxxWfijY7x5ZzCHap_wMXGnXT05TLaWYv9Vw/exec"
+# رابط الـ Web App الجديد الخاص بك
+WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwXqXyuuccgwaxtCTWGme09bYfdIMJOwIlWP6edGOXudxnmOIhS8wkP43ka0pLm1tKE/exec"
 
 # واجهة المدخلات وإرسال البيانات في الخلفية
 form_html = (
@@ -101,7 +101,7 @@ function verifyAndRegister() {
                 msg.style.color = "green";
                 msg.innerHTML = "🎉 مطابقة صحيحة! المسافة عن القاعة: " + Math.round(distance) + " متر.";
                 
-                // رابط إرسال البيانات للـ Web App في الخلفية
+                // إرسال البيانات للـ Web App عبر رابط الـ GET مع استخدام no-cors لضمان نجاح الاتصال من المتصفح
                 const targetUrl = WEB_APP_URL + "?name=" + encodeURIComponent(name) + "&id=" + encodeURIComponent(id);
                 
                 fetch(targetUrl, {
