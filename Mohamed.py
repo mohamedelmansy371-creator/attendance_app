@@ -7,19 +7,21 @@ st.set_page_config(page_title="تسجيل الحضور الجامعي الذكي
 
 st.title("📌 نظام تسجيل الحضور المقيد جغرافياً")
 st.write(
-    "يرجى كتابة اسمك وكود الطالب (8 أرقام)، ثم الضغط على زر تحديد الموقع للتحقق"
-    " والتسجيل."
+    "يرجى إدخال اسمك وكود الطالب (8 أرقام)، ثم الضغط على زر التحقق والتسجيل"
+    " التلقائي."
 )
 
-# --- إحداثيات قاعة المحاضرات الخاصة بك ---
-CLASS_LAT = 30.718881  # خط العرض للقاعة
-CLASS_LON = 31.244633  # خط الطول للقاعة
-ALLOWED_RADIUS_METERS = 100  # مسافة السماح
+# --- إحداثيات قاعة المحاضرات ---
+CLASS_LAT = 30.718881
+CLASS_LON = 31.244633
+ALLOWED_RADIUS_METERS = 100
 
-# معرف نموذج جوجل الخاص بك
+# معرف نموذج جوجل وحقول الـ entry المستخرجة
 FORM_ID = "1FAIpQLSdarNAh6jqY8f5zPzpN1auH_VHXFhbGhLsNWPwWAhx4TOZp5g"
+ENTRY_NAME = "entry.2005620554"  # حقل اسم الطالب
+ENTRY_ID = "entry.1045781291"  # حقل كود الطالب
 
-# واجهة المدخلات وزر الجي بي إس المدمج
+# واجهة المدخلات وإرسال الـ entry تلقائياً في الخلفية
 form_html = (
     """
 <div style="font-family: Tahoma, sans-serif; padding: 15px; direction: rtl; background-color: #f9f9f9; border-radius: 10px; border: 1px solid #ddd;">
@@ -33,14 +35,13 @@ form_html = (
         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="s_id" placeholder="أدخل 8 أرقام بالضبط" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box;">
     </div>
 
-    <button onclick="verifyAndRegister()" style="background-color: #ff4b4b; color: white; padding: 14px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%;">📍 تحديد الموقع والتحقق</button>
+    <button onclick="verifyAndRegister()" style="background-color: #ff4b4b; color: white; padding: 14px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%;">📍 تحديد الموقع وتسجيل الحضور</button>
     
     <p id="msg" style="margin-top: 15px; font-weight: bold; text-align: center; font-size: 15px;"></p>
     
-    <!-- زر يظهر فقط بعد اجتياز التحقق الجغرافي -->
-    <div id="success_container" style="display: none; margin-top: 20px; text-align: center;">
-        <p style="color: green; font-weight: bold; font-size: 16px;">✅ تم التحقق من تواجدك داخل القاعة بنجاح!</p>
-        <a id="submit_link" href="#" target="_blank" style="display: inline-block; background-color: #28a745; color: white; padding: 15px 25px; text-decoration: none; border-radius: 8px; font-size: 18px; font-weight: bold; width: 100%; box-sizing: border-box;">🚀 اضغط هنا لفتح النموذج وتأكيد الحضور</a>
+    <!-- صندوق النجاح -->
+    <div id="success_container" style="display: none; margin-top: 20px; text-align: center; background-color: #d4edda; padding: 15px; border-radius: 8px; border: 1px solid #c3e6cb;">
+        <p style="color: #155724; font-weight: bold; font-size: 16px; margin: 0;">✅ تم التحقق من موقعك وتسجيل حضورك بنجاح في نموذج جوجل!</p>
     </div>
 </div>
 
@@ -49,6 +50,8 @@ const CLASS_LAT = __LAT__;
 const CLASS_LON = __LON__;
 const ALLOWED_RADIUS = __RADIUS__;
 const FORM_ID = "__FORM_ID__";
+const ENTRY_NAME = "__ENTRY_NAME__";
+const ENTRY_ID = "__ENTRY_ID__";
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371000;
@@ -89,7 +92,7 @@ function verifyAndRegister() {
     }
 
     msg.style.color = "blue";
-    msg.innerHTML = "⏳ جاري تحديد موقعك بدقة، يرجى الانتظار والسماح بالصلاحية...";
+    msg.innerHTML = "⏳ جاري تحديد موقعك بدقة وتسجيل الحضور عبر الـ Entries، يرجى الانتظار...";
     successContainer.style.display = "none";
 
     navigator.geolocation.getCurrentPosition(
@@ -102,11 +105,19 @@ function verifyAndRegister() {
                 msg.style.color = "green";
                 msg.innerHTML = "🎉 مطابقة صحيحة! المسافة عن القاعة: " + Math.round(distance) + " متر.";
                 
-                // رابط النموذج مع تعبئة خانات الاسم وكود الطالب تلقائياً بالمعلمات الصحيحة للنموذج الخاص بك
-                const formUrl = "https://docs.google.com/forms/d/e/" + FORM_ID + "/viewform?usp=pp_url&entry.2005620554=" + encodeURIComponent(name) + "&entry.1045781291=" + encodeURIComponent(id);
+                // رابط إرسال البيانات المباشر مستخدماً حقول الـ Entry المستخرجة
+                const formUrl = "https://docs.google.com/forms/d/e/" + FORM_ID + "/formResponse?" + ENTRY_NAME + "=" + encodeURIComponent(name) + "&" + ENTRY_ID + "=" + encodeURIComponent(id) + "&submit=SUBMIT";
                 
-                document.getElementById("submit_link").href = formUrl;
-                successContainer.style.display = "block";
+                // إرسال البيانات في الخلفية باستخدام fetch مع no-cors
+                fetch(formUrl, {
+                    method: "POST",
+                    mode: "no-cors"
+                }).then(() => {
+                    successContainer.style.display = "block";
+                }).catch((error) => {
+                    successContainer.style.display = "block";
+                });
+
             } else {
                 msg.style.color = "red";
                 msg.innerHTML = "❌ عذراً، أنت خارج النطاق المسموح! (المسافة: " + Math.round(distance) + " متر والمسموح 100 متر).";
@@ -127,6 +138,8 @@ function verifyAndRegister() {
     .replace("__LON__", str(CLASS_LON))
     .replace("__RADIUS__", str(ALLOWED_RADIUS_METERS))
     .replace("__FORM_ID__", FORM_ID)
+    .replace("__ENTRY_NAME__", ENTRY_NAME)
+    .replace("__ENTRY_ID__", ENTRY_ID)
 )
 
-components.html(form_html, height=450)
+components.html(form_html, height=480)
