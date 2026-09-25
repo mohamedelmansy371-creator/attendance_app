@@ -1,18 +1,17 @@
 import math
 import os
 from datetime import datetime
-import urllib.parse
 import pandas as pd
-import requests  # مكتبة إرسال البيانات للرابط
 import streamlit as st
 import streamlit.components.v1 as components
 
 # إعدادات صفحة التطبيق
 st.set_page_config(page_title="تسجيل الحضور الجامعي الذكي", page_icon="📍")
 
-st.title("نظام تسجيل الحضور الذكي لبرنامج الهندسة الزراعية")
+st.title("📌 نظام تسجيل الحضور المقيد جغرافياً")
 st.write(
-    "يرجى إدخال البيانات المطلوبة، ثم الضغط على زر التحقق من الموقع."
+    "يرجى إدخال البيانات المطلوبة بدقة، ثم الضغط على زر التحقق من الموقع وتسجيل"
+    " الحضور."
 )
 
 # --- إحداثيات قاعة المحاضرات ---
@@ -20,55 +19,8 @@ CLASS_LAT = 30.718881
 CLASS_LON = 31.244633
 ALLOWED_RADIUS_METERS = 100
 
-# رابط الـ Web App الخاص بملف Google Sheets الذي أنشأته
+# رابط الـ Web App الخاص بملف Google Sheets الخاص بك
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxvYZXJaC6rgpchmf2jN8TgzzrbukHmc-BiTGVtGBa2XzcJvwVo5oJGcN5LiEgX9j3v2A/exec"
-
-# معالجة حفظ البيانات عند استقبالها عبر الـ query_params وإرسالها لـ Google Sheets
-query_params = st.query_params
-if "action" in query_params and query_params["action"] == "save":
-  s_name = urllib.parse.unquote(query_params.get("name", ""))
-  s_id = query_params.get("id", "")
-  s_course = urllib.parse.unquote(query_params.get("course", ""))
-  s_section = urllib.parse.unquote(query_params.get("section", ""))
-  s_year = urllib.parse.unquote(query_params.get("year", ""))
-  s_track = urllib.parse.unquote(query_params.get("track", "غير متوفر"))
-  s_loc = urllib.parse.unquote(query_params.get("loc", ""))
-  lat = query_params.get("lat", "")
-  lon = query_params.get("lon", "")
-  dist = query_params.get("dist", "")
-
-  if s_name and s_id:
-    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
-    # تجهيز البيانات للإرسال بصيغة JSON
-    payload = {
-        "name": s_name,
-        "id": str(s_id),
-        "course": s_course,
-        "section": s_section,
-        "year": s_year,
-        "track": s_track if s_year == "الفرقة الرابعة" else "غير مخصص",
-        "loc": s_loc,
-        "time": now_str,
-        "lat": lat,
-        "lon": lon,
-        "dist": dist,
-    }
-
-    try:
-      # إرسال البيانات مباشرة إلى ملف Google Sheets عبر رابط الـ Web App
-      response = requests.post(GOOGLE_SCRIPT_URL, json=payload)
-      if response.status_code == 200:
-        st.success(
-            f"✅ تم تسجيل حضور الطالب: **{s_name}** (الكود: {s_id}) للمادة **{s_course}**"
-            f" ({s_section}) وحفظه في جدول جوجل شيت بنجاح!"
-        )
-      else:
-        st.error("⚠️ حدث خطأ أثناء الاتصال بملف السيرفر، يرجى المحاولة مرة أخرى.")
-    except Exception as e:
-      st.error(f"❌ خطأ في الشبكة: {e}")
-
-    st.query_params.clear()
 
 form_html = (
     """
@@ -163,20 +115,16 @@ form_html = (
         </select>
     </div>
 
-    <button onclick="verifyLocation()" style="background-color: #ff4b4b; color: white; padding: 14px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%;">📍 تحقق من الموقع الجغرافي</button>
+    <button onclick="verifyAndSubmit()" style="background-color: #28a745; color: white; padding: 14px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">📍 تحقق من الموقع وتسجيل الحضور</button>
     
     <p id="msg" style="margin-top: 15px; font-weight: bold; text-align: center; font-size: 15px;"></p>
-    
-    <div id="success_container" style="display: none; margin-top: 15px; text-align: center;">
-        <p style="color: green; font-weight: bold; margin-bottom: 8px;">✅ تم التأكد من موقعك الجغرافي</p>
-        <a id="submit_link" href="#" style="display: block; background-color: #28a745; color: white; padding: 14px 20px; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">🚀 اضغط هنا لتأكيد وتسجيل الحضور نهائياً</a>
-    </div>
 </div>
 
 <script>
 const CLASS_LAT = __LAT__;
 const CLASS_LON = __LON__;
 const ALLOWED_RADIUS = __RADIUS__;
+const SCRIPT_URL = "__URL__";
 
 function toggleSection() {
     const course = document.getElementById("s_course").value;
@@ -211,7 +159,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     return R * c;
 }
 
-function verifyLocation() {
+function verifyAndSubmit() {
     const name = document.getElementById("s_name").value.trim();
     const id = document.getElementById("s_id").value.trim();
     const course = document.getElementById("s_course").value;
@@ -220,39 +168,33 @@ function verifyLocation() {
     const track = document.getElementById("s_track").value;
     const loc = document.getElementById("s_loc").value;
     const msg = document.getElementById("msg");
-    const successContainer = document.getElementById("success_container");
 
     if (!name || !id || !course || !section || !year || !loc) {
         msg.style.color = "red";
         msg.innerHTML = "❌ يرجى استيفاء جميع الحقول المطلوبة واختيار المادة والشق الدراسي والفرقة والمكان!";
-        successContainer.style.display = "none";
         return;
     }
 
     if (year === "الفرقة الرابعة" && !track) {
         msg.style.color = "red";
         msg.innerHTML = "❌ يرجى اختيار التوجه الخاص بالفرقة الرابعة!";
-        successContainer.style.display = "none";
         return;
     }
 
     if (id.length !== 8 || isNaN(id)) {
         msg.style.color = "red";
         msg.innerHTML = "❌ خطأ: يجب أن يكون كود الطالب مكوناً من 8 أرقام بالضبط!";
-        successContainer.style.display = "none";
         return;
     }
 
     if (!navigator.geolocation) {
         msg.style.color = "red";
         msg.innerHTML = "❌ متصفح هاتفك لا يدعم تحديد الموقع الجغرافي.";
-        successContainer.style.display = "none";
         return;
     }
 
     msg.style.color = "blue";
-    msg.innerHTML = "⏳ جاري تحديد موقعك بدقة، يرجى الانتظار...";
-    successContainer.style.display = "none";
+    msg.innerHTML = "⏳ جاري تحديد موقعك الجغرافي والتحقق من النطاق...";
 
     navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -261,35 +203,46 @@ function verifyLocation() {
             const distance = calculateDistance(CLASS_LAT, CLASS_LON, lat, lon);
 
             if (distance <= ALLOWED_RADIUS) {
-                msg.style.color = "green";
-                msg.innerHTML = "✅ تم التأكد من موقعك الجغرافي";
-                
-                const currentUrl = window.parent.location.href.split('?')[0];
-                const targetUrl = currentUrl + "?action=save" +
-                                  "&name=" + encodeURIComponent(name) +
-                                  "&id=" + encodeURIComponent(id) +
-                                  "&course=" + encodeURIComponent(course) +
-                                  "&section=" + encodeURIComponent(section) +
-                                  "&year=" + encodeURIComponent(year) +
-                                  "&track=" + encodeURIComponent(track) +
-                                  "&loc=" + encodeURIComponent(loc) +
-                                  "&lat=" + lat +
-                                  "&lon=" + lon +
-                                  "&dist=" + Math.round(distance);
-                
-                document.getElementById("submit_link").href = targetUrl;
-                successContainer.style.display = "block";
+                msg.style.color = "blue";
+                msg.innerHTML = "⏳ تم التحقق من الموقع، جاري إرسال وتسجيل الحضور...";
+
+                const data = {
+                    name: name,
+                    id: id,
+                    course: course,
+                    section: section,
+                    year: year,
+                    track: (year === "الفرقة الرابعة") ? track : "غير مخصص",
+                    loc: loc,
+                    lat: lat,
+                    lon: lon,
+                    dist: Math.round(distance)
+                };
+
+                // إرسال البيانات باستخدام Fetch API مباشرة إلى Google Sheets Web App
+                fetch(SCRIPT_URL, {
+                    method: "POST",
+                    mode: "no-cors", // لتجنب مشاكل الـ CORS في قوقل سكريبت
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                }).then(() => {
+                    msg.style.color = "green";
+                    msg.innerHTML = "✅ تم تسجيل حضورك بنجاح وحفظه في جدول البيانات!";
+                }).catch((error) => {
+                    msg.style.color = "red";
+                    msg.innerHTML = "❌ حدث خطأ أثناء الاتصال بالخادم، يرجى المحاولة مرة أخرى.";
+                });
 
             } else {
                 msg.style.color = "red";
-                msg.innerHTML = "❌ عذراً، أنت خارج النطاق المسموح للقاعة!";
-                successContainer.style.display = "none";
+                msg.innerHTML = "❌ عذراً، أنت خارج النطاق المسموح للقاعة (المسافة: " + Math.round(distance) + " متر)!";
             }
         },
         (error) => {
             msg.style.color = "red";
             msg.innerHTML = "❌ فشل تحديد الموقع. تأكد من تفعيل الـ GPS والسماح للمتصفح بالوصول لموقعك.";
-            successContainer.style.display = "none";
         },
         { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
     );
@@ -299,6 +252,7 @@ function verifyLocation() {
     .replace("__LAT__", str(CLASS_LAT))
     .replace("__LON__", str(CLASS_LON))
     .replace("__RADIUS__", str(ALLOWED_RADIUS_METERS))
+    .replace("__URL__", GOOGLE_SCRIPT_URL)
 )
 
-components.html(form_html, height=720)
+components.html(form_html, height=650)
