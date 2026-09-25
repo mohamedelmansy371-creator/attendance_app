@@ -10,7 +10,7 @@ st.set_page_config(page_title="تسجيل الحضور الجامعي الذكي
 
 st.title("📌 نظام تسجيل الحضور المقيد جغرافياً")
 st.write(
-    "يرجى إدخال البيانات المطلوبة بدقة، ثم الضغط على زر التحقق من الموقع وتسجيل الحضور."
+    "يرجى إدخال البيانات المطلوبة، ثم الضغط على زر التحقق من الموقع."
 )
 
 # --- إحداثيات قاعة المحاضرات ---
@@ -42,7 +42,7 @@ def init_excel():
 
 init_excel()
 
-# معالجة استقبال البيانات المرسلة
+# معالجة حفظ البيانات عند ضغط زر التأكيد النهائي
 query_params = st.query_params
 if "action" in query_params and query_params["action"] == "save":
   s_name = query_params.get("name", "")
@@ -139,9 +139,15 @@ form_html = (
         </select>
     </div>
 
-    <button onclick="verifyAndRegister()" style="background-color: #ff4b4b; color: white; padding: 14px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%;">📍 تحقق من الموقع وسجل الحضور</button>
+    <button onclick="verifyLocation()" style="background-color: #ff4b4b; color: white; padding: 14px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%;">📍 تحقق من الموقع الجغرافي</button>
     
     <p id="msg" style="margin-top: 15px; font-weight: bold; text-align: center; font-size: 15px;"></p>
+    
+    <!-- زر الإرسال يظهر فقط بعد اجتياز فحص الـ GPS بنجاح -->
+    <div id="success_container" style="display: none; margin-top: 15px; text-align: center;">
+        <p style="color: green; font-weight: bold; margin-bottom: 8px;">✅ تم التحقق من تواجدك داخل القاعة بنجاح!</p>
+        <a id="submit_link" href="#" style="display: block; background-color: #28a745; color: white; padding: 14px 20px; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">🚀 اضغط هنا لتأكيد وتسجيل الحضور نهائياً</a>
+    </div>
 </div>
 
 <script>
@@ -171,7 +177,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     return R * c;
 }
 
-function verifyAndRegister() {
+function verifyLocation() {
     const name = document.getElementById("s_name").value.trim();
     const id = document.getElementById("s_id").value.trim();
     const course = document.getElementById("s_course").value.trim();
@@ -179,33 +185,39 @@ function verifyAndRegister() {
     const track = document.getElementById("s_track").value;
     const loc = document.getElementById("s_loc").value;
     const msg = document.getElementById("msg");
+    const successContainer = document.getElementById("success_container");
 
     if (!name || !id || !course || !year || !loc) {
         msg.style.color = "red";
-        msg.innerHTML = "❌ الرجاء استيفاء جميع الحقول واختيار المكان والفرقة!";
+        msg.innerHTML = "❌ يرجى استيفاء جميع الحقول المطلوبة واختيار المكان والفرقة!";
+        successContainer.style.display = "none";
         return;
     }
 
     if (year === "الفرقة الرابعة" && !track) {
         msg.style.color = "red";
         msg.innerHTML = "❌ يرجى اختيار التوجه الخاص بالفرقة الرابعة!";
+        successContainer.style.display = "none";
         return;
     }
 
     if (id.length !== 8 || isNaN(id)) {
         msg.style.color = "red";
         msg.innerHTML = "❌ خطأ: يجب أن يكون كود الطالب مكوناً من 8 أرقام بالضبط!";
+        successContainer.style.display = "none";
         return;
     }
 
     if (!navigator.geolocation) {
         msg.style.color = "red";
         msg.innerHTML = "❌ متصفح هاتفك لا يدعم تحديد الموقع الجغرافي.";
+        successContainer.style.display = "none";
         return;
     }
 
     msg.style.color = "blue";
-    msg.innerHTML = "⏳ يرجى السماح للمتصفح بالوصول للموقع (GPS)...";
+    msg.innerHTML = "⏳ جاري تحديد موقعك بدقة، يرجى الانتظار...";
+    successContainer.style.display = "none";
 
     navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -215,9 +227,9 @@ function verifyAndRegister() {
 
             if (distance <= ALLOWED_RADIUS) {
                 msg.style.color = "green";
-                msg.innerHTML = "🎉 تم التحقق بنجاح! جاري حفظ الحضور...";
+                msg.innerHTML = "🎉 مطابقة صحيحة! المسافة عن القاعة: " + Math.round(distance) + " متر.";
                 
-                // استخدام parent.window لتحديث الصفحة الرئيسية لتجاوز قيود الـ iframe في Streamlit
+                // تجهيز رابط التأكيد النهائي
                 const currentUrl = window.parent.location.href.split('?')[0];
                 const targetUrl = currentUrl + "?action=save" +
                                   "&name=" + encodeURIComponent(name) +
@@ -230,24 +242,21 @@ function verifyAndRegister() {
                                   "&lon=" + lon +
                                   "&dist=" + Math.round(distance);
                 
-                setTimeout(() => {
-                    window.parent.location.href = targetUrl;
-                }, 800);
+                document.getElementById("submit_link").href = targetUrl;
+                successContainer.style.display = "block";
 
             } else {
                 msg.style.color = "red";
-                msg.innerHTML = "❌ أنت خارج النطاق المسموح! (المسافة: " + Math.round(distance) + " م والمسموح 100م).";
+                msg.innerHTML = "❌ عذراً، أنت خارج النطاق المسموح! (المسافة: " + Math.round(distance) + " متر والمسموح 100 متر).";
+                successContainer.style.display = "none";
             }
         },
         (error) => {
             msg.style.color = "red";
-            if (error.code === error.PERMISSION_DENIED) {
-                msg.innerHTML = "❌ تم رفض إذن الوصول للموقع. يرجى تفعيل الـ GPS والسماح للمتصفح من إعدادات الهاتف.";
-            } else {
-                msg.innerHTML = "❌ تعذر تحديد الموقع. تأكد من تشغيل GPS وإعادة المحاولة.";
-            }
+            msg.innerHTML = "❌ فشل تحديد الموقع. تأكد من تفعيل الـ GPS والسماح للمتصفح بالوصول لموقعك.";
+            successContainer.style.display = "none";
         },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
     );
 }
 </script>
@@ -257,7 +266,7 @@ function verifyAndRegister() {
     .replace("__RADIUS__", str(ALLOWED_RADIUS_METERS))
 )
 
-components.html(form_html, height=580)
+components.html(form_html, height=640)
 
 # --- لوحة تحكم المحاضر ---
 st.markdown("---")
