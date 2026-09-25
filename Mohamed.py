@@ -1,6 +1,7 @@
 from datetime import datetime
 import math
 import os
+import urllib.parse
 import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
@@ -42,12 +43,9 @@ def init_excel():
 
 init_excel()
 
-# معالجة حفظ البيانات عند استقبالها عبر الـ query_params بشكل مدعوم للغة العربية
+# معالجة حفظ البيانات عند استقبالها عبر الـ query_params
 query_params = st.query_params
 if "action" in query_params and query_params["action"] == "save":
-  # استخدام decode للتعامل السليم مع الحروف العربية والمسافات المرسلة من الابتكار البرمجي
-  import urllib.parse
-
   s_name = urllib.parse.unquote(query_params.get("name", ""))
   s_id = query_params.get("id", "")
   s_course = urllib.parse.unquote(query_params.get("course", ""))
@@ -233,7 +231,6 @@ function verifyLocation() {
                 msg.style.color = "green";
                 msg.innerHTML = "🎉 مطابقة صحيحة! المسافة عن القاعة: " + Math.round(distance) + " متر.";
                 
-                // استخدام encodeURIComponent للتأكد من نقل الحروف العربية بالكامل ودون فقدان
                 const currentUrl = window.parent.location.href.split('?')[0];
                 const targetUrl = currentUrl + "?action=save" +
                                   "&name=" + encodeURIComponent(name) +
@@ -271,24 +268,3 @@ function verifyLocation() {
 )
 
 components.html(form_html, height=640)
-
-# --- لوحة تحكم المحاضر ---
-st.markdown("---")
-st.subheader("👨‍🏫 لوحة تحكم المحاضر (كشف الحضور)")
-
-if os.path.exists(EXCEL_FILE):
-  df_view = pd.read_excel(EXCEL_FILE)
-  st.metric(label="إجمالي الطلاب المسجلين حتى الآن", value=len(df_view))
-  st.dataframe(df_view, use_container_width=True)
-
-  with open(EXCEL_FILE, "rb") as f:
-    st.download_button(
-        label="📥 تحميل كشف الحضور (Excel)",
-        data=f,
-        file_name="Attendance_Report.xlsx",
-        mime=(
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        ),
-    )
-else:
-  st.info("لا توجد سجلات حضور حتى الآن.")
