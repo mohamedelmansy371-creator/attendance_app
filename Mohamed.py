@@ -16,7 +16,7 @@ CLASS_LAT = 30.718881  # خط العرض للقاعة
 CLASS_LON = 31.244633  # خط الطول للقاعة
 ALLOWED_RADIUS_METERS = 100  # مسافة السماح
 
-# رابط نموذج جوجل الخاص بك والمعلمات المستخرجة منه
+# معرف نموذج جوجل الخاص بك
 FORM_ID = "1FAIpQLSdarNAh6jqY8f5zPzpN1auH_VHXFhbGhLsNWPwWAhx4TOZp5g"
 
 # واجهة المدخلات وزر الجي بي إس المدمج
@@ -40,7 +40,7 @@ form_html = (
     <!-- زر يظهر فقط بعد اجتياز التحقق الجغرافي -->
     <div id="success_container" style="display: none; margin-top: 20px; text-align: center;">
         <p style="color: green; font-weight: bold;">✅ تم التحقق من تواجدك داخل القاعة بنجاح!</p>
-        <a id="submit_link" href="#" target="_blank" style="display: inline-block; background-color: #28a745; color: white; padding: 15px 25px; text-decoration: none; border-radius: 8px; font-size: 18px; font-weight: bold; width: 100%; box-sizing: border-box;">🚀 اضغط هنا لتأكيد حفظ الحضور نهائياً</a>
+        <a id="submit_link" href="#" target="_blank" style="display: inline-block; background-color: #28a745; color: white; padding: 15px 25px; text-decoration: none; border-radius: 8px; font-size: 18px; font-weight: bold; width: 100%; box-sizing: border-box;">🚀 اضغط هنا لتسجيل حضورك نهائياً</a>
     </div>
 </div>
 
@@ -102,9 +102,9 @@ function verifyAndRegister() {
                 msg.style.color = "green";
                 msg.innerHTML = "🎉 مطابقة صحيحة! المسافة عن القاعة: " + Math.round(distance) + " متر.";
                 
-                // بناء رابط النموذج مع تعبئة الحقول تلقائياً
-                // (ملاحظة: سيتم توجيه الطالب للرابط مع ملء البيانات وجاهزية الإرسال)
-                const formUrl = "https://docs.google.com/forms/d/e/" + FORM_ID + "/viewform?usp=pp_url&entry.111111111=" + encodeURIComponent(name) + "&entry.222222222=" + encodeURIComponent(id);
+                // استخدام رابط الإرسال المباشر (formResponse) مع إضافة علامة الإرسال التلقائي submit=SUBMIT
+                // الحقل الأول (entry.2005620554) للأسماء، والحقل الثاني (entry.1045781291) للأكواد بناءً على ترتيب النموذج الخاص بك
+                const formUrl = "https://docs.google.com/forms/d/e/" + FORM_ID + "/formResponse?entry.2005620554=" + encodeURIComponent(name) + "&entry.1045781291=" + encodeURIComponent(id) + "&submit=SUBMIT";
                 
                 document.getElementById("submit_link").href = formUrl;
                 successContainer.style.display = "block";
