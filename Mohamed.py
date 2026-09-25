@@ -1,4 +1,5 @@
 import math
+import os
 from datetime import datetime
 import pandas as pd
 import streamlit as st
@@ -9,7 +10,7 @@ st.set_page_config(page_title="تسجيل الحضور الجامعي الذكي
 
 st.title("📌 نظام تسجيل الحضور المقيد جغرافياً")
 st.write(
-    "يرجى إدخال البيانات المطلوبة بدقة، ثم الضغط على زر التحقق من الموقع لتسجيل"
+    "يرجى إدخال البيانات المطلوبة بدقة، ثم الضغط على زر التحقق من الموقع وتسجيل"
     " الحضور."
 )
 
@@ -205,25 +206,34 @@ function verifyAndSubmit() {
                 msg.style.color = "blue";
                 msg.innerHTML = "⏳ تم التحقق من الموقع، جاري إرسال وتسجيل الحضور...";
 
-                // بناء رابط الإرسال المباشر (GET Request) متضمنًا كافة البيانات
-                const targetUrl = SCRIPT_URL + 
-                                  "?name=" + encodeURIComponent(name) +
-                                  "&id=" + encodeURIComponent(id) +
-                                  "&course=" + encodeURIComponent(course) +
-                                  "&section=" + encodeURIComponent(section) +
-                                  "&year=" + encodeURIComponent(year) +
-                                  "&track=" + encodeURIComponent((year === "الفرقة الرابعة") ? track : "غير مخصص") +
-                                  "&loc=" + encodeURIComponent(loc) +
-                                  "&lat=" + lat +
-                                  "&lon=" + lon +
-                                  "&dist=" + Math.round(distance);
+                const data = {
+                    name: name,
+                    id: id,
+                    course: course,
+                    section: section,
+                    year: year,
+                    track: (year === "الفرقة الرابعة") ? track : "غير مخصص",
+                    loc: loc,
+                    lat: lat,
+                    lon: lon,
+                    dist: Math.round(distance)
+                };
 
-                // إرسال البيانات بخفية تامة باستخدام Image object لتجنب مشاكل الـ CORS وتحقيق استجابة فورية
-                const img = new Image();
-                img.src = targetUrl;
-                
-                msg.style.color = "green";
-                msg.innerHTML = "✅ تم تسجيل حضورك بنجاح وحفظ الوقت والبيانات في جدول البيانات!";
+                // إرسال البيانات باستخدام Fetch API مباشرة إلى Google Sheets Web App
+                fetch(SCRIPT_URL, {
+                    method: "POST",
+                    mode: "no-cors", // لتجنب مشاكل الـ CORS في قوقل سكريبت
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                }).then(() => {
+                    msg.style.color = "green";
+                    msg.innerHTML = "✅ تم تسجيل حضورك بنجاح وحفظه في جدول البيانات!";
+                }).catch((error) => {
+                    msg.style.color = "red";
+                    msg.innerHTML = "❌ حدث خطأ أثناء الاتصال بالخادم، يرجى المحاولة مرة أخرى.";
+                });
 
             } else {
                 msg.style.color = "red";
