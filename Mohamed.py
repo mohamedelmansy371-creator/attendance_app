@@ -1,5 +1,4 @@
 import math
-import os
 from datetime import datetime
 import pandas as pd
 import streamlit as st
@@ -10,7 +9,7 @@ st.set_page_config(page_title="تسجيل الحضور الجامعي الذكي
 
 st.title("📌 نظام تسجيل الحضور المقيد جغرافياً")
 st.write(
-    "يرجى إدخال البيانات المطلوبة بدقة، ثم الضغط على زر التحقق من الموقع وتسجيل"
+    "يرجى إدخال البيانات المطلوبة بدقة، ثم الضغط على زر التحقق من الموقع لتسجيل"
     " الحضور."
 )
 
@@ -19,8 +18,8 @@ CLASS_LAT = 30.718881
 CLASS_LON = 31.244633
 ALLOWED_RADIUS_METERS = 100
 
-# رابط الـ Web App الخاص بملف Google Sheets الخاص بك
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxvYZXJaC6rgpchmf2jN8TgzzrbukHmc-BiTGVtGBa2XzcJvwVo5oJGcN5LiEgX9j3v2A/exec"
+# رابط الـ Web App الجديد الخاص بك
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbKej_CzJ59waqv_-gbKHjNImyczpFtdgQ6f_ouJ1A5mUhNB6veETkcD1ANewYF81KiA/exec"
 
 form_html = (
     """
@@ -206,34 +205,25 @@ function verifyAndSubmit() {
                 msg.style.color = "blue";
                 msg.innerHTML = "⏳ تم التحقق من الموقع، جاري إرسال وتسجيل الحضور...";
 
-                const data = {
-                    name: name,
-                    id: id,
-                    course: course,
-                    section: section,
-                    year: year,
-                    track: (year === "الفرقة الرابعة") ? track : "غير مخصص",
-                    loc: loc,
-                    lat: lat,
-                    lon: lon,
-                    dist: Math.round(distance)
-                };
+                // بناء رابط الـ GET المباشر متضمنًا كافة البيانات
+                const targetUrl = SCRIPT_URL + 
+                                  "?name=" + encodeURIComponent(name) +
+                                  "&id=" + encodeURIComponent(id) +
+                                  "&course=" + encodeURIComponent(course) +
+                                  "&section=" + encodeURIComponent(section) +
+                                  "&year=" + encodeURIComponent(year) +
+                                  "&track=" + encodeURIComponent((year === "الفرقة الرابعة") ? track : "غير مخصص") +
+                                  "&loc=" + encodeURIComponent(loc) +
+                                  "&lat=" + lat +
+                                  "&lon=" + lon +
+                                  "&dist=" + Math.round(distance);
 
-                // إرسال البيانات باستخدام Fetch API مباشرة إلى Google Sheets Web App
-                fetch(SCRIPT_URL, {
-                    method: "POST",
-                    mode: "no-cors", // لتجنب مشاكل الـ CORS في قوقل سكريبت
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify(data)
-                }).then(() => {
-                    msg.style.color = "green";
-                    msg.innerHTML = "✅ تم تسجيل حضورك بنجاح وحفظه في جدول البيانات!";
-                }).catch((error) => {
-                    msg.style.color = "red";
-                    msg.innerHTML = "❌ حدث خطأ أثناء الاتصال بالخادم، يرجى المحاولة مرة أخرى.";
-                });
+                // إرسال البيانات باستخدام عنصر Image لضمان التنفيذ الفوري وتفادي حظر متصفحات الهواتف للطلبات
+                const img = new Image();
+                img.src = targetUrl;
+                
+                msg.style.color = "green";
+                msg.innerHTML = "✅ تم تسجيل حضورك بنجاح وحفظ الوقت والبيانات في جدول البيانات!";
 
             } else {
                 msg.style.color = "red";
