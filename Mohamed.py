@@ -1,4 +1,7 @@
+from datetime import datetime
 import math
+import os
+import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 
@@ -15,11 +18,63 @@ CLASS_LAT = 30.718881
 CLASS_LON = 31.244633
 ALLOWED_RADIUS_METERS = 100
 
-# معرف نموذج جوجل وحقول الـ entry الخاصة بنموذجك
-FORM_ID = "1FAIpQLSdarNAh6jqY8f5zPzpN1auH_VHXFhbGhLsNWPwWAhx4TOZp5g"
-ENTRY_NAME = "entry.2005620554"  # حقل اسم الطالب
-ENTRY_ID = "entry.1045781291"  # حقل كود الطالب
+EXCEL_FILE = "attendance_log.xlsx"
 
+
+# دالة لتهيئة ملف الإكسيل إذا لم يكن موجوداً
+def init_excel():
+  if not os.path.exists(EXCEL_FILE):
+    df = pd.DataFrame(
+        columns=[
+            "اسم الطالب",
+            "كود الطالب",
+            "وقت الحضور",
+            "خط العرض",
+            "خط الطول",
+            "المسافة (متر)",
+        ]
+    )
+    df.to_excel(EXCEL_FILE, index=False)
+
+
+init_excel()
+
+# معالجة استقبال البيانات المرسلة من JavaScript المحتوي على الـ GPS
+query_params = st.query_params
+if "action" in query_params and query_params["action"] == "save":
+  s_name = query_params.get("name", "")
+  s_id = query_params.get("id", "")
+  lat = query_params.get("lat", "")
+  lon = query_params.get("lon", "")
+  dist = query_params.get("dist", "")
+
+  if s_name and s_id:
+    # قراءة الملف الحالي
+    df = pd.read_excel(EXCEL_FILE)
+
+    # التحقق مما إذا كان الطالب قد سجل مسبقاً
+    if str(s_id) in df["كود الطالب"].astype(str).values:
+      st.warning(
+          f"⚠️ الطالب ذو الكود ({s_id}) مسجل مسبقاً في كشف الحضور بالفعل!"
+      )
+    else:
+      # إضافة البيانات الجديدة
+      now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+      new_row = {
+          "اسم الطالب": s_name,
+          "كود الطالب": str(s_id),
+          "وقت الحضور": now_str,
+          "خط العرض": lat,
+          "خط الطول": lon,
+          "المسافة (متر)": dist,
+      }
+      df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+      df.to_excel(EXCEL_FILE, index=False)
+      st.success(
+          f"✅ تم تسجيل حضور الطالب: **{s_name}** (الكود: {s_id}) بنجاح في الكشف!"
+      )
+
+# واجهة إدخال البيانات والتحقق من الجغرافيا عبر JavaScript
 form_html = (
     """
 <div style="font-family: Tahoma, sans-serif; padding: 15px; direction: rtl; background-color: #f9f9f9; border-radius: 10px; border: 1px solid #ddd;">
@@ -36,21 +91,12 @@ form_html = (
     <button onclick="verifyAndRegister()" style="background-color: #ff4b4b; color: white; padding: 14px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%;">📍 تحقق من الموقع وسجل الحضور</button>
     
     <p id="msg" style="margin-top: 15px; font-weight: bold; text-align: center; font-size: 15px;"></p>
-    
-    <!-- زر إرسال الحضور المؤكد يظهر فقط بعد اجتياز فحص الـ GPS -->
-    <div id="success_container" style="display: none; margin-top: 20px; text-align: center;">
-        <p style="color: green; font-weight: bold; margin-bottom: 10px; font-size: 16px;">✅ تم التحقق من تواجدك داخل القاعة بنجاح!</p>
-        <a id="submit_link" href="#" target="_blank" style="display: inline-block; background-color: #28a745; color: white; padding: 15px 25px; text-decoration: none; border-radius: 8px; font-size: 18px; font-weight: bold; width: 100%; box-sizing: border-box; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">🚀 اضغط هنا لاعتماد وتسجيل حضورك نهائياً</a>
-    </div>
 </div>
 
 <script>
 const CLASS_LAT = __LAT__;
 const CLASS_LON = __LON__;
 const ALLOWED_RADIUS = __RADIUS__;
-const FORM_ID = "__FORM_ID__";
-const ENTRY_NAME = "__ENTRY_NAME__";
-const ENTRY_ID = "__ENTRY_ID__";
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371000;
@@ -67,32 +113,27 @@ function verifyAndRegister() {
     const name = document.getElementById("s_name").value.trim();
     const id = document.getElementById("s_id").value.trim();
     const msg = document.getElementById("msg");
-    const successContainer = document.getElementById("success_container");
 
     if (!name || !id) {
         msg.style.color = "red";
         msg.innerHTML = "❌ الرجاء إدخال الاسم وكود الطالب أولاً!";
-        successContainer.style.display = "none";
         return;
     }
 
     if (id.length !== 8 || isNaN(id)) {
         msg.style.color = "red";
         msg.innerHTML = "❌ خطأ: يجب أن يكون كود الطالب مكوناً من 8 أرقام بالضبط!";
-        successContainer.style.display = "none";
         return;
     }
 
     if (!navigator.geolocation) {
         msg.style.color = "red";
         msg.innerHTML = "❌ متصفح هاتفك لا يدعم تحديد الموقع الجغرافي.";
-        successContainer.style.display = "none";
         return;
     }
 
     msg.style.color = "blue";
     msg.innerHTML = "⏳ جاري تحديد موقعك بدقة، يرجى الانتظار...";
-    successContainer.style.display = "none";
 
     navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -102,24 +143,24 @@ function verifyAndRegister() {
 
             if (distance <= ALLOWED_RADIUS) {
                 msg.style.color = "green";
-                msg.innerHTML = "🎉 مطابقة صحيحة! المسافة عن القاعة: " + Math.round(distance) + " متر.";
+                msg.innerHTML = "🎉 مطابقة صحيحة! جاري حفظ الحضور في الكشف...";
                 
-                // تجهيز رابط إرسال نموذج جوجل مع تمرير الاسم والكود تلقائياً
-                const formUrl = "https://docs.google.com/forms/d/e/" + FORM_ID + "/formResponse?" + ENTRY_NAME + "=" + encodeURIComponent(name) + "&" + ENTRY_ID + "=" + encodeURIComponent(id) + "&submit=SUBMIT";
+                // إعادة توجيه الصفحة لتمرير البيانات وبمحافظتها على الـ Streamlit state
+                const currentUrl = window.location.href.split('?')[0];
+                const targetUrl = currentUrl + "?action=save&name=" + encodeURIComponent(name) + "&id=" + encodeURIComponent(id) + "&lat=" + lat + "&lon=" + lon + "&dist=" + Math.round(distance);
                 
-                document.getElementById("submit_link").href = formUrl;
-                successContainer.style.display = "block";
+                setTimeout(() => {
+                    window.location.href = targetUrl;
+                }, 1000);
 
             } else {
                 msg.style.color = "red";
                 msg.innerHTML = "❌ عذراً، أنت خارج النطاق المسموح! (المسافة: " + Math.round(distance) + " متر والمسموح 100 متر).";
-                successContainer.style.display = "none";
             }
         },
         (error) => {
             msg.style.color = "red";
             msg.innerHTML = "❌ فشل تحديد الموقع. تأكد من تفعيل الـ GPS والسماح للمتصفح بالوصول لموقعك.";
-            successContainer.style.display = "none";
         },
         { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
     );
@@ -129,9 +170,28 @@ function verifyAndRegister() {
     .replace("__LAT__", str(CLASS_LAT))
     .replace("__LON__", str(CLASS_LON))
     .replace("__RADIUS__", str(ALLOWED_RADIUS_METERS))
-    .replace("__FORM_ID__", FORM_ID)
-    .replace("__ENTRY_NAME__", ENTRY_NAME)
-    .replace("__ENTRY_ID__", ENTRY_ID)
 )
 
-components.html(form_html, height=480)
+components.html(form_html, height=350)
+
+# --- قسم خاص للأستاذ (عرض وتحميل كشف الحضور) ---
+st.markdown("---")
+st.subheader("👨‍🏫 لوحة تحكم المحاضر (كشف الحضور)")
+
+if os.path.exists(EXCEL_FILE):
+  df_view = pd.read_excel(EXCEL_FILE)
+  st.metric(label="إجمالي الطلاب المسجلين حتى الآن", value=len(df_view))
+  st.dataframe(df_view, use_container_width=True)
+
+  # زر لتحميل الملف بصيغة Excel
+  with open(EXCEL_FILE, "rb") as f:
+    st.download_button(
+        label="📥 تحميل كشف الحضور (Excel)",
+        data=f,
+        file_name="Attendance_Report.xlsx",
+        mime=(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ),
+    )
+else:
+  st.info("لا توجد سجلات حضور حتى الآن.")
