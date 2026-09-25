@@ -10,7 +10,7 @@ st.set_page_config(page_title="تسجيل الحضور الجامعي الذكي
 
 st.title("📌 نظام تسجيل الحضور المقيد جغرافياً")
 st.write(
-    "يرجى إدخال البيانات المطلوبة، ثم الضغط على زر التحقق من الموقع."
+    "يرجى إدخال البيانات المطلوبة بدقة، ثم الضغط على زر التحقق من الموقع."
 )
 
 # --- إحداثيات قاعة المحاضرات ---
@@ -42,9 +42,9 @@ def init_excel():
 
 init_excel()
 
-# معالجة حفظ البيانات عند ضغط زر التأكيد النهائي
+# معالجة حفظ البيانات عند إرسالها من الجافاسكريبت عبر الـ query_params
 query_params = st.query_params
-if "action" in query_params and query_params["action"] == "save":
+if "save_data" in query_params:
   s_name = query_params.get("name", "")
   s_id = query_params.get("id", "")
   s_course = query_params.get("course", "")
@@ -82,6 +82,8 @@ if "action" in query_params and query_params["action"] == "save":
           f"✅ تم تسجيل حضور الطالب: **{s_name}** (الكود: {s_id}) للمادة **{s_course}**"
           f" بنجاح!"
       )
+      # مسح البارامترات لمنع التكرار عند التحديث
+      st.query_params.clear()
 
 form_html = (
     """
@@ -143,10 +145,10 @@ form_html = (
     
     <p id="msg" style="margin-top: 15px; font-weight: bold; text-align: center; font-size: 15px;"></p>
     
-    <!-- زر الإرسال يظهر فقط بعد اجتياز فحص الـ GPS بنجاح -->
+    <!-- زر الإرسال النهائي -->
     <div id="success_container" style="display: none; margin-top: 15px; text-align: center;">
         <p style="color: green; font-weight: bold; margin-bottom: 8px;">✅ تم التحقق من تواجدك داخل القاعة بنجاح!</p>
-        <a id="submit_link" href="#" style="display: block; background-color: #28a745; color: white; padding: 14px 20px; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">🚀 اضغط هنا لتأكيد وتسجيل الحضور نهائياً</a>
+        <button onclick="submitAttendance()" style="background-color: #28a745; color: white; padding: 14px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">🚀 اضغط هنا لتأكيد وتسجيل الحضور نهائياً</button>
     </div>
 </div>
 
@@ -154,6 +156,7 @@ form_html = (
 const CLASS_LAT = __LAT__;
 const CLASS_LON = __LON__;
 const ALLOWED_RADIUS = __RADIUS__;
+let verifiedData = {};
 
 function toggleTrack() {
     const year = document.getElementById("s_year").value;
@@ -229,20 +232,19 @@ function verifyLocation() {
                 msg.style.color = "green";
                 msg.innerHTML = "🎉 مطابقة صحيحة! المسافة عن القاعة: " + Math.round(distance) + " متر.";
                 
-                // تجهيز رابط التأكيد النهائي
-                const currentUrl = window.parent.location.href.split('?')[0];
-                const targetUrl = currentUrl + "?action=save" +
-                                  "&name=" + encodeURIComponent(name) +
-                                  "&id=" + encodeURIComponent(id) +
-                                  "&course=" + encodeURIComponent(course) +
-                                  "&year=" + encodeURIComponent(year) +
-                                  "&track=" + encodeURIComponent(track) +
-                                  "&loc=" + encodeURIComponent(loc) +
-                                  "&lat=" + lat +
-                                  "&lon=" + lon +
-                                  "&dist=" + Math.round(distance);
+                // تخزين البيانات مؤقتاً لإرسالها
+                verifiedData = {
+                    name: name,
+                    id: id,
+                    course: course,
+                    year: year,
+                    track: track,
+                    loc: loc,
+                    lat: lat,
+                    lon: lon,
+                    dist: Math.round(distance)
+                };
                 
-                document.getElementById("submit_link").href = targetUrl;
                 successContainer.style.display = "block";
 
             } else {
@@ -258,6 +260,24 @@ function verifyLocation() {
         },
         { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
     );
+}
+
+function submitAttendance() {
+    const baseUrl = window.parent.location.href.split('?')[0];
+    const params = new URLSearchParams({
+        save_data: "1",
+        name: verifiedData.name,
+        id: verifiedData.id,
+        course: verifiedData.course,
+        year: verifiedData.year,
+        track: verifiedData.track,
+        loc: verifiedData.loc,
+        lat: verifiedData.lat,
+        lon: verifiedData.lon,
+        dist: verifiedData.dist
+    });
+    
+    window.parent.location.href = baseUrl + "?" + params.toString();
 }
 </script>
 """
