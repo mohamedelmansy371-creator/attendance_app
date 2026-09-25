@@ -39,8 +39,8 @@ form_html = (
     
     <!-- زر يظهر فقط بعد اجتياز التحقق الجغرافي -->
     <div id="success_container" style="display: none; margin-top: 20px; text-align: center;">
-        <p style="color: green; font-weight: bold;">✅ تم التحقق من تواجدك داخل القاعة بنجاح!</p>
-        <a id="submit_link" href="#" target="_blank" style="display: inline-block; background-color: #28a745; color: white; padding: 15px 25px; text-decoration: none; border-radius: 8px; font-size: 18px; font-weight: bold; width: 100%; box-sizing: border-box;">🚀 اضغط هنا لتسجيل حضورك نهائياً</a>
+        <p style="color: green; font-weight: bold; font-size: 16px;">✅ تم التحقق من تواجدك داخل القاعة بنجاح!</p>
+        <a id="submit_link" href="#" target="_blank" style="display: inline-block; background-color: #28a745; color: white; padding: 15px 25px; text-decoration: none; border-radius: 8px; font-size: 18px; font-weight: bold; width: 100%; box-sizing: border-box;">🚀 اضغط هنا لفتح النموذج وتأكيد الحضور</a>
     </div>
 </div>
 
@@ -102,9 +102,8 @@ function verifyAndRegister() {
                 msg.style.color = "green";
                 msg.innerHTML = "🎉 مطابقة صحيحة! المسافة عن القاعة: " + Math.round(distance) + " متر.";
                 
-                // استخدام رابط الإرسال المباشر (formResponse) مع إضافة علامة الإرسال التلقائي submit=SUBMIT
-                // الحقل الأول (entry.2005620554) للأسماء، والحقل الثاني (entry.1045781291) للأكواد بناءً على ترتيب النموذج الخاص بك
-                const formUrl = "https://docs.google.com/forms/d/e/" + FORM_ID + "/formResponse?entry.2005620554=" + encodeURIComponent(name) + "&entry.1045781291=" + encodeURIComponent(id) + "&submit=SUBMIT";
+                // رابط النموذج مع تعبئة خانات الاسم وكود الطالب تلقائياً بالمعلمات الصحيحة للنموذج الخاص بك
+                const formUrl = "https://docs.google.com/forms/d/e/" + FORM_ID + "/viewform?usp=pp_url&entry.2005620554=" + encodeURIComponent(name) + "&entry.1045781291=" + encodeURIComponent(id);
                 
                 document.getElementById("submit_link").href = formUrl;
                 successContainer.style.display = "block";
