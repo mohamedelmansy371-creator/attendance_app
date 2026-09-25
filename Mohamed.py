@@ -13,7 +13,7 @@ st.write(
     "يرجى إدخال البيانات المطلوبة بدقة، ثم الضغط على زر التحقق من الموقع وتسجيل الحضور."
 )
 
-# --- إحداثيات قاعة المحاضرات (افتراضية - يمكنك تعديلها) ---
+# --- إحداثيات قاعة المحاضرات ---
 CLASS_LAT = 30.718881
 CLASS_LON = 31.244633
 ALLOWED_RADIUS_METERS = 100
@@ -21,7 +21,6 @@ ALLOWED_RADIUS_METERS = 100
 EXCEL_FILE = "attendance_log.xlsx"
 
 
-# دالة لتهيئة ملف الإكسيل بالأعمدة الجديدة
 def init_excel():
   if not os.path.exists(EXCEL_FILE):
     df = pd.DataFrame(
@@ -43,7 +42,7 @@ def init_excel():
 
 init_excel()
 
-# معالجة استقبال البيانات المرسلة من JavaScript بعد التحقق من الـ GPS
+# معالجة استقبال البيانات المرسلة
 query_params = st.query_params
 if "action" in query_params and query_params["action"] == "save":
   s_name = query_params.get("name", "")
@@ -59,7 +58,6 @@ if "action" in query_params and query_params["action"] == "save":
   if s_name and s_id:
     df = pd.read_excel(EXCEL_FILE)
 
-    # التحقق مما إذا كان الطالب قد سجل مسبقاً في نفس الملف
     if str(s_id) in df["كود الطالب"].astype(str).values:
       st.warning(
           f"⚠️ الطالب ذو الكود ({s_id}) مسجل مسبقاً في كشف الحضور بالفعل!"
@@ -85,7 +83,6 @@ if "action" in query_params and query_params["action"] == "save":
           f" بنجاح!"
       )
 
-# واجهة إدخال البيانات والتحقق الجغرافي عبر HTML/JS
 form_html = (
     """
 <div style="font-family: Tahoma, sans-serif; padding: 15px; direction: rtl; background-color: #f9f9f9; border-radius: 10px; border: 1px solid #ddd;">
@@ -185,7 +182,7 @@ function verifyAndRegister() {
 
     if (!name || !id || !course || !year || !loc) {
         msg.style.color = "red";
-        msg.innerHTML = "❌ الرجاء استيفاء جميع الحقول الأساسية واختيار المكان!";
+        msg.innerHTML = "❌ الرجاء استيفاء جميع الحقول واختيار المكان والفرقة!";
         return;
     }
 
@@ -208,7 +205,7 @@ function verifyAndRegister() {
     }
 
     msg.style.color = "blue";
-    msg.innerHTML = "⏳ جاري تحديد موقعك بدقة، يرجى الانتظار...";
+    msg.innerHTML = "⏳ يرجى السماح للمتصفح بالوصول للموقع (GPS)...";
 
     navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -218,9 +215,10 @@ function verifyAndRegister() {
 
             if (distance <= ALLOWED_RADIUS) {
                 msg.style.color = "green";
-                msg.innerHTML = "🎉 مطابقة صحيحة! جاري حفظ الحضور في الكشف...";
+                msg.innerHTML = "🎉 تم التحقق بنجاح! جاري حفظ الحضور...";
                 
-                const currentUrl = window.location.href.split('?')[0];
+                // استخدام parent.window لتحديث الصفحة الرئيسية لتجاوز قيود الـ iframe في Streamlit
+                const currentUrl = window.parent.location.href.split('?')[0];
                 const targetUrl = currentUrl + "?action=save" +
                                   "&name=" + encodeURIComponent(name) +
                                   "&id=" + encodeURIComponent(id) +
@@ -233,19 +231,23 @@ function verifyAndRegister() {
                                   "&dist=" + Math.round(distance);
                 
                 setTimeout(() => {
-                    window.location.href = targetUrl;
-                }, 1000);
+                    window.parent.location.href = targetUrl;
+                }, 800);
 
             } else {
                 msg.style.color = "red";
-                msg.innerHTML = "❌ عذراً، أنت خارج النطاق المسموح! (المسافة: " + Math.round(distance) + " متر والمسموح 100 متر).";
+                msg.innerHTML = "❌ أنت خارج النطاق المسموح! (المسافة: " + Math.round(distance) + " م والمسموح 100م).";
             }
         },
         (error) => {
             msg.style.color = "red";
-            msg.innerHTML = "❌ فشل تحديد الموقع. تأكد من تفعيل الـ GPS والسماح للمتصفح بالوصول لموقعك.";
+            if (error.code === error.PERMISSION_DENIED) {
+                msg.innerHTML = "❌ تم رفض إذن الوصول للموقع. يرجى تفعيل الـ GPS والسماح للمتصفح من إعدادات الهاتف.";
+            } else {
+                msg.innerHTML = "❌ تعذر تحديد الموقع. تأكد من تشغيل GPS وإعادة المحاولة.";
+            }
         },
-        { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
 }
 </script>
@@ -255,10 +257,9 @@ function verifyAndRegister() {
     .replace("__RADIUS__", str(ALLOWED_RADIUS_METERS))
 )
 
-# تعديل ارتفاع المكون ليتناسب مع الخانات الإضافية
 components.html(form_html, height=580)
 
-# --- لوحة تحكم المحاضر (عرض وتحميل كشف الحضور) ---
+# --- لوحة تحكم المحاضر ---
 st.markdown("---")
 st.subheader("👨‍🏫 لوحة تحكم المحاضر (كشف الحضور)")
 
@@ -267,7 +268,6 @@ if os.path.exists(EXCEL_FILE):
   st.metric(label="إجمالي الطلاب المسجلين حتى الآن", value=len(df_view))
   st.dataframe(df_view, use_container_width=True)
 
-  # زر لتحميل الملف بصيغة Excel
   with open(EXCEL_FILE, "rb") as f:
     st.download_button(
         label="📥 تحميل كشف الحضور (Excel)",
