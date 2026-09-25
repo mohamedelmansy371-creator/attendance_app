@@ -1,15 +1,16 @@
-from datetime import datetime
 import math
 import os
+from datetime import datetime
 import urllib.parse
 import pandas as pd
+import requests  # مكتبة إرسال البيانات للرابط
 import streamlit as st
 import streamlit.components.v1 as components
 
 # إعدادات صفحة التطبيق
 st.set_page_config(page_title="تسجيل الحضور الجامعي الذكي", page_icon="📍")
 
-st.title("📌 نظام تسجيل الحضور المقيد جغرافياً")
+st.title("نظام تسجيل الحضور الذكي لبرنامج الهندسة الزراعية")
 st.write(
     "يرجى إدخال البيانات المطلوبة، ثم الضغط على زر التحقق من الموقع."
 )
@@ -19,32 +20,10 @@ CLASS_LAT = 30.718881
 CLASS_LON = 31.244633
 ALLOWED_RADIUS_METERS = 100
 
-EXCEL_FILE = "attendance_log.xlsx"
+# رابط الـ Web App الخاص بملف Google Sheets الذي أنشأته
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxvYZXJaC6rgpchmf2jN8TgzzrbukHmc-BiTGVtGBa2XzcJvwVo5oJGcN5LiEgX9j3v2A/exec"
 
-
-def init_excel():
-  if not os.path.exists(EXCEL_FILE):
-    df = pd.DataFrame(
-        columns=[
-            "اسم الطالب",
-            "كود الطالب",
-            "اسم المادة",
-            "الشق الدراسي",
-            "الفرقة",
-            "التوجه",
-            "المكان",
-            "وقت الحضور",
-            "خط العرض",
-            "خط الطول",
-            "المسافة (متر)",
-        ]
-    )
-    df.to_excel(EXCEL_FILE, index=False)
-
-
-init_excel()
-
-# معالجة حفظ البيانات عند استقبالها عبر الـ query_params
+# معالجة حفظ البيانات عند استقبالها عبر الـ query_params وإرسالها لـ Google Sheets
 query_params = st.query_params
 if "action" in query_params and query_params["action"] == "save":
   s_name = urllib.parse.unquote(query_params.get("name", ""))
@@ -59,34 +38,37 @@ if "action" in query_params and query_params["action"] == "save":
   dist = query_params.get("dist", "")
 
   if s_name and s_id:
-    df = pd.read_excel(EXCEL_FILE)
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # تجهيز البيانات للإرسال بصيغة JSON
+    payload = {
+        "name": s_name,
+        "id": str(s_id),
+        "course": s_course,
+        "section": s_section,
+        "year": s_year,
+        "track": s_track if s_year == "الفرقة الرابعة" else "غير مخصص",
+        "loc": s_loc,
+        "time": now_str,
+        "lat": lat,
+        "lon": lon,
+        "dist": dist,
+    }
 
-    if str(s_id) in df["كود الطالب"].astype(str).values:
-      st.warning(
-          f"⚠️ الطالب ذو الكود ({s_id}) مسجل مسبقاً في كشف الحضور بالفعل!"
-      )
-    else:
-      now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-      new_row = {
-          "اسم الطالب": s_name,
-          "كود الطالب": str(s_id),
-          "اسم المادة": s_course,
-          "الشق الدراسي": s_section,
-          "الفرقة": s_year,
-          "التوجه": s_track if s_year == "الفرقة الرابعة" else "غير مخصص",
-          "المكان": s_loc,
-          "وقت الحضور": now_str,
-          "خط العرض": lat,
-          "خط الطول": lon,
-          "المسافة (متر)": dist,
-      }
-      df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-      df.to_excel(EXCEL_FILE, index=False)
-      st.success(
-          f"✅ تم تسجيل حضور الطالب: **{s_name}** (الكود: {s_id}) للمادة **{s_course}**"
-          f" ({s_section}) بنجاح!"
-      )
-      st.query_params.clear()
+    try:
+      # إرسال البيانات مباشرة إلى ملف Google Sheets عبر رابط الـ Web App
+      response = requests.post(GOOGLE_SCRIPT_URL, json=payload)
+      if response.status_code == 200:
+        st.success(
+            f"✅ تم تسجيل حضور الطالب: **{s_name}** (الكود: {s_id}) للمادة **{s_course}**"
+            f" ({s_section}) وحفظه في جدول جوجل شيت بنجاح!"
+        )
+      else:
+        st.error("⚠️ حدث خطأ أثناء الاتصال بملف السيرفر، يرجى المحاولة مرة أخرى.")
+    except Exception as e:
+      st.error(f"❌ خطأ في الشبكة: {e}")
+
+    st.query_params.clear()
 
 form_html = (
     """
@@ -185,7 +167,6 @@ form_html = (
     
     <p id="msg" style="margin-top: 15px; font-weight: bold; text-align: center; font-size: 15px;"></p>
     
-    <!-- زر الإرسال يظهر فقط بعد اجتياز فحص الـ GPS بنجاح -->
     <div id="success_container" style="display: none; margin-top: 15px; text-align: center;">
         <p style="color: green; font-weight: bold; margin-bottom: 8px;">✅ تم التأكد من موقعك الجغرافي</p>
         <a id="submit_link" href="#" style="display: block; background-color: #28a745; color: white; padding: 14px 20px; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">🚀 اضغط هنا لتأكيد وتسجيل الحضور نهائياً</a>
