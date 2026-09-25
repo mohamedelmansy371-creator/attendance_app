@@ -10,10 +10,10 @@ st.set_page_config(page_title="تسجيل الحضور الجامعي الذكي
 
 st.title("📌 نظام تسجيل الحضور المقيد جغرافياً")
 st.write(
-    "يرجى إدخال اسمك وكود الطالب (8 أرقام)، ثم الضغط على زر التحقق والتسجيل."
+    "يرجى إدخال البيانات المطلوبة بدقة، ثم الضغط على زر التحقق من الموقع وتسجيل الحضور."
 )
 
-# --- إحداثيات قاعة المحاضرات ---
+# --- إحداثيات قاعة المحاضرات (افتراضية - يمكنك تعديلها) ---
 CLASS_LAT = 30.718881
 CLASS_LON = 31.244633
 ALLOWED_RADIUS_METERS = 100
@@ -21,13 +21,17 @@ ALLOWED_RADIUS_METERS = 100
 EXCEL_FILE = "attendance_log.xlsx"
 
 
-# دالة لتهيئة ملف الإكسيل إذا لم يكن موجوداً
+# دالة لتهيئة ملف الإكسيل بالأعمدة الجديدة
 def init_excel():
   if not os.path.exists(EXCEL_FILE):
     df = pd.DataFrame(
         columns=[
             "اسم الطالب",
             "كود الطالب",
+            "اسم المادة",
+            "الفرقة",
+            "التوجه",
+            "المكان",
             "وقت الحضور",
             "خط العرض",
             "خط الطول",
@@ -39,30 +43,36 @@ def init_excel():
 
 init_excel()
 
-# معالجة استقبال البيانات المرسلة من JavaScript المحتوي على الـ GPS
+# معالجة استقبال البيانات المرسلة من JavaScript بعد التحقق من الـ GPS
 query_params = st.query_params
 if "action" in query_params and query_params["action"] == "save":
   s_name = query_params.get("name", "")
   s_id = query_params.get("id", "")
+  s_course = query_params.get("course", "")
+  s_year = query_params.get("year", "")
+  s_track = query_params.get("track", "غير متوفر")
+  s_loc = query_params.get("loc", "")
   lat = query_params.get("lat", "")
   lon = query_params.get("lon", "")
   dist = query_params.get("dist", "")
 
   if s_name and s_id:
-    # قراءة الملف الحالي
     df = pd.read_excel(EXCEL_FILE)
 
-    # التحقق مما إذا كان الطالب قد سجل مسبقاً
+    # التحقق مما إذا كان الطالب قد سجل مسبقاً في نفس الملف
     if str(s_id) in df["كود الطالب"].astype(str).values:
       st.warning(
           f"⚠️ الطالب ذو الكود ({s_id}) مسجل مسبقاً في كشف الحضور بالفعل!"
       )
     else:
-      # إضافة البيانات الجديدة
       now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
       new_row = {
           "اسم الطالب": s_name,
           "كود الطالب": str(s_id),
+          "اسم المادة": s_course,
+          "الفرقة": s_year,
+          "التوجه": s_track if s_year == "الفرقة الرابعة" else "غير مخصص",
+          "المكان": s_loc,
           "وقت الحضور": now_str,
           "خط العرض": lat,
           "خط الطول": lon,
@@ -71,21 +81,65 @@ if "action" in query_params and query_params["action"] == "save":
       df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
       df.to_excel(EXCEL_FILE, index=False)
       st.success(
-          f"✅ تم تسجيل حضور الطالب: **{s_name}** (الكود: {s_id}) بنجاح في الكشف!"
+          f"✅ تم تسجيل حضور الطالب: **{s_name}** (الكود: {s_id}) للمادة **{s_course}**"
+          f" بنجاح!"
       )
 
-# واجهة إدخال البيانات والتحقق من الجغرافيا عبر JavaScript
+# واجهة إدخال البيانات والتحقق الجغرافي عبر HTML/JS
 form_html = (
     """
 <div style="font-family: Tahoma, sans-serif; padding: 15px; direction: rtl; background-color: #f9f9f9; border-radius: 10px; border: 1px solid #ddd;">
-    <div style="margin-bottom: 15px;">
-        <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">اسم الطالب الثلاثي:</label>
-        <input type="text" id="s_name" placeholder="أدخل اسمك الثلاثي هنا" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box;">
+    <div style="margin-bottom: 12px;">
+        <label style="font-weight: bold; display: block; margin-bottom: 4px; color: #333;">اسم الطالب الثلاثي:</label>
+        <input type="text" id="s_name" placeholder="أدخل اسمك الثلاثي هنا" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; box-sizing: border-box;">
     </div>
     
+    <div style="margin-bottom: 12px;">
+        <label style="font-weight: bold; display: block; margin-bottom: 4px; color: #333;">كود الطالب (8 أرقام إنجليزية):</label>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="s_id" placeholder="أدخل 8 أرقام بالضبط" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; box-sizing: border-box;">
+    </div>
+
+    <div style="margin-bottom: 12px;">
+        <label style="font-weight: bold; display: block; margin-bottom: 4px; color: #333;">اسم المادة الدراسية:</label>
+        <input type="text" id="s_course" placeholder="أدخل اسم المادة" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; box-sizing: border-box;">
+    </div>
+
+    <div style="margin-bottom: 12px;">
+        <label style="font-weight: bold; display: block; margin-bottom: 4px; color: #333;">الفرقة الدراسية:</label>
+        <select id="s_year" onchange="toggleTrack()" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; box-sizing: border-box; background-color: white;">
+            <option value="">-- اختر الفرقة --</option>
+            <option value="الفرقة الأولى">الفرقة الأولى</option>
+            <option value="الفرقة الثانية">الفرقة الثانية</option>
+            <option value="الفرقة الثالثة">الفرقة الثالثة</option>
+            <option value="الفرقة الرابعة">الفرقة الرابعة</option>
+        </select>
+    </div>
+
+    <div id="track_container" style="margin-bottom: 12px; display: none;">
+        <label style="font-weight: bold; display: block; margin-bottom: 4px; color: #333;">التوجه (التخصص):</label>
+        <select id="s_track" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; box-sizing: border-box; background-color: white;">
+            <option value="">-- اختر التوجه --</option>
+            <option value="توجه آلات">توجه آلات</option>
+            <option value="توجه ري">توجه ري</option>
+            <option value="توجه نظم">توجه نظم</option>
+            <option value="توجه عام">توجه عام</option>
+        </select>
+    </div>
+
     <div style="margin-bottom: 15px;">
-        <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">كود الطالب (8 أرقام إنجليزية):</label>
-        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="s_id" placeholder="أدخل 8 أرقام بالضبط" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box;">
+        <label style="font-weight: bold; display: block; margin-bottom: 4px; color: #333;">مكان المحاضرة:</label>
+        <select id="s_loc" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; box-sizing: border-box; background-color: white;">
+            <option value="">-- اختر المكان --</option>
+            <option value="مدرج هندسة 1">مدرج هندسة 1</option>
+            <option value="مدرج هندسة 2">مدرج هندسة 2</option>
+            <option value="مدرج هندسة 3">مدرج هندسة 3</option>
+            <option value="مدرج هندسة 4">مدرج هندسة 4</option>
+            <option value="قاعة تدريس 1">قاعة تدريس 1</option>
+            <option value="قاعة تدريس 2">قاعة تدريس 2</option>
+            <option value="قاعة تدريس 3">قاعة تدريس 3</option>
+            <option value="قاعة تدريس 4">قاعة تدريس 4</option>
+            <option value="قاعة تدريس 5">قاعة تدريس 5</option>
+        </select>
     </div>
 
     <button onclick="verifyAndRegister()" style="background-color: #ff4b4b; color: white; padding: 14px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%;">📍 تحقق من الموقع وسجل الحضور</button>
@@ -97,6 +151,17 @@ form_html = (
 const CLASS_LAT = __LAT__;
 const CLASS_LON = __LON__;
 const ALLOWED_RADIUS = __RADIUS__;
+
+function toggleTrack() {
+    const year = document.getElementById("s_year").value;
+    const trackContainer = document.getElementById("track_container");
+    if (year === "الفرقة الرابعة") {
+        trackContainer.style.display = "block";
+    } else {
+        trackContainer.style.display = "none";
+        document.getElementById("s_track").value = "";
+    }
+}
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371000;
@@ -112,11 +177,21 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 function verifyAndRegister() {
     const name = document.getElementById("s_name").value.trim();
     const id = document.getElementById("s_id").value.trim();
+    const course = document.getElementById("s_course").value.trim();
+    const year = document.getElementById("s_year").value;
+    const track = document.getElementById("s_track").value;
+    const loc = document.getElementById("s_loc").value;
     const msg = document.getElementById("msg");
 
-    if (!name || !id) {
+    if (!name || !id || !course || !year || !loc) {
         msg.style.color = "red";
-        msg.innerHTML = "❌ الرجاء إدخال الاسم وكود الطالب أولاً!";
+        msg.innerHTML = "❌ الرجاء استيفاء جميع الحقول الأساسية واختيار المكان!";
+        return;
+    }
+
+    if (year === "الفرقة الرابعة" && !track) {
+        msg.style.color = "red";
+        msg.innerHTML = "❌ يرجى اختيار التوجه الخاص بالفرقة الرابعة!";
         return;
     }
 
@@ -145,9 +220,17 @@ function verifyAndRegister() {
                 msg.style.color = "green";
                 msg.innerHTML = "🎉 مطابقة صحيحة! جاري حفظ الحضور في الكشف...";
                 
-                // إعادة توجيه الصفحة لتمرير البيانات وبمحافظتها على الـ Streamlit state
                 const currentUrl = window.location.href.split('?')[0];
-                const targetUrl = currentUrl + "?action=save&name=" + encodeURIComponent(name) + "&id=" + encodeURIComponent(id) + "&lat=" + lat + "&lon=" + lon + "&dist=" + Math.round(distance);
+                const targetUrl = currentUrl + "?action=save" +
+                                  "&name=" + encodeURIComponent(name) +
+                                  "&id=" + encodeURIComponent(id) +
+                                  "&course=" + encodeURIComponent(course) +
+                                  "&year=" + encodeURIComponent(year) +
+                                  "&track=" + encodeURIComponent(track) +
+                                  "&loc=" + encodeURIComponent(loc) +
+                                  "&lat=" + lat +
+                                  "&lon=" + lon +
+                                  "&dist=" + Math.round(distance);
                 
                 setTimeout(() => {
                     window.location.href = targetUrl;
@@ -172,9 +255,10 @@ function verifyAndRegister() {
     .replace("__RADIUS__", str(ALLOWED_RADIUS_METERS))
 )
 
-components.html(form_html, height=350)
+# تعديل ارتفاع المكون ليتناسب مع الخانات الإضافية
+components.html(form_html, height=580)
 
-# --- قسم خاص للأستاذ (عرض وتحميل كشف الحضور) ---
+# --- لوحة تحكم المحاضر (عرض وتحميل كشف الحضور) ---
 st.markdown("---")
 st.subheader("👨‍🏫 لوحة تحكم المحاضر (كشف الحضور)")
 
