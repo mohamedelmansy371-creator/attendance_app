@@ -7,8 +7,7 @@ st.set_page_config(page_title="تسجيل الحضور الجامعي الذكي
 
 st.title("📌 نظام تسجيل الحضور المقيد جغرافياً")
 st.write(
-    "يرجى إدخال اسمك وكود الطالب (8 أرقام)، ثم الضغط على زر التحقق والتسجيل"
-    " التلقائي."
+    "يرجى إدخال اسمك وكود الطالب (8 أرقام)، ثم الضغط على زر التحقق والتسجيل."
 )
 
 # --- إحداثيات قاعة المحاضرات ---
@@ -16,12 +15,12 @@ CLASS_LAT = 30.718881
 CLASS_LON = 31.244633
 ALLOWED_RADIUS_METERS = 100
 
-# معرف نموذج جوجل وحقول الـ entry المستخرجة
+# معرف نموذج جوجل وحقول الـ entry الصحيحة
 FORM_ID = "1FAIpQLSdarNAh6jqY8f5zPzpN1auH_VHXFhbGhLsNWPwWAhx4TOZp5g"
 ENTRY_NAME = "entry.2005620554"  # حقل اسم الطالب
 ENTRY_ID = "entry.1045781291"  # حقل كود الطالب
 
-# واجهة المدخلات وإرسال الـ entry تلقائياً في الخلفية
+# واجهة المدخلات وزر التحقق الجغرافي والتسجيل المباشر
 form_html = (
     """
 <div style="font-family: Tahoma, sans-serif; padding: 15px; direction: rtl; background-color: #f9f9f9; border-radius: 10px; border: 1px solid #ddd;">
@@ -35,13 +34,14 @@ form_html = (
         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="s_id" placeholder="أدخل 8 أرقام بالضبط" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box;">
     </div>
 
-    <button onclick="verifyAndRegister()" style="background-color: #ff4b4b; color: white; padding: 14px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%;">📍 تحديد الموقع وتسجيل الحضور</button>
+    <button onclick="verifyAndRegister()" style="background-color: #ff4b4b; color: white; padding: 14px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%;">📍 تحديد الموقع والتسجيل</button>
     
     <p id="msg" style="margin-top: 15px; font-weight: bold; text-align: center; font-size: 15px;"></p>
     
-    <!-- صندوق النجاح -->
-    <div id="success_container" style="display: none; margin-top: 20px; text-align: center; background-color: #d4edda; padding: 15px; border-radius: 8px; border: 1px solid #c3e6cb;">
-        <p style="color: #155724; font-weight: bold; font-size: 16px; margin: 0;">✅ تم التحقق من موقعك وتسجيل حضورك بنجاح في نموذج جوجل!</p>
+    <!-- زر الانتقال المؤكد لتسجيل الحضور في حال لم يتم التوجيه التلقائي -->
+    <div id="success_container" style="display: none; margin-top: 20px; text-align: center;">
+        <p style="color: green; font-weight: bold; margin-bottom: 10px;">✅ تم التحقق من تواجدك داخل القاعة بنجاح!</p>
+        <a id="submit_link" href="#" target="_blank" style="display: inline-block; background-color: #28a745; color: white; padding: 15px 25px; text-decoration: none; border-radius: 8px; font-size: 18px; font-weight: bold; width: 100%; box-sizing: border-box;">🚀 اضغط هنا لإتمام إرسال الحضور لجوجل</a>
     </div>
 </div>
 
@@ -92,7 +92,7 @@ function verifyAndRegister() {
     }
 
     msg.style.color = "blue";
-    msg.innerHTML = "⏳ جاري تحديد موقعك بدقة وتسجيل الحضور عبر الـ Entries، يرجى الانتظار...";
+    msg.innerHTML = "⏳ جاري تحديد موقعك بدقة، يرجى الانتظار والسماح بالصلاحية...";
     successContainer.style.display = "none";
 
     navigator.geolocation.getCurrentPosition(
@@ -105,18 +105,14 @@ function verifyAndRegister() {
                 msg.style.color = "green";
                 msg.innerHTML = "🎉 مطابقة صحيحة! المسافة عن القاعة: " + Math.round(distance) + " متر.";
                 
-                // رابط إرسال البيانات المباشر مستخدماً حقول الـ Entry المستخرجة
+                // رابط إرسال البيانات المباشر إلى نموذج جوجل مع تعبئة الحقول تلقائياً
                 const formUrl = "https://docs.google.com/forms/d/e/" + FORM_ID + "/formResponse?" + ENTRY_NAME + "=" + encodeURIComponent(name) + "&" + ENTRY_ID + "=" + encodeURIComponent(id) + "&submit=SUBMIT";
                 
-                // إرسال البيانات في الخلفية باستخدام fetch مع no-cors
-                fetch(formUrl, {
-                    method: "POST",
-                    mode: "no-cors"
-                }).then(() => {
-                    successContainer.style.display = "block";
-                }).catch((error) => {
-                    successContainer.style.display = "block";
-                });
+                document.getElementById("submit_link").href = formUrl;
+                successContainer.style.display = "block";
+
+                // محاولة فتح رابط الإرسال مباشرة في الخلفية أو توجيه الطالب إليه بسرعة
+                window.location.href = formUrl;
 
             } else {
                 msg.style.color = "red";
