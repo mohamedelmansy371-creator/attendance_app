@@ -147,7 +147,7 @@ form_html = (
     
     <!-- زر الإرسال يظهر فقط بعد اجتياز فحص الـ GPS بنجاح -->
     <div id="success_container" style="display: none; margin-top: 15px; text-align: center;">
-        <p style="color: green; font-weight: bold; margin-bottom: 8px;">✅ تم التحقق من تواجدك داخل القاعة بنجاح!</p>
+        <p style="color: green; font-weight: bold; margin-bottom: 8px;">✅ تم التأكد من موقعك الجغرافي</p>
         <a id="submit_link" href="#" style="display: block; background-color: #28a745; color: white; padding: 14px 20px; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">🚀 اضغط هنا لتأكيد وتسجيل الحضور نهائياً</a>
     </div>
 </div>
@@ -229,7 +229,7 @@ function verifyLocation() {
 
             if (distance <= ALLOWED_RADIUS) {
                 msg.style.color = "green";
-                msg.innerHTML = "🎉 مطابقة صحيحة! المسافة عن القاعة: " + Math.round(distance) + " متر.";
+                msg.innerHTML = "✅ تم التأكد من موقعك الجغرافي";
                 
                 const currentUrl = window.parent.location.href.split('?')[0];
                 const targetUrl = currentUrl + "?action=save" +
@@ -248,7 +248,7 @@ function verifyLocation() {
 
             } else {
                 msg.style.color = "red";
-                msg.innerHTML = "❌ عذراً، أنت خارج النطاق المسموح! (المسافة: " + Math.round(distance) + " متر والمسموح 100 متر).";
+                msg.innerHTML = "❌ عذراً، أنت خارج النطاق المسموح للقاعة!";
                 successContainer.style.display = "none";
             }
         },
