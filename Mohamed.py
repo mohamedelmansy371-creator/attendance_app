@@ -10,8 +10,7 @@ st.set_page_config(page_title="تسجيل الحضور الجامعي الذكي
 
 st.title("📌 نظام تسجيل الحضور المقيد جغرافياً")
 st.write(
-    "يرجى إدخال البيانات المطلوبة بدقة، ثم الضغط على زر التحقق من الموقع وتسجيل"
-    " الحضور."
+    "يرجى إدخال البيانات المطلوبة بدقة، ثم الضغط على زر التحقق من الموقع وتسجيل الحضور."
 )
 
 # --- إحداثيات قاعة المحاضرات ---
@@ -115,6 +114,12 @@ form_html = (
         </select>
     </div>
 
+    <!-- خانة وقت الحضور (تظهر تلقائياً أو يتم تعبئتها عند التسجيل) -->
+    <div style="margin-bottom: 15px;">
+        <label style="font-weight: bold; display: block; margin-bottom: 4px; color: #333;">وقت الحضور المسجل:</label>
+        <input type="text" id="s_time" readonly placeholder="سيتم التقاط الوقت تلقائياً عند التسجيل" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; background-color: #e9ecef; box-sizing: border-box;">
+    </div>
+
     <button onclick="verifyAndSubmit()" style="background-color: #28a745; color: white; padding: 14px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">📍 تحقق من الموقع وتسجيل الحضور</button>
     
     <p id="msg" style="margin-top: 15px; font-weight: bold; text-align: center; font-size: 15px;"></p>
@@ -206,6 +211,18 @@ function verifyAndSubmit() {
                 msg.style.color = "blue";
                 msg.innerHTML = "⏳ تم التحقق من الموقع، جاري إرسال وتسجيل الحضور...";
 
+                // التقاط الوقت الحالي من هاتف الطالب وتنسيقه
+                const now = new Date();
+                const formattedTime = now.getFullYear() + '-' + 
+                    String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                    String(now.getDate()).padStart(2, '0') + ' ' + 
+                    String(now.getHours()).padStart(2, '0') + ':' + 
+                    String(now.getMinutes()).padStart(2, '0') + ':' + 
+                    String(now.getSeconds()).padStart(2, '0');
+
+                // عرض الوقت في الخانة المخصصة له على الشاشة
+                document.getElementById("s_time").value = formattedTime;
+
                 const data = {
                     name: name,
                     id: id,
@@ -216,7 +233,8 @@ function verifyAndSubmit() {
                     loc: loc,
                     lat: lat,
                     lon: lon,
-                    dist: Math.round(distance)
+                    dist: Math.round(distance),
+                    time: formattedTime  // إرسال الوقت مع البيانات
                 };
 
                 // إرسال البيانات باستخدام Fetch API مباشرة إلى Google Sheets Web App
@@ -255,4 +273,4 @@ function verifyAndSubmit() {
     .replace("__URL__", GOOGLE_SCRIPT_URL)
 )
 
-components.html(form_html, height=650)
+components.html(form_html, height=730)
