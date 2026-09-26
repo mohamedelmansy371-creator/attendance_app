@@ -18,8 +18,8 @@ CLASS_LAT = 30.718881
 CLASS_LON = 31.244633
 ALLOWED_RADIUS_METERS = 100
 
-# رابط الـ Web App الخاص بملف Google Sheets الخاص بك
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxvYZXJaC6rgpchmf2jN8TgzzrbukHmc-BiTGVtGBa2XzcJvwVo5oJGcN5LiEgX9j3v2A/exec"
+# رابط الـ Web App الجديد الخاص بملف Google Sheets
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyaK7e8SrCjYuzsKZOHBCauWglmVD7F-0q8bvATsvm5jWf8Zh79445GScxtuvWwIvgV3A/exec"
 
 form_html = (
     """
@@ -114,7 +114,6 @@ form_html = (
         </select>
     </div>
 
-    <!-- خانة وقت الحضور (تظهر تلقائياً أو يتم تعبئتها عند التسجيل) -->
     <div style="margin-bottom: 15px;">
         <label style="font-weight: bold; display: block; margin-bottom: 4px; color: #333;">وقت الحضور المسجل:</label>
         <input type="text" id="s_time" readonly placeholder="سيتم التقاط الوقت تلقائياً عند التسجيل" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; background-color: #e9ecef; box-sizing: border-box;">
@@ -211,7 +210,7 @@ function verifyAndSubmit() {
                 msg.style.color = "blue";
                 msg.innerHTML = "⏳ تم التحقق من الموقع، جاري إرسال وتسجيل الحضور...";
 
-                // التقاط الوقت الحالي من هاتف الطالب وتنسيقه
+                // التقاط الوقت الحالي وتنسيقه
                 const now = new Date();
                 const formattedTime = now.getFullYear() + '-' + 
                     String(now.getMonth() + 1).padStart(2, '0') + '-' + 
@@ -220,7 +219,6 @@ function verifyAndSubmit() {
                     String(now.getMinutes()).padStart(2, '0') + ':' + 
                     String(now.getSeconds()).padStart(2, '0');
 
-                // عرض الوقت في الخانة المخصصة له على الشاشة
                 document.getElementById("s_time").value = formattedTime;
 
                 const data = {
@@ -234,13 +232,13 @@ function verifyAndSubmit() {
                     lat: lat,
                     lon: lon,
                     dist: Math.round(distance),
-                    time: formattedTime  // إرسال الوقت مع البيانات
+                    time: formattedTime
                 };
 
-                // إرسال البيانات باستخدام Fetch API مباشرة إلى Google Sheets Web App
+                // إرسال البيانات إلى Google Sheets Web App
                 fetch(SCRIPT_URL, {
                     method: "POST",
-                    mode: "no-cors", // لتجنب مشاكل الـ CORS في قوقل سكريبت
+                    mode: "no-cors",
                     headers: {
                         "Content-Type": "application/json"
                     },
