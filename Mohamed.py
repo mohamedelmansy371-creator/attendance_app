@@ -34,6 +34,21 @@ form_html = (
         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="s_id" placeholder="أدخل 8 أرقام بالضبط" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box;">
     </div>
 
+    <!-- خانة يوم الأسبوع -->
+    <div style="margin-bottom: 15px;">
+        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">يوم الأسبوع:</label>
+        <select id="s_day" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: white;">
+            <option value="">-- اختر يوم الأسبوع --</option>
+            <option value="السبت">السبت</option>
+            <option value="الأحد">الأحد</option>
+            <option value="الإثنين">الإثنين</option>
+            <option value="الثلاثاء">الثلاثاء</option>
+            <option value="الأربعاء">الأربعاء</option>
+            <option value="الخميس">الخميس</option>
+            <option value="الجمعة">الجمعة</option>
+        </select>
+    </div>
+
     <div style="margin-bottom: 15px;">
         <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">اسم المادة الدراسية:</label>
         <select id="s_course" onchange="toggleSection()" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: white;">
@@ -179,14 +194,15 @@ function showMessage(text, color, bgColor) {
 function verifyAndSubmit() {
     const name = document.getElementById("s_name").value.trim();
     const id = document.getElementById("s_id").value.trim();
+    const day = document.getElementById("s_day").value;
     const course = document.getElementById("s_course").value;
     const section = document.getElementById("s_section").value;
     const year = document.getElementById("s_year").value;
     const track = document.getElementById("s_track").value;
     const loc = document.getElementById("s_loc").value;
 
-    if (!name || !id || !course || !section || !year || !loc) {
-        showMessage("❌ يرجى استيفاء جميع الحقول المطلوبة واختيار المادة والشق الدراسي والفرقة والمكان!", "#d9534f", "#f2dede");
+    if (!name || !id || !day || !course || !section || !year || !loc) {
+        showMessage("❌ يرجى استيفاء جميع الحقول المطلوبة (بما في ذلك يوم الأسبوع والمادة والشق الدراسي)!", "#d9534f", "#f2dede");
         return;
     }
 
@@ -200,16 +216,12 @@ function verifyAndSubmit() {
         return;
     }
 
-    // التحقق من مدة الساعة (60 دقيقة = 3600000 مللي ثانية)
-    const lastSubmitTime = localStorage.getItem("last_submit_" + id);
-    if (lastSubmitTime) {
-        const elapsed = Date.now() - parseInt(lastSubmitTime);
-        const cooldownTime = 60 * 60 * 1000; // ساعة كاملة
-        if (elapsed < cooldownTime) {
-            const remainingMinutes = Math.ceil((cooldownTime - elapsed) / (1000 * 60));
-            showMessage("⏳ عذراً، لقد قمت بتسجيل الحضور مسبقاً. يمكنك التسجيل مرة أخرى بعد مرور " + remainingMinutes + " دقيقة.", "#f0ad4e", "#fcf8e3");
-            return;
-        }
+    // التحقق من عدم تسجيل نفس المادة ونفس الشق (نظري/عملي) في نفس اليوم مسبقاً
+    const recordKey = "attendance_" + id + "_" + day + "_" + course + "_" + section;
+    const alreadyRegistered = localStorage.getItem(recordKey);
+    if (alreadyRegistered) {
+        showMessage("⏳ عذراً، لقد قمت بتسجيل الحضور لهذه المادة (شق " + section + ") في يوم " + day + " مسبقاً ولا يمكنك التسجيل مرتين في نفس اليوم!", "#f0ad4e", "#fcf8e3");
+        return;
     }
 
     if (!navigator.geolocation) {
@@ -241,6 +253,7 @@ function verifyAndSubmit() {
                 const data = {
                     name: name,
                     id: id,
+                    day: day,
                     course: course,
                     section: section,
                     year: year,
@@ -260,10 +273,10 @@ function verifyAndSubmit() {
                     },
                     body: JSON.stringify(data)
                 }).then(() => {
-                    // حفظ وقت الإرسال الناجح في الـ localStorage لهذا الطالب
-                    localStorage.setItem("last_submit_" + id, Date.now().toString());
+                    // حفظ حالة التسجيل في الـ localStorage لمنع تكرار نفس المادة والشق في نفس اليوم
+                    localStorage.setItem(recordKey, "true");
 
-                    showMessage("✅ تم تسجيل حضورك بنجاح وحفظه في جدول البيانات وأنت الآن داخل النطاق!", "#28a745", "#d4edda");
+                    showMessage("✅ تم تسجيل حضورك بنجاح في مادة (" + course + " - " + section + ") ليوم " + day + " وحفظه في جدول البيانات!", "#28a745", "#d4edda");
                 }).catch((error) => {
                     showMessage("❌ حدث خطأ أثناء الاتصال بالخادم، يرجى المحاولة مرة أخرى.", "#d9534f", "#f2dede");
                 });
