@@ -31,7 +31,7 @@ if admin_password_input == ADMIN_SECRET_PASS:
     otp_enabled = True
     current_otp = st.sidebar.text_input(
         "الرمز الحالي للمحاضرة",
-        value="7888",
+        value="7887",
         help="اكتب الرمز الذي ستعطيه للطلاب في المدرج",
     )
   else:
@@ -43,7 +43,7 @@ else:
   otp_enabled = True
   current_otp = "7890"
 
-st.title("📌 نظام تسجيل الحضور المقيد جغرافياً")
+st.title("نظام تسجيل الحضور")
 st.write(
     "يرجى إدخال البيانات المطلوبة بدقة، ثم الضغط على زر التحقق من الموقع وتسجيل"
     " الحضور."
@@ -74,17 +74,17 @@ form_html = (
         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="s_id" placeholder="أدخل 8 أرقام بالضبط" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box;">
     </div>
 
-    <!-- خانة رمز التحقق (OTP) المعدلة -->
+    <!-- خانة رمز التحقق (OTP) الرقمية -->
     <div id="otp_box_container" style="margin-bottom: 15px; display: __SHOW_OTP__;">
         <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #c0392b; font-size: 16px;">🔐 رمز التحقق (OTP) المعلن في القاعة:</label>
         <input type="text" inputmode="numeric" pattern="[0-9]*" id="s_otp" placeholder="أدخل الرمز الرقمي المكتوب على السبورة" style="width: 100%; padding: 14px; border: 2px dashed #e74c3c; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: #fff5f5;">
     </div>
 
-    <!-- خانة يوم الأسبوع -->
+    <!-- خانة يوم الأسبوع (يتم تحديدها تلقائياً وتثبيتها أو التحقق منها) -->
     <div style="margin-bottom: 15px;">
-        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">يوم الأسبوع:</label>
-        <select id="s_day" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: white;">
-            <option value="">-- اختر يوم الأسبوع --</option>
+        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">يوم الأسبوع (تلقائي حسب التاريخ الحالي):</label>
+        <select id="s_day" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: #e9ecef; font-weight: bold; color: #0275d8;">
+            <option value="">-- جارٍ تحديد اليوم تلقائياً --</option>
             <option value="السبت">السبت</option>
             <option value="الأحد">الأحد</option>
             <option value="الإثنين">الإثنين</option>
@@ -196,6 +196,16 @@ const SCRIPT_URL = "__URL__";
 const OTP_ENABLED = __OTP_ENABLED__;
 const CORRECT_OTP = "__CORRECT_OTP__";
 
+// تعيين وتحديد يوم الأسبوع الحالي تلقائياً عند فتح الصفحة
+window.onload = function() {
+    const daysMap = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+    const todayIndex = new Date().getDay();
+    const currentDayArabic = daysMap[todayIndex];
+    
+    const daySelect = document.getElementById("s_day");
+    daySelect.value = currentDayArabic;
+};
+
 function toggleSection() {
     const course = document.getElementById("s_course").value;
     const sectionContainer = document.getElementById("section_container");
@@ -259,6 +269,14 @@ function verifyAndSubmit() {
         return;
     }
 
+    // التحقق من تطابق اليوم المختار مع اليوم الحقيقي للجهاز
+    const daysMap = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+    const actualRealDay = daysMap[new Date().getDay()];
+    if (day !== actualRealDay) {
+        showMessage("❌ خطأ: يوم الأسبوع المحدد لا يطابق اليوم الحقيقي الحالي (" + actualRealDay + ")!", "#d9534f", "#f2dede");
+        return;
+    }
+
     if (year === "الفرقة الرابعة" && !track) {
         showMessage("❌ يرجى اختيار التوجه الخاص بالفرقة الرابعة!", "#d9534f", "#f2dede");
         return;
@@ -269,7 +287,7 @@ function verifyAndSubmit() {
         return;
     }
 
-    // التحقق من صحة رمز التحقق (OTP) بأنه أرقام وصحيح
+    // التحقق من صحة رمز التحقق (OTP)
     if (OTP_ENABLED && (isNaN(studentOtp) || studentOtp !== CORRECT_OTP)) {
         showMessage("❌ عذراً، رمز التحقق (OTP) الذي أدخلته غير صحيح! تأكد من الرمز الرقمي المعلن في القاعة.", "#d9534f", "#f2dede");
         return;
@@ -281,7 +299,7 @@ function verifyAndSubmit() {
         String(nowCheck.getMonth() + 1).padStart(2, '0') + '-' + 
         String(nowCheck.getDate()).padStart(2, '0');
 
-    // 1. الشرط الأول: التحقق من عدم تسجيل نفس المادة ونفس الشق في نفس اليوم والتاريخ الفعلي مسبقاً
+    // 1. الشرط الأول: التحقق من عدم تسجيل نفس المادة ونفس الشق في نفس اليوم وتاريخ اليوم الفعلي مسبقاً
     const recordKey = "attendance_" + id + "_" + currentDateStr + "_" + course + "_" + section;
     const alreadyRegistered = localStorage.getItem(recordKey);
     if (alreadyRegistered) {
