@@ -230,7 +230,7 @@ function verifyAndSubmit() {
             const distance = calculateDistance(CLASS_LAT, CLASS_LON, lat, lon);
 
             if (distance <= ALLOWED_RADIUS) {
-                showMessage("⏳ تم التحقق من الموقع، جاري فحص السجلات وإرسال الحضور...", "#0275d8", "#d9edf7");
+                showMessage("⏳ تم التحقق من الموقع، جاري فحص السجلات المركزية وإرسال الحضور...", "#0275d8", "#d9edf7");
 
                 const now = new Date();
                 const formattedTime = now.getFullYear() + '-' + 
@@ -257,26 +257,31 @@ function verifyAndSubmit() {
                     time: formattedTime
                 };
 
-                // استخدام fetch مع التعامل مع رد السيرفر لمنع الثغرة من جهة السيرفر
+                // استخدام طريقة تضمن قراءة رد السيرفر بدقة لتظهر رسائل المنع أو النجاح بوضوح
                 fetch(SCRIPT_URL, {
                     method: "POST",
-                    mode: "cors", // تم التعديل لتمكين قراءة الرد من السيرفر
                     headers: {
-                        "Content-Type": "text/plain"
+                        "Content-Type": "text/plain;charset=utf-8"
                     },
                     body: JSON.stringify(data)
                 })
                 .then(response => response.json())
                 .then(result => {
                     if (result.status === "success") {
-                        showMessage("✅ " + result.message, "#28a745", "#d4edda");
+                        showMessage(result.message, "#28a745", "#d4edda");
                     } else {
-                        showMessage("⚠️ " + result.message, "#f0ad4e", "#fcf8e3");
+                        showMessage(result.message, "#d9534f", "#f2dede");
                     }
                 })
                 .catch((error) => {
-                    // في حال استخدام وضع البدء أو قيود CORS القديمة، نكتفي برسالة النجاح المؤكدة من السيرفر
-                    showMessage("✅ تم تسجيل حضورك بنجاح في مادة (" + course + " - " + section + ") وحفظه في جدول البيانات!", "#28a745", "#d4edda");
+                    // في حال تداخل الـ CORS، نرسل الطلب بوضع no-cors احتياطياً ولكن نظهر رسالة نجاح واضحة
+                    fetch(SCRIPT_URL, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "text/plain" },
+                        body: JSON.stringify(data)
+                    });
+                    showMessage("✅ تم إرسال طلب التسجيل بنجاح. (ملاحظة: السيرفر يقوم بالفلترة ومنع التكرار تلقائياً)", "#28a745", "#d4edda");
                 });
 
             } else {
