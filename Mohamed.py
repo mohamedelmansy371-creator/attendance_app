@@ -21,7 +21,7 @@ otp_enabled = False
 current_otp = ""
 
 if admin_password_input == ADMIN_SECRET_PASS:
-  st.sidebar.success("تم تسجيل الدخول بنجاح كمسرف ✅")
+  st.sidebar.success("تم تسجيل الدخول بنجاح كمشرف ✅")
   st.sidebar.markdown("---")
   st.sidebar.subheader("إدارة رمز التحقق (OTP)")
 
