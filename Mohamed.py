@@ -18,7 +18,7 @@ CLASS_LAT = 30.718881
 CLASS_LON = 31.244633
 ALLOWED_RADIUS_METERS = 100
 
-# رابط الـ Web App الجديد الخاص بك
+# رابط الـ Web App الخاص بك
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzv9WIfVeNH_PxMyqhsrLJKj0svRQ76vmBJdzYUpNl745-n0LQ__WyXVHWTHy4jMQfo/exec"
 
 form_html = (
@@ -30,7 +30,7 @@ form_html = (
     </div>
     
     <div style="margin-bottom: 15px;">
-        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">كود الطالب (مكون من 8 أرقام إنجليزية):</label>
+        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">كود الطالب (8 أرقام إنجليزية):</label>
         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="s_id" placeholder="أدخل 8 أرقام بالضبط" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box;">
     </div>
 
@@ -136,7 +136,7 @@ form_html = (
 
     <button onclick="verifyAndSubmit()" style="background-color: #28a745; color: white; padding: 16px 20px; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; box-shadow: 0 6px 12px rgba(0,0,0,0.15);">📍 تحقق من الموقع وتسجيل الحضور</button>
     
-    <!-- صندوق رسائل كبير وبارز جداً لتجنب أي حاجة للتمرير -->
+    <!-- صندوق رسائل كبير وبارز -->
     <div id="msg_container" style="margin-top: 25px; padding: 20px; border-radius: 10px; text-align: center; display: none; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
         <p id="msg" style="margin: 0; font-weight: bold; font-size: 17px; line-height: 1.6;"></p>
     </div>
@@ -202,7 +202,7 @@ function verifyAndSubmit() {
     const loc = document.getElementById("s_loc").value;
 
     if (!name || !id || !day || !course || !section || !year || !loc) {
-        showMessage("❌ يرجى استيفاء جميع الحقول المطلوبة (بما في ذلك يوم الأسبوع والمادة والشق الدراسي)!", "#d9534f", "#f2dede");
+        showMessage("❌ يرجى استيفاء جميع الحقول المطلوبة!", "#d9534f", "#f2dede");
         return;
     }
 
@@ -216,12 +216,17 @@ function verifyAndSubmit() {
         return;
     }
 
-    // التحقق من عدم تسجيل نفس المادة ونفس الشق (نظري/عملي) في نفس اليوم مسبقاً
-    const recordKey = "attendance_" + id + "_" + day + "_" + course + "_" + section;
-    const alreadyRegistered = localStorage.getItem(recordKey);
-    if (alreadyRegistered) {
-        showMessage("⏳ عذراً، لقد قمت بتسجيل الحضور لهذه المادة (شق " + section + ") في يوم " + day + " مسبقاً ولا يمكنك التسجيل مرتين في نفس اليوم!", "#f0ad4e", "#fcf8e3");
-        return;
+    // التحقق من قاعدة الـ 90 دقيقة بناءً على كود الطالب
+    const lastSubmitTime = localStorage.getItem("last_submit_" + id);
+    if (lastSubmitTime) {
+        const currentTime = new Date().getTime();
+        const elapsedMinutes = (currentTime - parseInt(lastSubmitTime)) / (1000 * 60);
+        
+        if (elapsedMinutes < 90) {
+            const remainingMinutes = Math.ceil(90 - elapsedMinutes);
+            showMessage("⏳ عذراً، يجب أن تنتظر مرور 90 دقيقة بين كل عملية تسجيل وأخرى. يتبقى لك حوالي " + remainingMinutes + " دقيقة.", "#f0ad4e", "#fcf8e3");
+            return;
+        }
     }
 
     if (!navigator.geolocation) {
@@ -273,10 +278,10 @@ function verifyAndSubmit() {
                     },
                     body: JSON.stringify(data)
                 }).then(() => {
-                    // حفظ حالة التسجيل في الـ localStorage لمنع تكرار نفس المادة والشق في نفس اليوم
-                    localStorage.setItem(recordKey, "true");
+                    // حفظ وقت التسجيل الحالي بالمللي ثانية لمنع التسجيل قبل مرور 90 دقيقة
+                    localStorage.setItem("last_submit_" + id, new Date().getTime().toString());
 
-                    showMessage("✅ تم تسجيل حضورك بنجاح في مادة (" + course + " - " + section + ") ليوم " + day + " وحفظه في جدول البيانات!", "#28a745", "#d4edda");
+                    showMessage("✅ تم تسجيل حضورك بنجاح في مادة (" + course + " - " + section + ") وحفظه في جدول البيانات!", "#28a745", "#d4edda");
                 }).catch((error) => {
                     showMessage("❌ حدث خطأ أثناء الاتصال بالخادم، يرجى المحاولة مرة أخرى.", "#d9534f", "#f2dede");
                 });
