@@ -8,7 +8,7 @@ import streamlit.components.v1 as components
 # إعدادات صفحة التطبيق
 st.set_page_config(page_title="تسجيل الحضور الجامعي الذكي", page_icon="📍")
 
-st.title("نظام تسجيل الحضور الذكي الخاص ببرنامج الهندسة الزراعية")
+st.title("نظام تسجيل الحضور")
 st.write(
     "يرجى إدخال البيانات المطلوبة بدقة، ثم الضغط على زر التحقق من الموقع وتسجيل الحضور."
 )
@@ -30,7 +30,7 @@ form_html = (
     </div>
     
     <div style="margin-bottom: 15px;">
-        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">كود الطالب (يرجى الانتباه عند كتابة الكود حيث ان تسجيل الحضور يعتمد على صحة كتابة الكود وهو مكون من 8 أرقام إنجليزية):</label>
+        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">كود الطالب (مكون من 8 أرقام إنجليزية):</label>
         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="s_id" placeholder="أدخل 8 أرقام بالضبط" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box;">
     </div>
 
