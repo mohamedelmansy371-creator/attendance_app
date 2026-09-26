@@ -10,7 +10,8 @@ st.set_page_config(page_title="تسجيل الحضور الجامعي الذكي
 
 st.title("📌 نظام تسجيل الحضور المقيد جغرافياً")
 st.write(
-    "يرجى إدخال البيانات المطلوبة بدقة، ثم الضغط على زر التحقق من الموقع وتسجيل الحضور."
+    "يرجى إدخال البيانات المطلوبة بدقة، ثم الضغط على زر التحقق من الموقع وتسجيل"
+    " الحضور."
 )
 
 # --- إحداثيات قاعة المحاضرات ---
@@ -18,10 +19,11 @@ CLASS_LAT = 30.718881
 CLASS_LON = 31.244633
 ALLOWED_RADIUS_METERS = 100
 
-# رابط الـ Web App الجديد الخاص بك
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzDPaZF64zrJK3Mz3k7-uBK_Yr7GkyOWmdMqYE0RdISEzgyPMtSYkhL_GbA-eBqz981cw/exec"
+# رابط الـ Web App الخاص بملف Google Sheets الخاص بك
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxvYZXJaC6rgpchmf2jN8TgzzrbukHmc-BiTGVtGBa2XzcJvwVo5oJGcN5LiEgX9j3v2A/exec"
 
-form_html = """
+form_html = (
+    """
 <div style="font-family: Tahoma, sans-serif; padding: 15px; direction: rtl; background-color: #f9f9f9; border-radius: 10px; border: 1px solid #ddd;">
     <div style="margin-bottom: 12px;">
         <label style="font-weight: bold; display: block; margin-bottom: 4px; color: #333;">اسم الطالب الثلاثي:</label>
@@ -204,10 +206,6 @@ function verifyAndSubmit() {
                 msg.style.color = "blue";
                 msg.innerHTML = "⏳ تم التحقق من الموقع، جاري إرسال وتسجيل الحضور...";
 
-                // إنشاء وقت محلي واضح لإرساله مع البيانات
-                const now = new Date();
-                const timeString = now.toLocaleDateString('ar-EG', {year: 'numeric', month: '2-digit', day: '2-digit'}) + ' ' + now.toLocaleTimeString('ar-EG');
-
                 const data = {
                     name: name,
                     id: id,
@@ -216,13 +214,15 @@ function verifyAndSubmit() {
                     year: year,
                     track: (year === "الفرقة الرابعة") ? track : "غير مخصص",
                     loc: loc,
-                    dist: Math.round(distance),
-                    time: timeString
+                    lat: lat,
+                    lon: lon,
+                    dist: Math.round(distance)
                 };
 
+                // إرسال البيانات باستخدام Fetch API مباشرة إلى Google Sheets Web App
                 fetch(SCRIPT_URL, {
                     method: "POST",
-                    mode: "no-cors",
+                    mode: "no-cors", // لتجنب مشاكل الـ CORS في قوقل سكريبت
                     headers: {
                         "Content-Type": "application/json"
                     },
@@ -249,10 +249,7 @@ function verifyAndSubmit() {
 }
 </script>
 """
-
-# تعقيم وإدراج المتغيرات داخل الكود
-form_html = (
-    form_html.replace("__LAT__", str(CLASS_LAT))
+    .replace("__LAT__", str(CLASS_LAT))
     .replace("__LON__", str(CLASS_LON))
     .replace("__RADIUS__", str(ALLOWED_RADIUS_METERS))
     .replace("__URL__", GOOGLE_SCRIPT_URL)
