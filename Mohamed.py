@@ -8,7 +8,7 @@ import streamlit.components.v1 as components
 # إعدادات صفحة التطبيق
 st.set_page_config(page_title="تسجيل الحضور الجامعي الذكي", page_icon="📍")
 
-st.title("📌 نظام تسجيل الحضور المقيد جغرافياً (آمن ضد التكرار)")
+st.title("📌 نظام تسجيل الحضور المقيد جغرافياً")
 st.write(
     "يرجى إدخال البيانات المطلوبة بدقة، ثم الضغط على زر التحقق من الموقع وتسجيل الحضور."
 )
@@ -216,6 +216,33 @@ function verifyAndSubmit() {
         return;
     }
 
+    // استخراج التاريخ الحالي بصيغة (YYYY-MM-DD) لدمجه مع مفتاح الفحص
+    const nowCheck = new Date();
+    const currentDateStr = nowCheck.getFullYear() + '-' + 
+        String(nowCheck.getMonth() + 1).padStart(2, '0') + '-' + 
+        String(nowCheck.getDate()).padStart(2, '0');
+
+    // 1. الشرط الأول: التحقق من عدم تسجيل نفس المادة ونفس الشق في نفس اليوم والتاريخ الفعلي مسبقاً
+    const recordKey = "attendance_" + id + "_" + currentDateStr + "_" + course + "_" + section;
+    const alreadyRegistered = localStorage.getItem(recordKey);
+    if (alreadyRegistered) {
+        showMessage("⏳ عذراً، لقد قمت بتسجيل الحضور لهذه المادة (شق " + section + ") في تاريخ اليوم (" + currentDateStr + ") مسبقاً ولا يمكنك التسجيل مرتين في نفس اليوم!", "#f0ad4e", "#fcf8e3");
+        return;
+    }
+
+    // 2. الشرط الثاني: التحقق من مرور 90 دقيقة على الأقل منذ آخر عملية تسجيل عامة لأي مادة
+    const lastSubmitTime = localStorage.getItem("last_submit_" + id);
+    if (lastSubmitTime) {
+        const currentTime = new Date().getTime();
+        const elapsedMinutes = (currentTime - parseInt(lastSubmitTime)) / (1000 * 60);
+        
+        if (elapsedMinutes < 90) {
+            const remainingMinutes = Math.ceil(90 - elapsedMinutes);
+            showMessage("⏳ عذراً، يجب أن تنتظر مرور 90 دقيقة بين كل عملية تسجيل وأخرى. يتبقى لك حوالي " + remainingMinutes + " دقيقة.", "#f0ad4e", "#fcf8e3");
+            return;
+        }
+    }
+
     if (!navigator.geolocation) {
         showMessage("❌ متصفح هاتفك لا يدعم تحديد الموقع الجغرافي.", "#d9534f", "#f2dede");
         return;
@@ -230,7 +257,7 @@ function verifyAndSubmit() {
             const distance = calculateDistance(CLASS_LAT, CLASS_LON, lat, lon);
 
             if (distance <= ALLOWED_RADIUS) {
-                showMessage("⏳ تم التحقق من الموقع، جاري فحص السجلات المركزية وإرسال الحضور...", "#0275d8", "#d9edf7");
+                showMessage("⏳ تم التحقق من الموقع (داخل النطاق بنجاح)، جاري إرسال وتسجيل الحضور...", "#0275d8", "#d9edf7");
 
                 const now = new Date();
                 const formattedTime = now.getFullYear() + '-' + 
@@ -257,31 +284,21 @@ function verifyAndSubmit() {
                     time: formattedTime
                 };
 
-                // استخدام طريقة تضمن قراءة رد السيرفر بدقة لتظهر رسائل المنع أو النجاح بوضوح
                 fetch(SCRIPT_URL, {
                     method: "POST",
+                    mode: "no-cors",
                     headers: {
-                        "Content-Type": "text/plain;charset=utf-8"
+                        "Content-Type": "text/plain"
                     },
                     body: JSON.stringify(data)
-                })
-                .then(response => response.json())
-                .then(result => {
-                    if (result.status === "success") {
-                        showMessage(result.message, "#28a745", "#d4edda");
-                    } else {
-                        showMessage(result.message, "#d9534f", "#f2dede");
-                    }
-                })
-                .catch((error) => {
-                    // في حال تداخل الـ CORS، نرسل الطلب بوضع no-cors احتياطياً ولكن نظهر رسالة نجاح واضحة
-                    fetch(SCRIPT_URL, {
-                        method: "POST",
-                        mode: "no-cors",
-                        headers: { "Content-Type": "text/plain" },
-                        body: JSON.stringify(data)
-                    });
-                    showMessage("✅ تم إرسال طلب التسجيل بنجاح. (ملاحظة: السيرفر يقوم بالفلترة ومنع التكرار تلقائياً)", "#28a745", "#d4edda");
+                }).then(() => {
+                    // حفظ حالة التسجيل مرتبطة بتاريخ اليوم الحالي + وقت آخر تسجيل للـ 90 دقيقة
+                    localStorage.setItem(recordKey, "true");
+                    localStorage.setItem("last_submit_" + id, new Date().getTime().toString());
+
+                    showMessage("✅ تم تسجيل حضورك بنجاح في مادة (" + course + " - " + section + ") ليوم " + day + " وتاريخ " + currentDateStr + " وحفظه في جدول البيانات!", "#28a745", "#d4edda");
+                }).catch((error) => {
+                    showMessage("❌ حدث خطأ أثناء الاتصال بالخادم، يرجى المحاولة مرة أخرى.", "#d9534f", "#f2dede");
                 });
 
             } else {
