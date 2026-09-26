@@ -31,7 +31,7 @@ if admin_password_input == ADMIN_SECRET_PASS:
     otp_enabled = True
     current_otp = st.sidebar.text_input(
         "الرمز الحالي للمحاضرة",
-        value="7890",
+        value="7888",
         help="اكتب الرمز الذي ستعطيه للطلاب في المدرج",
     )
   else:
@@ -40,8 +40,7 @@ if admin_password_input == ADMIN_SECRET_PASS:
 else:
   if admin_password_input != "":
     st.sidebar.error("كلمة المرور غير صحيحة")
-  # في حال لم يسجل المشرف الدخول، نفترض الافتراضي أو نقفل الخاصية حسب الرغبة
-  otp_enabled = True  # أو تتركه مفعلًا برمز افتراضي
+  otp_enabled = True
   current_otp = "7890"
 
 st.title("📌 نظام تسجيل الحضور المقيد جغرافياً")
@@ -75,10 +74,10 @@ form_html = (
         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="s_id" placeholder="أدخل 8 أرقام بالضبط" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box;">
     </div>
 
-    <!-- خانة رمز التحقق (OTP) المتغير -->
+    <!-- خانة رمز التحقق (OTP) المعدلة -->
     <div id="otp_box_container" style="margin-bottom: 15px; display: __SHOW_OTP__;">
-        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #c0392b; font-size: 16px;">🔐 رمز التحقق للمحاضرة (المعلن في القاعة):</label>
-        <input type="text" id="s_otp" placeholder="أدخل رمز التحقق المكتوب على السبورة" style="width: 100%; padding: 14px; border: 2px dashed #e74c3c; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: #fff5f5;">
+        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #c0392b; font-size: 16px;">🔐 رمز التحقق (OTP) المعلن في القاعة:</label>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="s_otp" placeholder="أدخل الرمز الرقمي المكتوب على السبورة" style="width: 100%; padding: 14px; border: 2px dashed #e74c3c; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: #fff5f5;">
     </div>
 
     <!-- خانة يوم الأسبوع -->
@@ -256,7 +255,7 @@ function verifyAndSubmit() {
     }
 
     if (!name || !id || !day || !course || !section || !year || !loc || (OTP_ENABLED && !studentOtp)) {
-        showMessage("❌ يرجى استيفاء جميع الحقول المطلوبة (بما في ذلك رمز التحقق ويوم الأسبوع والمادة والشق)!", "#d9534f", "#f2dede");
+        showMessage("❌ يرجى استيفاء جميع الحقول المطلوبة (بما في ذلك رمز التحقق (OTP) ويوم الأسبوع والمادة والشق)!", "#d9534f", "#f2dede");
         return;
     }
 
@@ -270,9 +269,9 @@ function verifyAndSubmit() {
         return;
     }
 
-    // التحقق من صحة رمز التحقق (OTP)
-    if (OTP_ENABLED && studentOtp !== CORRECT_OTP) {
-        showMessage("❌ عذراً، رمز التحقق الذي أدخلته غير صحيح! تأكد من الرمز المعلن في القاعة.", "#d9534f", "#f2dede");
+    // التحقق من صحة رمز التحقق (OTP) بأنه أرقام وصحيح
+    if (OTP_ENABLED && (isNaN(studentOtp) || studentOtp !== CORRECT_OTP)) {
+        showMessage("❌ عذراً، رمز التحقق (OTP) الذي أدخلته غير صحيح! تأكد من الرمز الرقمي المعلن في القاعة.", "#d9534f", "#f2dede");
         return;
     }
 
