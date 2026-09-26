@@ -19,8 +19,8 @@ CLASS_LAT = 30.718881
 CLASS_LON = 31.244633
 ALLOWED_RADIUS_METERS = 100
 
-# رابط الـ Web App الجديد الخاص بك
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyWzDVaeoEo1-moJC7UycBA1qpSTInUUPpPpD5euhqOqFPtpaRbaFmA13_ZQlBTGdK67w/exec"
+# رابط الـ Web App الخاص بملف Google Sheets الخاص بك
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxvYZXJaC6rgpchmf2jN8TgzzrbukHmc-BiTGVtGBa2XzcJvwVo5oJGcN5LiEgX9j3v2A/exec"
 
 form_html = (
     """
@@ -219,10 +219,10 @@ function verifyAndSubmit() {
                     dist: Math.round(distance)
                 };
 
-                # إرسال البيانات باستخدام Fetch API مباشرة إلى Google Sheets Web App
+                // إرسال البيانات باستخدام Fetch API مباشرة إلى Google Sheets Web App
                 fetch(SCRIPT_URL, {
                     method: "POST",
-                    mode: "no-cors", # لتجنب مشاكل الـ CORS في قوقل سكريبت
+                    mode: "no-cors", // لتجنب مشاكل الـ CORS في قوقل سكريبت
                     headers: {
                         "Content-Type": "application/json"
                     },
