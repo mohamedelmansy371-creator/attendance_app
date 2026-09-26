@@ -8,9 +8,46 @@ import streamlit.components.v1 as components
 # إعدادات صفحة التطبيق
 st.set_page_config(page_title="تسجيل الحضور الجامعي الذكي", page_icon="📍")
 
+# --- لوحة التحكم الجانبية للمشرف (أنت) ---
+st.sidebar.title("🔐 لوحة تحكم المشرف")
+admin_password_input = st.sidebar.text_input(
+    "كلمة مرور المشرف", type="password", placeholder="أدخل كلمة المرور"
+)
+
+# كلمة المرور الخاصة بك (يمكنك تغييرها هنا متى شئت)
+ADMIN_SECRET_PASS = "5994"
+
+otp_enabled = False
+current_otp = ""
+
+if admin_password_input == ADMIN_SECRET_PASS:
+  st.sidebar.success("تم تسجيل الدخول بنجاح كمسرف ✅")
+  st.sidebar.markdown("---")
+  st.sidebar.subheader("إدارة رمز التحقق (OTP)")
+
+  use_otp = st.sidebar.checkbox("تفعيل نظام رمز التحقق (OTP)", value=True)
+
+  if use_otp:
+    otp_enabled = True
+    current_otp = st.sidebar.text_input(
+        "الرمز الحالي للمحاضرة",
+        value="7890",
+        help="اكتب الرمز الذي ستعطيه للطلاب في المدرج",
+    )
+  else:
+    otp_enabled = False
+    current_otp = ""
+else:
+  if admin_password_input != "":
+    st.sidebar.error("كلمة المرور غير صحيحة")
+  # في حال لم يسجل المشرف الدخول، نفترض الافتراضي أو نقفل الخاصية حسب الرغبة
+  otp_enabled = True  # أو تتركه مفعلًا برمز افتراضي
+  current_otp = "7890"
+
 st.title("📌 نظام تسجيل الحضور المقيد جغرافياً")
 st.write(
-    "يرجى إدخال البيانات المطلوبة بدقة، ثم الضغط على زر التحقق من الموقع وتسجيل الحضور."
+    "يرجى إدخال البيانات المطلوبة بدقة، ثم الضغط على زر التحقق من الموقع وتسجيل"
+    " الحضور."
 )
 
 # --- إحداثيات قاعة المحاضرات ---
@@ -20,6 +57,10 @@ ALLOWED_RADIUS_METERS = 100
 
 # رابط الـ Web App الخاص بك
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzv9WIfVeNH_PxMyqhsrLJKj0svRQ76vmBJdzYUpNl745-n0LQ__WyXVHWTHy4jMQfo/exec"
+
+# تمرير حالة تفعيل الـ OTP والرمز الفعلي إلى الـ HTML/JavaScript
+SHOW_OTP_FIELD = "block" if otp_enabled else "none"
+SERVER_OTP = str(current_otp).strip()
 
 form_html = (
     """
@@ -32,6 +73,12 @@ form_html = (
     <div style="margin-bottom: 15px;">
         <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">كود الطالب (8 أرقام إنجليزية):</label>
         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="s_id" placeholder="أدخل 8 أرقام بالضبط" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box;">
+    </div>
+
+    <!-- خانة رمز التحقق (OTP) المتغير -->
+    <div id="otp_box_container" style="margin-bottom: 15px; display: __SHOW_OTP__;">
+        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #c0392b; font-size: 16px;">🔐 رمز التحقق للمحاضرة (المعلن في القاعة):</label>
+        <input type="text" id="s_otp" placeholder="أدخل رمز التحقق المكتوب على السبورة" style="width: 100%; padding: 14px; border: 2px dashed #e74c3c; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: #fff5f5;">
     </div>
 
     <!-- خانة يوم الأسبوع -->
@@ -147,6 +194,8 @@ const CLASS_LAT = __LAT__;
 const CLASS_LON = __LON__;
 const ALLOWED_RADIUS = __RADIUS__;
 const SCRIPT_URL = "__URL__";
+const OTP_ENABLED = __OTP_ENABLED__;
+const CORRECT_OTP = "__CORRECT_OTP__";
 
 function toggleSection() {
     const course = document.getElementById("s_course").value;
@@ -200,9 +249,14 @@ function verifyAndSubmit() {
     const year = document.getElementById("s_year").value;
     const track = document.getElementById("s_track").value;
     const loc = document.getElementById("s_loc").value;
+    
+    let studentOtp = "";
+    if (OTP_ENABLED) {
+        studentOtp = document.getElementById("s_otp").value.trim();
+    }
 
-    if (!name || !id || !day || !course || !section || !year || !loc) {
-        showMessage("❌ يرجى استيفاء جميع الحقول المطلوبة (بما في ذلك يوم الأسبوع والمادة والشق الدراسي)!", "#d9534f", "#f2dede");
+    if (!name || !id || !day || !course || !section || !year || !loc || (OTP_ENABLED && !studentOtp)) {
+        showMessage("❌ يرجى استيفاء جميع الحقول المطلوبة (بما في ذلك رمز التحقق ويوم الأسبوع والمادة والشق)!", "#d9534f", "#f2dede");
         return;
     }
 
@@ -213,6 +267,12 @@ function verifyAndSubmit() {
 
     if (id.length !== 8 || isNaN(id)) {
         showMessage("❌ خطأ: يجب أن يكون كود الطالب مكوناً من 8 أرقام بالضبط!", "#d9534f", "#f2dede");
+        return;
+    }
+
+    // التحقق من صحة رمز التحقق (OTP)
+    if (OTP_ENABLED && studentOtp !== CORRECT_OTP) {
+        showMessage("❌ عذراً، رمز التحقق الذي أدخلته غير صحيح! تأكد من الرمز المعلن في القاعة.", "#d9534f", "#f2dede");
         return;
     }
 
@@ -317,6 +377,9 @@ function verifyAndSubmit() {
     .replace("__LON__", str(CLASS_LON))
     .replace("__RADIUS__", str(ALLOWED_RADIUS_METERS))
     .replace("__URL__", GOOGLE_SCRIPT_URL)
+    .replace("__SHOW_OTP__", SHOW_OTP_FIELD)
+    .replace("__OTP_ENABLED__", "true" if otp_enabled else "false")
+    .replace("__CORRECT_OTP__", SERVER_OTP)
 )
 
-components.html(form_html, height=1100)
+components.html(form_html, height=1150)
