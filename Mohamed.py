@@ -18,8 +18,8 @@ CLASS_LAT = 30.718881
 CLASS_LON = 31.244633
 ALLOWED_RADIUS_METERS = 100
 
-# رابط الـ Web App الخاص بملف Google Sheets الخاص بك
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxvYZXJaC6rgpchmf2jN8TgzzrbukHmc-BiTGVtGBa2XzcJvwVo5oJGcN5LiEgX9j3v2A/exec"
+# رابط الـ Web App الجديد الخاص بك
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQZAYBcSlqJA-NJBzHo5KYhLZo_VXkrWwRjWCZXWyTYLvieLUWEMkT0BfA668kB8x7/exec"
 
 form_html = (
     """
