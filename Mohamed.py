@@ -202,7 +202,7 @@ function verifyAndSubmit() {
     const loc = document.getElementById("s_loc").value;
 
     if (!name || !id || !day || !course || !section || !year || !loc) {
-        showMessage("❌ يرجى استيفاء جميع الحقول المطلوبة!", "#d9534f", "#f2dede");
+        showMessage("❌ يرجى استيفاء جميع الحقول المطلوبة (بما في ذلك يوم الأسبوع والمادة والشق الدراسي)!", "#d9534f", "#f2dede");
         return;
     }
 
@@ -216,7 +216,21 @@ function verifyAndSubmit() {
         return;
     }
 
-    // التحقق من قاعدة الـ 90 دقيقة بناءً على كود الطالب
+    // استخراج التاريخ الحالي بصيغة (YYYY-MM-DD) لدمجه مع مفتاح الفحص
+    const nowCheck = new Date();
+    const currentDateStr = nowCheck.getFullYear() + '-' + 
+        String(nowCheck.getMonth() + 1).padStart(2, '0') + '-' + 
+        String(nowCheck.getDate()).padStart(2, '0');
+
+    // 1. الشرط الأول: التحقق من عدم تسجيل نفس المادة ونفس الشق في نفس اليوم والتاريخ الفعلي مسبقاً
+    const recordKey = "attendance_" + id + "_" + currentDateStr + "_" + course + "_" + section;
+    const alreadyRegistered = localStorage.getItem(recordKey);
+    if (alreadyRegistered) {
+        showMessage("⏳ عذراً، لقد قمت بتسجيل الحضور لهذه المادة (شق " + section + ") في تاريخ اليوم (" + currentDateStr + ") مسبقاً ولا يمكنك التسجيل مرتين في نفس اليوم!", "#f0ad4e", "#fcf8e3");
+        return;
+    }
+
+    // 2. الشرط الثاني: التحقق من مرور 90 دقيقة على الأقل منذ آخر عملية تسجيل عامة لأي مادة
     const lastSubmitTime = localStorage.getItem("last_submit_" + id);
     if (lastSubmitTime) {
         const currentTime = new Date().getTime();
@@ -278,10 +292,11 @@ function verifyAndSubmit() {
                     },
                     body: JSON.stringify(data)
                 }).then(() => {
-                    // حفظ وقت التسجيل الحالي بالمللي ثانية لمنع التسجيل قبل مرور 90 دقيقة
+                    // حفظ حالة التسجيل مرتبطة بتاريخ اليوم الحالي + وقت آخر تسجيل للـ 90 دقيقة
+                    localStorage.setItem(recordKey, "true");
                     localStorage.setItem("last_submit_" + id, new Date().getTime().toString());
 
-                    showMessage("✅ تم تسجيل حضورك بنجاح في مادة (" + course + " - " + section + ") وحفظه في جدول البيانات!", "#28a745", "#d4edda");
+                    showMessage("✅ تم تسجيل حضورك بنجاح في مادة (" + course + " - " + section + ") ليوم " + day + " وتاريخ " + currentDateStr + " وحفظه في جدول البيانات!", "#28a745", "#d4edda");
                 }).catch((error) => {
                     showMessage("❌ حدث خطأ أثناء الاتصال بالخادم، يرجى المحاولة مرة أخرى.", "#d9534f", "#f2dede");
                 });
