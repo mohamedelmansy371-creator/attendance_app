@@ -112,7 +112,7 @@ ALLOWED_RADIUS_METERS = 100
 
 # رابط الـ Web App الخاص بك
 
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzv9WIfVeNH_PxMyqhsrLJKj0svRQ76vmBJdzYUpNl745-n0LQ__WyXVHWTHy4jMQfo/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwhvY9p5gUW4t7R2Q-e1MkJlRdqAK9faqQHCbhoRC1CLgK1wzD7s-qj29xhTrvnUygS/exec"
 
 
 
