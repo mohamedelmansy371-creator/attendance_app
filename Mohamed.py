@@ -15,13 +15,13 @@ admin_password_input = st.sidebar.text_input(
 )
 
 # كلمة المرور الخاصة بك (يمكنك تغييرها هنا متى شئت)
-ADMIN_SECRET_PASS = "1234"
+ADMIN_SECRET_PASS = "5994"
 
 otp_enabled = False
 current_otp = ""
 
 if admin_password_input == ADMIN_SECRET_PASS:
-  st.sidebar.success("تم تسجيل الدخول بنجاح كمسرف ✅")
+  st.sidebar.success("تم تسجيل الدخول بنجاح كمشرف ✅")
   st.sidebar.markdown("---")
   st.sidebar.subheader("إدارة رمز التحقق (OTP)")
 
@@ -70,8 +70,8 @@ form_html = (
     </div>
     
     <div style="margin-bottom: 15px;">
-        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">كود الطالب (8 أرقام إنجليزية):</label>
-        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="s_id" placeholder="أدخل 8 أرقام بالضبط" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box;">
+        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">الرقم القومي (14 رقم بالإنجليزية):</label>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="14" id="s_id" placeholder="أدخل 14 رقم بالضبط" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box;">
     </div>
 
     <!-- خانة يوم الأسبوع (تلقائي بدون تدخل الطالب مع إمكانية العرض) -->
