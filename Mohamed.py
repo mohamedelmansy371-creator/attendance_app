@@ -399,4 +399,4 @@ function verifyAndSubmit() {
     .replace("__CORRECT_OTP__", SERVER_OTP)
 )
 
-components.html(form_html, height=1150)
+components.html(form_html, height=1200)
