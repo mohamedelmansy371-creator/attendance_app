@@ -201,6 +201,24 @@ window.onload = function() {
     const daysMap = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
     const todayIndex = new Date().getDay();
     document.getElementById("s_day").value = daysMap[todayIndex];
+
+    // التحقق المسبق من بصمة الجهاز لهذا اليوم لمنع تسجيل أكثر من طالب من نفس الهاتف
+    const nowCheckInit = new Date();
+    const currentDateStrInit = nowCheckInit.getFullYear() + '-' + 
+        String(nowCheckInit.getMonth() + 1).padStart(2, '0') + '-' + 
+        String(nowCheckInit.getDate()).padStart(2, '0');
+    
+    let deviceFingerprint = localStorage.getItem("device_fp_" + currentDateStrInit);
+    if (deviceFingerprint) {
+        showMessage("⚠️ تنبيه: تم تسجيل حضور طالب برقم قومي من هذا الهاتف اليوم (" + currentDateStrInit + "). لا يمكن استخدام نفس الهاتف لتسجيل حضور طالب آخر.", "#856404", "#fff3cd");
+        // تعطيل زر التسجيل وحقول الإدخال لحماية النظام
+        const inputs = document.querySelectorAll("input, select, button");
+        inputs.forEach(el => {
+            if (!el.id.includes("msg")) {
+                el.disabled = true;
+            }
+        });
+    }
 };
 
 function toggleSection() {
@@ -307,6 +325,14 @@ function verifyAndSubmit() {
         String(nowCheck.getMonth() + 1).padStart(2, '0') + '-' + 
         String(nowCheck.getDate()).padStart(2, '0');
 
+    // 0. فحص بصمة الجهاز المرتبطة بالرقم القومي لهذا اليوم لمنع أي محاولة تسجيل ثانية من نفس الهاتف
+    const deviceFpKey = "device_fp_" + currentDateStr;
+    const existingFp = localStorage.getItem(deviceFpKey);
+    if (existingFp) {
+        showMessage("⏳ عذراً، لقد تم تسجيل حضور طالب بالفعل من هذا الهاتف اليوم (" + currentDateStr + "). لا يُسمح بتسجيل أكثر من طالب من نفس الجهاز نهائياً!", "#f0ad4e", "#fcf8e3");
+        return;
+    }
+
     // 1. الشرط الأول: التحقق من عدم تسجيل نفس المادة ونفس الشق في نفس اليوم وتاريخ اليوم الفعلي مسبقاً
     const recordKey = "attendance_" + id + "_" + currentDateStr + "_" + course + "_" + section;
     const alreadyRegistered = localStorage.getItem(recordKey);
@@ -377,9 +403,18 @@ function verifyAndSubmit() {
                     },
                     body: JSON.stringify(data)
                 }).then(() => {
-                    // حفظ حالة التسجيل مرتبطة بتاريخ اليوم الحالي + وقت آخر تسجيل للـ 90 دقيقة
+                    // حفظ بصمة الهاتف لهذا اليوم مرتبطة بهذا الرقم القومي لمنع أي محاولة أخرى
+                    localStorage.setItem(deviceFpKey, id);
                     localStorage.setItem(recordKey, "true");
                     localStorage.setItem("last_submit_" + id, new Date().getTime().toString());
+
+                    // قفل الحقول لمنع إدخال بيانات أخرى
+                    const inputs = document.querySelectorAll("input, select, button");
+                    inputs.forEach(el => {
+                        if (!el.id.includes("msg")) {
+                            el.disabled = true;
+                        }
+                    });
 
                     showMessage("✅ تم تسجيل حضورك بنجاح في مادة (" + course + " - " + section + ") ليوم " + day + " وتاريخ " + currentDateStr + " وحفظه في جدول البيانات!", "#28a745", "#d4edda");
                 }).catch((error) => {
