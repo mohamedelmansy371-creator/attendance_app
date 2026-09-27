@@ -74,11 +74,11 @@ form_html = (
         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="s_id" placeholder="أدخل 8 أرقام بالضبط" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box;">
     </div>
 
-    <!-- خانة يوم الأسبوع (يختارها الطالب يدوياً مثل الشكل الأصلي) -->
+    <!-- خانة يوم الأسبوع (تلقائي بدون تدخل الطالب مع إمكانية العرض) -->
     <div style="margin-bottom: 15px;">
-        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">يوم الأسبوع:</label>
-        <select id="s_day" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: white;">
-            <option value="">-- اختر يوم الأسبوع --</option>
+        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">يوم الأسبوع (تلقائي):</label>
+        <select id="s_day" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: #e9ecef; font-weight: bold; color: #0275d8;">
+            <option value="">-- جارٍ تحديد اليوم تلقائياً --</option>
             <option value="السبت">السبت</option>
             <option value="الأحد">الأحد</option>
             <option value="الإثنين">الإثنين</option>
@@ -196,6 +196,13 @@ const SCRIPT_URL = "__URL__";
 const OTP_ENABLED = __OTP_ENABLED__;
 const CORRECT_OTP = "__CORRECT_OTP__";
 
+// تعيين يوم الأسبوع تلقائياً بمجرد فتح الصفحة
+window.onload = function() {
+    const daysMap = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+    const todayIndex = new Date().getDay();
+    document.getElementById("s_day").value = daysMap[todayIndex];
+};
+
 function toggleSection() {
     const course = document.getElementById("s_course").value;
     const sectionContainer = document.getElementById("section_container");
@@ -239,10 +246,9 @@ function showMessage(text, color, bgColor) {
     msg.innerHTML = text;
 }
 
-// دالة تنقية ذكية متقدمة لإزالة الرموز الخفية وتحويل الأرقام العربية إلى إنجليزية بدقة
+// دالة تنقية ذكية متقدمة لإزالة الرموز الخفية وتوحيد الأرقام
 function cleanDigits(inputStr) {
     if (!inputStr) return "";
-    // إزالة الفراغات الصفرية والرموز الخفية التي تضعها بعض لوحات مفاتيح الهواتف
     let cleaned = inputStr.toString().replace(/[\\u200B-\\u200D\\uFEFF]/g, '').trim();
     
     let arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
@@ -253,7 +259,6 @@ function cleanDigits(inputStr) {
         let regexFa = new RegExp(persianNumbers[i], 'g');
         cleaned = cleaned.replace(regexAr, i).replace(regexFa, i);
     }
-    // الاحتفاظ بالأرقام الصافية فقط
     let matches = cleaned.match(/[0-9]/g);
     return matches ? matches.join('') : '';
 }
@@ -275,7 +280,7 @@ function verifyAndSubmit() {
     }
 
     if (!name || !id || !day || !course || !section || !year || !loc || (OTP_ENABLED && !studentOtp)) {
-        showMessage("❌ يرجى استيفاء جميع الحقول المطلوبة (بما في ذلك رمز التحقق (OTP) ويوم الأسبوع والمادة والشق)!", "#d9534f", "#f2dede");
+        showMessage("❌ يرجى استيفاء جميع الحقول المطلوبة (بما في ذلك رمز التحقق (OTP) والمادة والشق)!", "#d9534f", "#f2dede");
         return;
     }
 
@@ -388,7 +393,7 @@ function verifyAndSubmit() {
         (error) => {
             showMessage("❌ فشل تحديد الموقع. تأكد من تفعيل الـ GPS والسماح للمتصفح بالوصول لموقعك.", "#d9534f", "#f2dede");
         },
-        { enableHighAccuracy: true, timeout: 20, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
     );
 }
 </script>
