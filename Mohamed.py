@@ -14,7 +14,6 @@ admin_password_input = st.sidebar.text_input(
     "كلمة مرور المشرف", type="password", placeholder="أدخل كلمة المرور"
 )
 
-# كلمة المرور الخاصة بك (يمكنك تغييرها هنا متى شئت)
 ADMIN_SECRET_PASS = "5994"
 
 otp_enabled = False
@@ -54,10 +53,8 @@ CLASS_LAT = 30.718881
 CLASS_LON = 31.244633
 ALLOWED_RADIUS_METERS = 100
 
-# رابط الـ Web App الخاص بك
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzv9WIfVeNH_PxMyqhsrLJKj0svRQ76vmBJdzYUpNl745-n0LQ__WyXVHWTHy4jMQfo/exec"
 
-# تمرير حالة تفعيل الـ OTP والرمز الفعلي إلى الـ HTML/JavaScript
 SHOW_OTP_FIELD = "block" if otp_enabled else "none"
 SERVER_OTP = str(current_otp).strip()
 
@@ -74,7 +71,6 @@ form_html = (
         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="14" id="s_id" placeholder="أدخل 14 رقم بالضبط" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box;">
     </div>
 
-    <!-- خانة يوم الأسبوع (تلقائي بدون تدخل الطالب مع إمكانية العرض) -->
     <div style="margin-bottom: 15px;">
         <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">يوم الأسبوع (تلقائي):</label>
         <select id="s_day" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: #e9ecef; font-weight: bold; color: #0275d8;">
@@ -174,7 +170,6 @@ form_html = (
         <input type="text" id="s_time" readonly placeholder="سيتم التقاط الوقت تلقائياً عند التسجيل" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; background-color: #e9ecef; box-sizing: border-box;">
     </div>
 
-    <!-- خانة رمز التحقق (OTP) الرقمية - الخطوة الأخيرة قبل زر التأكيد -->
     <div id="otp_box_container" style="margin-bottom: 20px; display: __SHOW_OTP__;">
         <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #c0392b; font-size: 16px;">🔐 رمز التحقق (OTP) المعلن في القاعة:</label>
         <input type="text" inputmode="numeric" pattern="[0-9]*" id="s_otp" placeholder="أدخل الرمز الرقمي المكتوب على السبورة" style="width: 100%; padding: 14px; border: 2px dashed #e74c3c; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: #fff5f5;">
@@ -182,7 +177,6 @@ form_html = (
 
     <button onclick="verifyAndSubmit()" style="background-color: #28a745; color: white; padding: 16px 20px; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; box-shadow: 0 6px 12px rgba(0,0,0,0.15);">📍 تحقق من الموقع وتسجيل الحضور</button>
     
-    <!-- صندوق رسائل كبير وبارز -->
     <div id="msg_container" style="margin-top: 25px; padding: 20px; border-radius: 10px; text-align: center; display: none; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
         <p id="msg" style="margin: 0; font-weight: bold; font-size: 17px; line-height: 1.6;"></p>
     </div>
@@ -196,29 +190,20 @@ const SCRIPT_URL = "__URL__";
 const OTP_ENABLED = __OTP_ENABLED__;
 const CORRECT_OTP = "__CORRECT_OTP__";
 
-// تعيين يوم الأسبوع تلقائياً بمجرد فتح الصفحة
+function getDeviceFingerprint() {
+    let fp = localStorage.getItem("permanent_device_fp");
+    if (!fp) {
+        fp = 'dev_' + Math.random().toString(36).substring(2) + Date.now().toString(36) + '_' + screen.width + 'x' + screen.height;
+        localStorage.setItem("permanent_device_fp", fp);
+    }
+    return fp;
+}
+
 window.onload = function() {
     const daysMap = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
     const todayIndex = new Date().getDay();
     document.getElementById("s_day").value = daysMap[todayIndex];
-
-    // التحقق المسبق من بصمة الجهاز لهذا اليوم لمنع تسجيل أكثر من طالب من نفس الهاتف
-    const nowCheckInit = new Date();
-    const currentDateStrInit = nowCheckInit.getFullYear() + '-' + 
-        String(nowCheckInit.getMonth() + 1).padStart(2, '0') + '-' + 
-        String(nowCheckInit.getDate()).padStart(2, '0');
-    
-    let deviceFingerprint = localStorage.getItem("device_fp_" + currentDateStrInit);
-    if (deviceFingerprint) {
-        showMessage("⚠️ تنبيه: تم تسجيل حضور طالب برقم قومي من هذا الهاتف اليوم (" + currentDateStrInit + "). لا يمكن استخدام نفس الهاتف لتسجيل حضور طالب آخر.", "#856404", "#fff3cd");
-        // تعطيل زر التسجيل وحقول الإدخال لحماية النظام
-        const inputs = document.querySelectorAll("input, select, button");
-        inputs.forEach(el => {
-            if (!el.id.includes("msg")) {
-                el.disabled = true;
-            }
-        });
-    }
+    getDeviceFingerprint();
 };
 
 function toggleSection() {
@@ -264,14 +249,11 @@ function showMessage(text, color, bgColor) {
     msg.innerHTML = text;
 }
 
-// دالة تنقية ذكية متقدمة لإزالة الرموز الخفية وتوحيد الأرقام
 function cleanDigits(inputStr) {
     if (!inputStr) return "";
     let cleaned = inputStr.toString().replace(/[\\u200B-\\u200D\\uFEFF]/g, '').trim();
-    
     let arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
     let persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-    
     for (let i = 0; i < 10; i++) {
         let regexAr = new RegExp(arabicNumbers[i], 'g');
         let regexFa = new RegExp(persianNumbers[i], 'g');
@@ -312,46 +294,10 @@ function verifyAndSubmit() {
         return;
     }
 
-    // التحقق من صحة رمز التحقق (OTP) بعد تنقيته تماماً
     let serverOtpCleaned = cleanDigits(CORRECT_OTP);
     if (OTP_ENABLED && (studentOtp !== serverOtpCleaned)) {
         showMessage("❌ عذراً، رمز التحقق (OTP) الذي أدخلته غير صحيح! تأكد من الرمز الرقمي المعلن في القاعة.", "#d9534f", "#f2dede");
         return;
-    }
-
-    // استخراج التاريخ الحالي بصيغة (YYYY-MM-DD) لدمجه مع مفتاح الفحص
-    const nowCheck = new Date();
-    const currentDateStr = nowCheck.getFullYear() + '-' + 
-        String(nowCheck.getMonth() + 1).padStart(2, '0') + '-' + 
-        String(nowCheck.getDate()).padStart(2, '0');
-
-    // 0. فحص بصمة الجهاز المرتبطة بالرقم القومي لهذا اليوم لمنع أي محاولة تسجيل ثانية من نفس الهاتف
-    const deviceFpKey = "device_fp_" + currentDateStr;
-    const existingFp = localStorage.getItem(deviceFpKey);
-    if (existingFp) {
-        showMessage("⏳ عذراً، لقد تم تسجيل حضور طالب بالفعل من هذا الهاتف اليوم (" + currentDateStr + "). لا يُسمح بتسجيل أكثر من طالب من نفس الجهاز نهائياً!", "#f0ad4e", "#fcf8e3");
-        return;
-    }
-
-    // 1. الشرط الأول: التحقق من عدم تسجيل نفس المادة ونفس الشق في نفس اليوم وتاريخ اليوم الفعلي مسبقاً
-    const recordKey = "attendance_" + id + "_" + currentDateStr + "_" + course + "_" + section;
-    const alreadyRegistered = localStorage.getItem(recordKey);
-    if (alreadyRegistered) {
-        showMessage("⏳ عذراً، لقد قمت بتسجيل الحضور لهذه المادة (شق " + section + ") في تاريخ اليوم (" + currentDateStr + ") مسبقاً ولا يمكنك التسجيل مرتين في نفس اليوم!", "#f0ad4e", "#fcf8e3");
-        return;
-    }
-
-    // 2. الشرط الثاني: التحقق من مرور 90 دقيقة على الأقل منذ آخر عملية تسجيل عامة لأي مادة
-    const lastSubmitTime = localStorage.getItem("last_submit_" + id);
-    if (lastSubmitTime) {
-        const currentTime = new Date().getTime();
-        const elapsedMinutes = (currentTime - parseInt(lastSubmitTime)) / (1000 * 60);
-        
-        if (elapsedMinutes < 90) {
-            const remainingMinutes = Math.ceil(90 - elapsedMinutes);
-            showMessage("⏳ عذراً، يجب أن تنتظر مرور 90 دقيقة بين كل عملية تسجيل وأخرى. يتبقى لك حوالي " + remainingMinutes + " دقيقة.", "#f0ad4e", "#fcf8e3");
-            return;
-        }
     }
 
     if (!navigator.geolocation) {
@@ -368,7 +314,7 @@ function verifyAndSubmit() {
             const distance = calculateDistance(CLASS_LAT, CLASS_LON, lat, lon);
 
             if (distance <= ALLOWED_RADIUS) {
-                showMessage("⏳ تم التحقق من الموقع (داخل النطاق بنجاح)، جاري إرسال وتسجيل الحضور...", "#0275d8", "#d9edf7");
+                showMessage("⏳ تم التحقق من الموقع، جاري إرسال البيانات والتحقق من السجل المركزي...", "#0275d8", "#d9edf7");
 
                 const now = new Date();
                 const formattedTime = now.getFullYear() + '-' + 
@@ -379,6 +325,7 @@ function verifyAndSubmit() {
                     String(now.getSeconds()).padStart(2, '0');
 
                 document.getElementById("s_time").value = formattedTime;
+                const deviceFp = getDeviceFingerprint();
 
                 const data = {
                     name: name,
@@ -392,32 +339,31 @@ function verifyAndSubmit() {
                     lat: lat,
                     lon: lon,
                     dist: Math.round(distance),
-                    time: formattedTime
+                    time: formattedTime,
+                    deviceFp: deviceFp
                 };
 
                 fetch(SCRIPT_URL, {
                     method: "POST",
-                    mode: "no-cors",
                     headers: {
-                        "Content-Type": "text/plain"
+                        "Content-Type": "text/plain;charset=utf-8"
                     },
                     body: JSON.stringify(data)
-                }).then(() => {
-                    // حفظ بصمة الهاتف لهذا اليوم مرتبطة بهذا الرقم القومي لمنع أي محاولة أخرى
-                    localStorage.setItem(deviceFpKey, id);
-                    localStorage.setItem(recordKey, "true");
-                    localStorage.setItem("last_submit_" + id, new Date().getTime().toString());
-
-                    // قفل الحقول لمنع إدخال بيانات أخرى
-                    const inputs = document.querySelectorAll("input, select, button");
-                    inputs.forEach(el => {
-                        if (!el.id.includes("msg")) {
-                            el.disabled = true;
+                })
+                .then(response => response.text())
+                .then(text => {
+                    try {
+                        let resJson = JSON.parse(text);
+                        if (resJson.status === "success") {
+                            showMessage("✅ تم تسجيل حضورك بنجاح في مادة (" + course + " - " + section + ")!", "#28a745", "#d4edda");
+                        } else {
+                            showMessage("❌ " + resJson.message, "#f0ad4e", "#fcf8e3");
                         }
-                    });
-
-                    showMessage("✅ تم تسجيل حضورك بنجاح في مادة (" + course + " - " + section + ") ليوم " + day + " وتاريخ " + currentDateStr + " وحفظه في جدول البيانات!", "#28a745", "#d4edda");
-                }).catch((error) => {
+                    } catch(e) {
+                        showMessage("✅ تم إرسال طلب تسجيل الحضور بنجاح!", "#28a745", "#d4edda");
+                    }
+                })
+                .catch((error) => {
                     showMessage("❌ حدث خطأ أثناء الاتصال بالخادم، يرجى المحاولة مرة أخرى.", "#d9534f", "#f2dede");
                 });
 
