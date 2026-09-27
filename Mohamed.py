@@ -289,8 +289,8 @@ function verifyAndSubmit() {
         return;
     }
 
-    if (id.length !== 8 || isNaN(id)) {
-        showMessage("❌ خطأ: يجب أن يكون كود الطالب مكوناً من 8 أرقام بالضبط!", "#d9534f", "#f2dede");
+    if (id.length !== 14 || isNaN(id)) {
+        showMessage("❌ خطأ: يجب أن يكون الرقم القومي مكوناً من 14 أرقام بالضبط!", "#d9534f", "#f2dede");
         return;
     }
 
