@@ -296,7 +296,7 @@ function verifyAndSubmit() {
 
     let serverOtpCleaned = cleanDigits(CORRECT_OTP);
     if (OTP_ENABLED && (studentOtp !== serverOtpCleaned)) {
-        showMessage("❌ عذراً، رمز التحقق (OTP) الذي أدخلته غير صحيح! تأكد من الرمز الرقمي المعلن في القاعة.", "#d9534f", "#f2dede");
+        showMessage("❌ عذراً، رمز التحقق (OTP) الذي أدخلته غير صحيح! تأكد من الرمز الرقمي المكتوب على السبورة.", "#d9534f", "#f2dede");
         return;
     }
 
