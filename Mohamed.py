@@ -15,13 +15,13 @@ admin_password_input = st.sidebar.text_input(
 )
 
 # كلمة المرور الخاصة بك (يمكنك تغييرها هنا متى شئت)
-ADMIN_SECRET_PASS = "5994"
+ADMIN_SECRET_PASS = "1234"
 
 otp_enabled = False
 current_otp = ""
 
 if admin_password_input == ADMIN_SECRET_PASS:
-  st.sidebar.success("تم تسجيل الدخول بنجاح كمشرف ✅")
+  st.sidebar.success("تم تسجيل الدخول بنجاح كمسرف ✅")
   st.sidebar.markdown("---")
   st.sidebar.subheader("إدارة رمز التحقق (OTP)")
 
@@ -31,7 +31,7 @@ if admin_password_input == ADMIN_SECRET_PASS:
     otp_enabled = True
     current_otp = st.sidebar.text_input(
         "الرمز الحالي للمحاضرة",
-        value="7863",
+        value="7890",
         help="اكتب الرمز الذي ستعطيه للطلاب في المدرج",
     )
   else:
@@ -43,15 +43,15 @@ else:
   otp_enabled = True
   current_otp = "7890"
 
-st.title("نظام تسجيل الحضور")
+st.title("📌 نظام تسجيل الحضور المقيد جغرافياً")
 st.write(
     "يرجى إدخال البيانات المطلوبة بدقة، ثم الضغط على زر التحقق من الموقع وتسجيل"
     " الحضور."
 )
 
 # --- إحداثيات قاعة المحاضرات ---
-CLASS_LAT = 30.354283
-CLASS_LON = 31.222370
+CLASS_LAT = 30.718881
+CLASS_LON = 31.244633
 ALLOWED_RADIUS_METERS = 100
 
 # رابط الـ Web App الخاص بك
@@ -74,13 +74,7 @@ form_html = (
         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="s_id" placeholder="أدخل 8 أرقام بالضبط" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box;">
     </div>
 
-    <!-- خانة رمز التحقق (OTP) الرقمية -->
-    <div id="otp_box_container" style="margin-bottom: 15px; display: __SHOW_OTP__;">
-        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #c0392b; font-size: 16px;">🔐 رمز التحقق (OTP) المعلن في القاعة:</label>
-        <input type="text" inputmode="numeric" pattern="[0-9]*" id="s_otp" placeholder="أدخل الرمز الرقمي المكتوب على السبورة" style="width: 100%; padding: 14px; border: 2px dashed #e74c3c; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: #fff5f5;">
-    </div>
-
-    <!-- خانة يوم الأسبوع (يتم تحديدها تلقائياً وتثبيتها أو التحقق منها) -->
+    <!-- خانة يوم الأسبوع (تلقائي حسب التاريخ الحالي) -->
     <div style="margin-bottom: 15px;">
         <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">يوم الأسبوع (تلقائي حسب التاريخ الحالي):</label>
         <select id="s_day" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: #e9ecef; font-weight: bold; color: #0275d8;">
@@ -178,6 +172,12 @@ form_html = (
     <div style="margin-bottom: 18px;">
         <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">وقت الحضور المسجل:</label>
         <input type="text" id="s_time" readonly placeholder="سيتم التقاط الوقت تلقائياً عند التسجيل" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; background-color: #e9ecef; box-sizing: border-box;">
+    </div>
+
+    <!-- خانة رمز التحقق (OTP) الرقمية - أصبحت الخطوة الأخيرة قبل زر التأكيد -->
+    <div id="otp_box_container" style="margin-bottom: 20px; display: __SHOW_OTP__;">
+        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #c0392b; font-size: 16px;">🔐 رمز التحقق (OTP) المعلن في القاعة:</label>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="s_otp" placeholder="أدخل الرمز الرقمي المكتوب على السبورة" style="width: 100%; padding: 14px; border: 2px dashed #e74c3c; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: #fff5f5;">
     </div>
 
     <button onclick="verifyAndSubmit()" style="background-color: #28a745; color: white; padding: 16px 20px; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; box-shadow: 0 6px 12px rgba(0,0,0,0.15);">📍 تحقق من الموقع وتسجيل الحضور</button>
@@ -399,4 +399,4 @@ function verifyAndSubmit() {
     .replace("__CORRECT_OTP__", SERVER_OTP)
 )
 
-components.html(form_html, height=1200)
+components.html(form_html, height=1150)
