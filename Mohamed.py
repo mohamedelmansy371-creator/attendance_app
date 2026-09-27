@@ -31,7 +31,7 @@ if admin_password_input == ADMIN_SECRET_PASS:
     otp_enabled = True
     current_otp = st.sidebar.text_input(
         "الرمز الحالي للمحاضرة",
-        value="7887",
+        value="7888",
         help="اكتب الرمز الذي ستعطيه للطلاب في المدرج",
     )
   else:
