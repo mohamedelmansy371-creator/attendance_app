@@ -174,7 +174,7 @@ form_html = (
         <input type="text" id="s_time" readonly placeholder="سيتم التقاط الوقت تلقائياً عند التسجيل" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; background-color: #e9ecef; box-sizing: border-box;">
     </div>
 
-    <!-- خانة رمز التحقق (OTP) الرقمية - أصبحت الخطوة الأخيرة قبل زر التأكيد -->
+    <!-- خانة رمز التحقق (OTP) الرقمية - الخطوة الأخيرة قبل زر التأكيد -->
     <div id="otp_box_container" style="margin-bottom: 20px; display: __SHOW_OTP__;">
         <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #c0392b; font-size: 16px;">🔐 رمز التحقق (OTP) المعلن في القاعة:</label>
         <input type="text" inputmode="numeric" pattern="[0-9]*" id="s_otp" placeholder="أدخل الرمز الرقمي المكتوب على السبورة" style="width: 100%; padding: 14px; border: 2px dashed #e74c3c; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: #fff5f5;">
@@ -192,7 +192,7 @@ form_html = (
 const CLASS_LAT = __LAT__;
 const CLASS_LON = __LON__;
 const ALLOWED_RADIUS = __RADIUS__;
-const SCRIPT_URL = "__URL__";
+const SCRIPT_URL = __URL__;
 const OTP_ENABLED = __OTP_ENABLED__;
 const CORRECT_OTP = "__CORRECT_OTP__";
 
@@ -249,6 +249,22 @@ function showMessage(text, color, bgColor) {
     msg.innerHTML = text;
 }
 
+// دالة ذكية لتنقية الأرقام (تحويل الأرقام العربية إلى إنجليزية وإزالة المسافات)
+function cleanDigits(inputStr) {
+    if (!inputStr) return "";
+    let arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    let persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+    
+    let cleaned = inputStr.toString().trim();
+    for (let i = 0; i < 10; i++) {
+        let regexAr = new RegExp(arabicNumbers[i], 'g');
+        let regexFa = new RegExp(persianNumbers[i], 'g');
+        cleaned = cleaned.replace(regexAr, i).replace(regexFa, i);
+    }
+    // الاحتفاظ بالأرقام فقط وإزالة أي مسافات أو رموز خفية في المنتصف
+    return cleaned.replace(/[^0-9]/g, '');
+}
+
 function verifyAndSubmit() {
     const name = document.getElementById("s_name").value.trim();
     const id = document.getElementById("s_id").value.trim();
@@ -261,7 +277,8 @@ function verifyAndSubmit() {
     
     let studentOtp = "";
     if (OTP_ENABLED) {
-        studentOtp = document.getElementById("s_otp").value.trim();
+        let rawOtp = document.getElementById("s_otp").value;
+        studentOtp = cleanDigits(rawOtp); // تنقية رمز التحقق تماماً
     }
 
     if (!name || !id || !day || !course || !section || !year || !loc || (OTP_ENABLED && !studentOtp)) {
@@ -287,8 +304,9 @@ function verifyAndSubmit() {
         return;
     }
 
-    // التحقق من صحة رمز التحقق (OTP)
-    if (OTP_ENABLED && (isNaN(studentOtp) || studentOtp !== CORRECT_OTP)) {
+    // التحقق من صحة رمز التحقق (OTP) بعد تنقيته مقارنة بالرمز الصحيح من الخادم
+    const serverOtpCleaned = cleanDigits(CORRECT_OTP);
+    if (OTP_ENABLED && (studentOtp !== serverOtpCleaned)) {
         showMessage("❌ عذراً، رمز التحقق (OTP) الذي أدخلته غير صحيح! تأكد من الرمز الرقمي المعلن في القاعة.", "#d9534f", "#f2dede");
         return;
     }
@@ -399,4 +417,4 @@ function verifyAndSubmit() {
     .replace("__CORRECT_OTP__", SERVER_OTP)
 )
 
-components.html(form_html, height=1200)
+components.html(form_html, height=1500)
