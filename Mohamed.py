@@ -88,7 +88,7 @@ else:
 
 
 
-st.title("📌 نظام تسجيل الحضور المقيد جغرافياً")
+st.title("نظام تسجيل الحضور الذكي")
 
 st.write(
 
@@ -102,9 +102,9 @@ st.write(
 
 # --- إحداثيات قاعة المحاضرات ---
 
-CLASS_LAT = 30.718881
+CLASS_LAT = 30.354266
 
-CLASS_LON = 31.244633
+CLASS_LON = 31.222372
 
 ALLOWED_RADIUS_METERS = 100
 
