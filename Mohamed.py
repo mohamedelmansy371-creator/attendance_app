@@ -54,7 +54,7 @@ CLASS_LON = 31.244548
 ALLOWED_RADIUS_METERS = 100
 
 # رابط الـ Web App الجديد الخاص بك
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzkp8l9Pe8AcptjeKPFBBltB8E2Dql7teO2Gcvqc8JJOXo30II2saduylog9HZlIpMR/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz6ThM4MXH5yEFrtgPrghW1D459UIR8INYZLbCtroH9HXCJBdwSWKCXAVLnwLIZG4C0/exec"
 
 # تمرير حالة تفعيل الـ OTP والرمز الفعلي إلى الـ HTML/JavaScript
 SHOW_OTP_FIELD = "block" if otp_enabled else "none"
