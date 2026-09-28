@@ -21,32 +21,31 @@ otp_enabled = False
 current_otp = ""
 
 if admin_password_input == ADMIN_SECRET_PASS:
-  st.sidebar.success("تم تسجيل الدخول بنجاح كمشرف ✅")
-  st.sidebar.markdown("---")
-  st.sidebar.subheader("إدارة رمز التحقق (OTP)")
+    st.sidebar.success("تم تسجيل الدخول بنجاح كمشرف ✅")
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("إدارة رمز التحقق (OTP)")
 
-  use_otp = st.sidebar.checkbox("تفعيل نظام رمز التحقق (OTP)", value=True)
+    use_otp = st.sidebar.checkbox("تفعيل نظام رمز التحقق (OTP)", value=True)
 
-  if use_otp:
-    otp_enabled = True
-    current_otp = st.sidebar.text_input(
-        "الرمز الحالي للمحاضرة",
-        value="7890",
-        help="اكتب الرمز الذي ستعطيه للطلاب في المدرج",
-    )
-  else:
-    otp_enabled = False
-    current_otp = ""
+    if use_otp:
+        otp_enabled = True
+        current_otp = st.sidebar.text_input(
+            "الرمز الحالي للمحاضرة",
+            value="7890",
+            help="اكتب الرمز الذي ستعطيه للطلاب في المدرج",
+        )
+    else:
+        otp_enabled = False
+        current_otp = ""
 else:
-  if admin_password_input != "":
-    st.sidebar.error("كلمة المرور غير صحيحة")
-  otp_enabled = True
-  current_otp = "7890"
+    if admin_password_input != "":
+        st.sidebar.error("كلمة المرور غير صحيحة")
+    otp_enabled = True
+    current_otp = "7890"
 
 st.title("نظام تسجيل الحضور الذكي")
 st.write(
-    "يرجى إدخال البيانات المطلوبة بدقة، ثم الضغط على زر التحقق من الموقع وتسجيل"
-    " الحضور."
+    "يرجى إدخال البيانات المطلوبة بدقة، ثم الضغط على زر التحقق من الموقع وتسجيل الحضور."
 )
 
 # --- إحداثيات قاعة المحاضرات ---
@@ -61,9 +60,20 @@ GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzkp8l9Pe8AcptjeKPF
 SHOW_OTP_FIELD = "block" if otp_enabled else "none"
 SERVER_OTP = str(current_otp).strip()
 
-form_html = (
-    """
-<div style="font-family: Tahoma, sans-serif; padding: 25px; direction: rtl; background-color: #f9f9f9; border-radius: 12px; border: 1px solid #ddd; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+form_html = """
+<!-- حاوية تحذير المتصفح (تظهر فقط إذا لم يكن المتصفح جوجل كروم) -->
+<div id="browser_warning_container" style="display: none; font-family: Tahoma, sans-serif; padding: 30px; direction: rtl; background-color: #f8d7da; border-radius: 12px; border: 2px solid #f5c6cb; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px;">
+    <h2 style="color: #721c24; margin-bottom: 15px;">⚠️ تنبيه هـام جداً - متصفح غير مسموح</h2>
+    <p style="font-size: 18px; color: #721c24; line-height: 1.6; font-weight: bold;">
+        عذراً، لا يمكن تسجيل الحضور إلا من خلال <b>متصفح جوجل كروم (Google Chrome) الأساسي</b> فقط.
+    </p>
+    <p style="font-size: 16px; color: #555; line-height: 1.5;">
+        يبدو أنك تفتح الرابط من تطبيق خارجي (مثل فيسبوك، واتساب) أو متصفح غير مدعوم. يرجى نسخ الرابط فتحه مباشرة داخل تطبيق <b>جوجل كروم</b> بهاتفك لتسجيل الحضور بنجاح.
+    </p>
+</div>
+
+<!-- نموذج تسجيل الحضور (يظهر حصرياً إذا كان المتصفح جوجل كروم) -->
+<div id="main_app_container" style="display: none; font-family: Tahoma, sans-serif; padding: 25px; direction: rtl; background-color: #f9f9f9; border-radius: 12px; border: 1px solid #ddd; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
     <div style="margin-bottom: 15px;">
         <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">اسم الطالب الثلاثي:</label>
         <input type="text" id="s_name" placeholder="أدخل اسمك الثلاثي هنا" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box;">
@@ -196,6 +206,33 @@ const SCRIPT_URL = "__URL__";
 const OTP_ENABLED = __OTP_ENABLED__;
 const CORRECT_OTP = "__CORRECT_OTP__";
 
+// فحص المتصفح عند التحميل المباشر للصفحة
+document.addEventListener("DOMContentLoaded", function() {
+    const ua = navigator.userAgent;
+    // التحقق الصارم من أن المتصفح هو جوجل كروم حصرياً
+    const isChrome = /Chrome/.test(ua) && !/Edge|OPR|SamsungBrowser|UCBrowser|Firefox|CriOS.*CriOS/.test(ua) || (/CriOS/.test(ua) && /Google/.test(navigator.vendor));
+    
+    // للتأكد التام من تشغيل كروم بكل أنواعه (أندرويد وآيفون وديسكتوب)
+    const isActualChrome = /Chrome|CriOS/.test(ua) && !/Edg|OPR|SamsungBrowser|UCBrowser|Firefox/.test(ua);
+
+    const warningBox = document.getElementById("browser_warning_container");
+    const mainApp = document.getElementById("main_app_container");
+
+    if (!isActualChrome) {
+        if (warningBox) warningBox.style.display = "block";
+        if (mainApp) mainApp.style.display = "none";
+    } else {
+        if (warningBox) warningBox.style.display = "none";
+        if (mainApp) mainApp.style.display = "block";
+        
+        // تعيين يوم الأسبوع تلقائياً بمجرد فتح الصفحة في كروم
+        const daysMap = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+        const todayIndex = new Date().getDay();
+        const daySelect = document.getElementById("s_day");
+        if(daySelect) daySelect.value = daysMap[todayIndex];
+    }
+});
+
 // توليد أو جلب معرف ثابت للجهاز لضمان منعه من تسجيل أكثر من طالب للمادة الواحدة
 function getOrCreateDeviceId() {
     let devId = localStorage.getItem("uni_device_unique_id");
@@ -205,13 +242,6 @@ function getOrCreateDeviceId() {
     }
     return devId;
 }
-
-// تعيين يوم الأسبوع تلقائياً بمجرد فتح الصفحة
-window.onload = function() {
-    const daysMap = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-    const todayIndex = new Date().getDay();
-    document.getElementById("s_day").value = daysMap[todayIndex];
-};
 
 function toggleSection() {
     const course = document.getElementById("s_course").value;
@@ -307,7 +337,7 @@ function verifyAndSubmit() {
     // التحقق من صحة رمز التحقق (OTP) بعد تنقيته تماماً
     let serverOtpCleaned = cleanDigits(CORRECT_OTP);
     if (OTP_ENABLED && (studentOtp !== serverOtpCleaned)) {
-        showMessage("❌ عذراً، رمز التحقق (OTP) الذي أدخلته غير صحيح! تأكد من الرمز الرقمي المعلن في القاعة.", "#d9534f", "#f2dede");
+        showMessage("❌ عذراً، رمز التحقق (OTP) الذي أدخلته غير صحيح! تأكد من الرمز الرقمي المكتوب على السبورة.", "#d9534f", "#f2dede");
         return;
     }
 
@@ -390,14 +420,13 @@ function verifyAndSubmit() {
     );
 }
 </script>
-"""
-    .replace("__LAT__", str(CLASS_LAT))
-    .replace("__LON__", str(CLASS_LON))
-    .replace("__RADIUS__", str(ALLOWED_RADIUS_METERS))
-    .replace("__URL__", GOOGLE_SCRIPT_URL)
-    .replace("__SHOW_OTP__", SHOW_OTP_FIELD)
-    .replace("__OTP_ENABLED__", "true" if otp_enabled else "false")
-    .replace("__CORRECT_OTP__", SERVER_OTP)
-)
+""" \
+.replace("__LAT__", str(CLASS_LAT)) \
+.replace("__LON__", str(CLASS_LON)) \
+.replace("__RADIUS__", str(ALLOWED_RADIUS_METERS)) \
+.replace("__URL__", GOOGLE_SCRIPT_URL) \
+.replace("__SHOW_OTP__", SHOW_OTP_FIELD) \
+.replace("__OTP_ENABLED__", "true" if otp_enabled else "false") \
+.replace("__CORRECT_OTP__", SERVER_OTP)
 
 components.html(form_html, height=1500)
