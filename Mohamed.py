@@ -14,7 +14,6 @@ admin_password_input = st.sidebar.text_input(
     "كلمة مرور المشرف", type="password", placeholder="أدخل كلمة المرور"
 )
 
-# كلمة المرور الخاصة بك (يمكنك تغييرها هنا متى شئت)
 ADMIN_SECRET_PASS = "5994"
 
 otp_enabled = False
@@ -53,26 +52,23 @@ CLASS_LAT = 30.719106
 CLASS_LON = 31.244548
 ALLOWED_RADIUS_METERS = 100
 
-# رابط الـ Web App الجديد الخاص بك
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz6ThM4MXH5yEFrtgPrghW1D459UIR8INYZLbCtroH9HXCJBdwSWKCXAVLnwLIZG4C0/exec"
+# رابط الـ Web App الخاص بك
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzkp8l9Pe8AcptjeKPFBBltB8E2Dql7teO2Gcvqc8JJOXo30II2saduylog9HZlIpMR/exec"
 
-# تمرير حالة تفعيل الـ OTP والرمز الفعلي إلى الـ HTML/JavaScript
 SHOW_OTP_FIELD = "block" if otp_enabled else "none"
 SERVER_OTP = str(current_otp).strip()
 
 form_html = """
-<!-- حاوية تحذير المتصفح (تظهر فقط إذا لم يكن المتصفح جوجل كروم) -->
 <div id="browser_warning_container" style="display: none; font-family: Tahoma, sans-serif; padding: 30px; direction: rtl; background-color: #f8d7da; border-radius: 12px; border: 2px solid #f5c6cb; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px;">
     <h2 style="color: #721c24; margin-bottom: 15px;">⚠️ تنبيه هـام جداً - متصفح غير مسموح</h2>
     <p style="font-size: 18px; color: #721c24; line-height: 1.6; font-weight: bold;">
         عذراً، لا يمكن تسجيل الحضور إلا من خلال <b>متصفح جوجل كروم (Google Chrome) الأساسي</b> فقط.
     </p>
     <p style="font-size: 16px; color: #555; line-height: 1.5;">
-        يبدو أنك تفتح الرابط من تطبيق خارجي (مثل فيسبوك، واتساب) أو متصفح غير مدعوم. يرجى نسخ الرابط فتحه مباشرة داخل تطبيق <b>جوجل كروم</b> بهاتفك لتسجيل الحضور بنجاح.
+        يبدو أنك تفتح الرابط من تطبيق خارجي أو متصفح غير مدعوم. يرجى نسخ الرابط فتحه مباشرة داخل تطبيق <b>جوجل كروم</b> بهاتفك لتسجيل الحضور بنجاح.
     </p>
 </div>
 
-<!-- نموذج تسجيل الحضور (يظهر حصرياً إذا كان المتصفح جوجل كروم) -->
 <div id="main_app_container" style="display: none; font-family: Tahoma, sans-serif; padding: 25px; direction: rtl; background-color: #f9f9f9; border-radius: 12px; border: 1px solid #ddd; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
     <div style="margin-bottom: 15px;">
         <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">اسم الطالب الثلاثي:</label>
@@ -84,7 +80,6 @@ form_html = """
         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="14" id="s_id" placeholder="أدخل 14 رقم بالضبط" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box;">
     </div>
 
-    <!-- خانة يوم الأسبوع (تلقائي بدون تدخل الطالب مع إمكانية العرض) -->
     <div style="margin-bottom: 15px;">
         <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">يوم الأسبوع (تلقائي):</label>
         <select id="s_day" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: #e9ecef; font-weight: bold; color: #0275d8;">
@@ -184,7 +179,6 @@ form_html = """
         <input type="text" id="s_time" readonly placeholder="سيتم التقاط الوقت تلقائياً عند التسجيل" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; background-color: #e9ecef; box-sizing: border-box;">
     </div>
 
-    <!-- خانة رمز التحقق (OTP) الرقمية - الخطوة الأخيرة قبل زر التأكيد -->
     <div id="otp_box_container" style="margin-bottom: 20px; display: __SHOW_OTP__;">
         <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #c0392b; font-size: 16px;">🔐 رمز التحقق (OTP) المعلن في القاعة:</label>
         <input type="text" inputmode="numeric" pattern="[0-9]*" id="s_otp" placeholder="أدخل الرمز الرقمي المكتوب على السبورة" style="width: 100%; padding: 14px; border: 2px dashed #e74c3c; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: #fff5f5;">
@@ -192,7 +186,6 @@ form_html = """
 
     <button onclick="verifyAndSubmit()" style="background-color: #28a745; color: white; padding: 16px 20px; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; box-shadow: 0 6px 12px rgba(0,0,0,0.15);">📍 تحقق من الموقع وتسجيل الحضور</button>
     
-    <!-- صندوق رسائل كبير وبارز -->
     <div id="msg_container" style="margin-top: 25px; padding: 20px; border-radius: 10px; text-align: center; display: none; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
         <p id="msg" style="margin: 0; font-weight: bold; font-size: 17px; line-height: 1.6;"></p>
     </div>
@@ -206,13 +199,8 @@ const SCRIPT_URL = "__URL__";
 const OTP_ENABLED = __OTP_ENABLED__;
 const CORRECT_OTP = "__CORRECT_OTP__";
 
-// فحص المتصفح عند التحميل المباشر للصفحة
 document.addEventListener("DOMContentLoaded", function() {
     const ua = navigator.userAgent;
-    // التحقق الصارم من أن المتصفح هو جوجل كروم حصرياً
-    const isChrome = /Chrome/.test(ua) && !/Edge|OPR|SamsungBrowser|UCBrowser|Firefox|CriOS.*CriOS/.test(ua) || (/CriOS/.test(ua) && /Google/.test(navigator.vendor));
-    
-    // للتأكد التام من تشغيل كروم بكل أنواعه (أندرويد وآيفون وديسكتوب)
     const isActualChrome = /Chrome|CriOS/.test(ua) && !/Edg|OPR|SamsungBrowser|UCBrowser|Firefox/.test(ua);
 
     const warningBox = document.getElementById("browser_warning_container");
@@ -225,7 +213,6 @@ document.addEventListener("DOMContentLoaded", function() {
         if (warningBox) warningBox.style.display = "none";
         if (mainApp) mainApp.style.display = "block";
         
-        // تعيين يوم الأسبوع تلقائياً بمجرد فتح الصفحة في كروم
         const daysMap = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
         const todayIndex = new Date().getDay();
         const daySelect = document.getElementById("s_day");
@@ -233,14 +220,54 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
-// توليد أو جلب معرف ثابت للجهاز لضمان منعه من تسجيل أكثر من طالب للمادة الواحدة
-function getOrCreateDeviceId() {
-    let devId = localStorage.getItem("uni_device_unique_id");
-    if (!devId) {
-        devId = 'dev_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
-        localStorage.setItem("uni_device_unique_id", devId);
+// دالة توليد بصمة عتادية صلبة لا تتأثر بمسح تاريخ المتصفح أو الكوكيز
+function getAdvancedHardwareFingerprint() {
+    try {
+        let canvas = document.createElement('canvas');
+        let ctx = canvas.getContext('2d');
+        ctx.textBaseline = "top";
+        ctx.font = "14px Arial";
+        ctx.fillStyle = "#f60";
+        ctx.fillRect(125, 1, 62, 20);
+        ctx.fillStyle = "#069";
+        ctx.fillText("BenhaUnivSys2026", 2, 15);
+        let canvasData = canvas.toDataURL();
+
+        let glVendor = "";
+        let glRenderer = "";
+        try {
+            let canvasGL = document.createElement('canvas');
+            let gl = canvasGL.getContext('webgl') || canvasGL.getContext('experimental-webgl');
+            if (gl) {
+                let debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                if (debugInfo) {
+                    glVendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+                    glRenderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                }
+            }
+        } catch(e) {}
+
+        let components = [
+            navigator.hardwareConcurrency || '4',
+            navigator.deviceMemory || '4',
+            screen.width + 'x' + screen.height,
+            screen.colorDepth || '24',
+            Intl.DateTimeFormat().resolvedOptions().timeZone || '',
+            glVendor,
+            glRenderer,
+            canvasData.substring(canvasData.length - 40)
+        ].join('###');
+
+        let hash = 0;
+        for (let i = 0; i < components.length; i++) {
+            let char = components.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+        }
+        return 'hw_fp_' + Math.abs(hash).toString(36) + '_' + screen.width + 'x' + screen.height;
+    } catch (e) {
+        return 'hw_fallback_' + screen.width + 'x' + screen.height;
     }
-    return devId;
 }
 
 function toggleSection() {
@@ -286,18 +313,13 @@ function showMessage(text, color, bgColor) {
     msg.innerHTML = text;
 }
 
-// دالة تنقية ذكية متقدمة لإزالة الرموز الخفية وتوحيد الأرقام
 function cleanDigits(inputStr) {
     if (!inputStr) return "";
     let cleaned = inputStr.toString().replace(/[\\u200B-\\u200D\\uFEFF]/g, '').trim();
-    
     let arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
     let persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-    
     for (let i = 0; i < 10; i++) {
-        let regexAr = new RegExp(arabicNumbers[i], 'g');
-        let regexFa = new RegExp(persianNumbers[i], 'g');
-        cleaned = cleaned.replace(regexAr, i).replace(regexFa, i);
+        cleaned = cleaned.replace(new RegExp(arabicNumbers[i], 'g'), i).replace(new RegExp(persianNumbers[i], 'g'), i);
     }
     let matches = cleaned.match(/[0-9]/g);
     return matches ? matches.join('') : '';
@@ -315,12 +337,11 @@ function verifyAndSubmit() {
     
     let studentOtp = "";
     if (OTP_ENABLED) {
-        let rawOtp = document.getElementById("s_otp").value;
-        studentOtp = cleanDigits(rawOtp);
+        studentOtp = cleanDigits(document.getElementById("s_otp").value);
     }
 
     if (!name || !id || !day || !course || !section || !year || !loc || (OTP_ENABLED && !studentOtp)) {
-        showMessage("❌ يرجى استيفاء جميع الحقول المطلوبة (بما في ذلك رمز التحقق (OTP) والمادة والشق)!", "#d9534f", "#f2dede");
+        showMessage("❌ يرجى استيفاء جميع الحقول المطلوبة بدقة!", "#d9534f", "#f2dede");
         return;
     }
 
@@ -330,18 +351,16 @@ function verifyAndSubmit() {
     }
 
     if (id.length !== 14 || isNaN(id)) {
-        showMessage("❌ خطأ: يجب أن يكون الرقم القومي مكوناً من 14 أرقام بالضبط!", "#d9534f", "#f2dede");
+        showMessage("❌ خطأ: يجب أن يكون الرقم القومي مكوناً من 14 رقماً بالضبط!", "#d9534f", "#f2dede");
         return;
     }
 
-    // التحقق من صحة رمز التحقق (OTP) بعد تنقيته تماماً
     let serverOtpCleaned = cleanDigits(CORRECT_OTP);
     if (OTP_ENABLED && (studentOtp !== serverOtpCleaned)) {
-        showMessage("❌ عذراً، رمز التحقق (OTP) الذي أدخلته غير صحيح! تأكد من الرمز الرقمي المكتوب على السبورة.", "#d9534f", "#f2dede");
+        showMessage("❌ عذراً، رمز التحقق (OTP) الذي أدخلته غير صحيح!", "#d9534f", "#f2dede");
         return;
     }
 
-    // استخراج التاريخ الحالي بصيغة (YYYY-MM-DD)
     const nowCheck = new Date();
     const currentDateStr = nowCheck.getFullYear() + '-' + 
         String(nowCheck.getMonth() + 1).padStart(2, '0') + '-' + 
@@ -386,21 +405,18 @@ function verifyAndSubmit() {
                     lon: lon,
                     dist: Math.round(distance),
                     time: formattedTime,
-                    deviceId: getOrCreateDeviceId()
+                    deviceId: getAdvancedHardwareFingerprint() // إرسال البصمة العتادية الصلبة
                 };
 
-                // إرسال الطلب ومعالجة رد السيرفر بدقة (لكشف أي محاولة تكرار أو تحايل)
                 fetch(SCRIPT_URL, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "text/plain"
-                    },
+                    headers: { "Content-Type": "text/plain" },
                     body: JSON.stringify(data)
                 })
                 .then(response => response.json())
                 .then(result => {
                     if (result.status === "success") {
-                        showMessage("✅ تم تسجيل حضورك بنجاح في مادة (" + course + " - " + section + ") ليوم " + day + " وتاريخ " + currentDateStr + " وحفظه في جدول البيانات!", "#28a745", "#d4edda");
+                        showMessage("✅ تم تسجيل حضورك بنجاح في مادة (" + course + " - " + section + ") ليوم " + day + " وتاريخ " + currentDateStr + "!", "#28a745", "#d4edda");
                     } else {
                         showMessage("❌ " + (result.message || "عذراً، حدث خطأ أثناء التسجيل."), "#d9534f", "#f2dede");
                     }
@@ -410,7 +426,7 @@ function verifyAndSubmit() {
                 });
 
             } else {
-                showMessage("❌ عذراً، أنت خارج النطاق المسموح للقاعة (المسافة الحالية: " + Math.round(distance) + " متر)! اقترب أكثر من القاعة.", "#d9534f", "#f2dede");
+                showMessage("❌ عذراً، أنت خارج النطاق المسموح للقاعة (المسافة الحالية: " + Math.round(distance) + " متر)!", "#d9534f", "#f2dede");
             }
         },
         (error) => {
