@@ -81,8 +81,10 @@ form_html = """
         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="14" id="s_id" placeholder="أدخل 14 رقم بالضبط" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box;">
     </div>
 
-    <!-- يوم الأسبوع (يتم التقاطه تلقائياً في الخلفية دون قائمة منسدلة) -->
-    <input type="hidden" id="s_day">
+    <div style="margin-bottom: 15px;">
+        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">يوم الأسبوع:</label>
+        <input type="text" id="s_day" readonly placeholder="جاري التقاط اليوم تلقائياً..." style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; background-color: #e9ecef; font-weight: bold; color: #0275d8; box-sizing: border-box;">
+    </div>
 
     <div style="margin-bottom: 15px;">
         <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">الفرقة الدراسية:</label>
