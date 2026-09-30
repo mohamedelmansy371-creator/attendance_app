@@ -48,8 +48,8 @@ st.write(
 )
 
 # --- إحداثيات قاعة المحاضرات ---
-CLASS_LAT = 30.353160
-CLASS_LON = 31.224244
+CLASS_LAT = 30.719124
+CLASS_LON = 31.244525
 ALLOWED_RADIUS_METERS = 500
 
 # رابط الـ Web App الخاص بك
