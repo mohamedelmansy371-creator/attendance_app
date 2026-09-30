@@ -230,8 +230,10 @@ const coursesData = {
 
 document.addEventListener("DOMContentLoaded", function() {
     const ua = navigator.userAgent;
+    
+    // شروط صارمة لفحص كروم واستبعاد أي متصفح خارجي أو مدمج
     const isChromeBrowser = /Chrome|CriOS/.test(ua);
-    const isExcludedBrowser = /Edg|OPR|SamsungBrowser|UCBrowser|Firefox|MiuiBrowser|Whale|Yandex/i.test(ua);
+    const isExcludedBrowser = /Edg|OPR|SamsungBrowser|UCBrowser|Firefox|MiuiBrowser|Whale|Yandex|FBAN|FBAV|Instagram|WhatsApp|Twitter/i.test(ua);
     const isActualChrome = isChromeBrowser && !isExcludedBrowser;
 
     const warningBox = document.getElementById("browser_warning_container");
