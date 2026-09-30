@@ -81,19 +81,8 @@ form_html = """
         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="14" id="s_id" placeholder="أدخل 14 رقم بالضبط" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box;">
     </div>
 
-    <div style="margin-bottom: 15px;">
-        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">يوم الأسبوع (تلقائي):</label>
-        <select id="s_day" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: #e9ecef; font-weight: bold; color: #0275d8;">
-            <option value="">-- جارٍ تحديد اليوم تلقائياً --</option>
-            <option value="السبت">السبت</option>
-            <option value="الأحد">الأحد</option>
-            <option value="الإثنين">الإثنين</option>
-            <option value="الثلاثاء">الثلاثاء</option>
-            <option value="الأربعاء">الأربعاء</option>
-            <option value="الخميس">الخميس</option>
-            <option value="الجمعة">الجمعة</option>
-        </select>
-    </div>
+    <!-- يوم الأسبوع (يتم التقاطه تلقائياً في الخلفية دون قائمة منسدلة) -->
+    <input type="hidden" id="s_day">
 
     <div style="margin-bottom: 15px;">
         <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">الفرقة الدراسية:</label>
@@ -255,8 +244,8 @@ document.addEventListener("DOMContentLoaded", function() {
         
         const daysMap = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
         const todayIndex = new Date().getDay();
-        const daySelect = document.getElementById("s_day");
-        if(daySelect) daySelect.value = daysMap[todayIndex];
+        const dayInput = document.getElementById("s_day");
+        if(dayInput) dayInput.value = daysMap[todayIndex];
     }
 });
 
