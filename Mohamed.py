@@ -48,12 +48,12 @@ st.write(
 )
 
 # --- إحداثيات قاعة المحاضرات ---
-CLASS_LAT = 30.719124
-CLASS_LON = 31.244525
+CLASS_LAT = 30.719101
+CLASS_LON = 31.244522
 ALLOWED_RADIUS_METERS = 500
 
 # رابط الـ Web App الخاص بك
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyqapTw6O-iKSa9_XIwxdL-FjdixKLe1dnP9uk_01JQkSJ2nih9ApLm6GYvLziAe0YV/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGm8xBQik6aefSUMDemJYzW7JNzIJ5itxnSEcrtkTAQqQFjEngtffc3gl5U_sVr6Tk/exec"
 
 SHOW_OTP_FIELD = "block" if otp_enabled else "none"
 SERVER_OTP = str(current_otp).strip()
@@ -231,6 +231,7 @@ const coursesData = {
 document.addEventListener("DOMContentLoaded", function() {
     const ua = navigator.userAgent;
     
+    // شروط صارمة لفحص كروم واستبعاد أي متصفح خارجي أو مدمج
     const isChromeBrowser = /Chrome|CriOS/.test(ua);
     const isExcludedBrowser = /Edg|OPR|SamsungBrowser|UCBrowser|Firefox|MiuiBrowser|Whale|Yandex|FBAN|FBAV|Instagram|WhatsApp|Twitter/i.test(ua);
     const isActualChrome = isChromeBrowser && !isExcludedBrowser;
@@ -409,22 +410,7 @@ function cleanDigits(inputStr) {
     return matches ? matches.join('') : '';
 }
 
-// دالة مساعدة لأخذ قراءة GPS فردية بمواصفات دقة عالية ومهلة موسعة
-function getSinglePosition() {
-    return new Promise((resolve, reject) => {
-        if (!navigator.geolocation) {
-            reject("متصفح هاتفك لا يدعم تحديد الموقع الجغرافي.");
-            return;
-        }
-        navigator.geolocation.getCurrentPosition(
-            (position) => resolve(position),
-            (error) => reject(error),
-            { enableHighAccuracy: true, timeout: 25000, maximumAge: 0 }
-        );
-    });
-}
-
-async function verifyAndSubmit() {
+function verifyAndSubmit() {
     const name = document.getElementById("s_name").value.trim();
     const id = document.getElementById("s_id").value.trim();
     const day = document.getElementById("s_day").value;
@@ -465,91 +451,74 @@ async function verifyAndSubmit() {
         String(nowCheck.getMonth() + 1).padStart(2, '0') + '-' + 
         String(nowCheck.getDate()).padStart(2, '0');
 
-    showMessage("⏳ جاري تثبيت وتحديد موقعك الجغرافي بدقة (جاري أخذ عدة عينات)...", "#0275d8", "#d9edf7");
-
-    try {
-        // أخذ 3 قراءات متتالية لضمان استقرار المستشعر وتجاوز قفزة البداية
-        let bestPosition = null;
-        let minAccuracy = Infinity;
-
-        for (let i = 0; i < 3; i++) {
-            try {
-                let pos = await getSinglePosition();
-                let acc = pos.coords.accuracy;
-                if (acc < minAccuracy) {
-                    minAccuracy = acc;
-                    bestPosition = pos;
-                }
-                // انتظار قصير بين القراءة والأخرى (1.5 ثانية) لتمكين القمر الصناعي من الثبات
-                if (i < 2) {
-                    await new Promise(r => setTimeout(r, 1500));
-                }
-            } catch (e) {
-                // تجاهل خطأ محاولة فردية إذا نجحت المحاولات الأخرى
-            }
-        }
-
-        if (!bestPosition) {
-            throw new Error("فشل التقاط إشارات الـ GPS.");
-        }
-
-        const lat = bestPosition.coords.latitude;
-        const lon = bestPosition.coords.longitude;
-        const distance = calculateDistance(CLASS_LAT, CLASS_LON, lat, lon);
-
-        if (distance <= ALLOWED_RADIUS) {
-            showMessage("⏳ تم التحقق من الموقع بدقة عالية (داخل النطاق)، جاري إرسال وتسجيل الحضور...", "#0275d8", "#d9edf7");
-
-            const now = new Date();
-            const formattedTime = now.getFullYear() + '-' + 
-                String(now.getMonth() + 1).padStart(2, '0') + '-' + 
-                String(now.getDate()).padStart(2, '0') + ' ' + 
-                String(now.getHours()).padStart(2, '0') + ':' + 
-                String(now.getMinutes()).padStart(2, '0') + ':' + 
-                String(now.getSeconds()).padStart(2, '0');
-
-            document.getElementById("s_time").value = formattedTime;
-
-            const data = {
-                name: name,
-                id: id,
-                day: day,
-                year: year,
-                track: (year === "الفرقة الرابعة") ? track : "غير مخصص",
-                course: course,
-                section: section,
-                loc: loc,
-                lat: lat,
-                lon: lon,
-                dist: Math.round(distance),
-                time: formattedTime,
-                deviceId: getAdvancedHardwareFingerprint()
-            };
-
-            fetch(SCRIPT_URL, {
-                method: "POST",
-                headers: { "Content-Type": "text/plain" },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.status === "success") {
-                    showMessage("✅ تم تسجيل حضورك بنجاح في مادة (" + course + " - " + section + ") ليوم " + day + " وتاريخ " + currentDateStr + "!", "#28a745", "#d4edda");
-                } else {
-                    showMessage("❌ " + (result.message || "عذراً، حدث خطأ أثناء التسجيل."), "#d9534f", "#f2dede");
-                }
-            })
-            .catch((error) => {
-                showMessage("❌ حدث خطأ أثناء الاتصال بالخادم، يرجى المحاولة مرة أخرى.", "#d9534f", "#f2dede");
-            });
-
-        } else {
-            showMessage("❌ عذراً، أنت خارج النطاق المسموح للقاعة (المسافة الحالية: " + Math.round(distance) + " متر)!", "#d9534f", "#f2dede");
-        }
-
-    } catch (error) {
-        showMessage("❌ فشل تحديد الموقع بدقة. تأكد من تفعيل الـ GPS والسماح للمتصفح بالوصول لموقعك بوضوح.", "#d9534f", "#f2dede");
+    if (!navigator.geolocation) {
+        showMessage("❌ متصفح هاتفك لا يدعم تحديد الموقع الجغرافي.", "#d9534f", "#f2dede");
+        return;
     }
+
+    showMessage("⏳ جاري تحديد موقعك الجغرافي والتحقق من النطاق...", "#0275d8", "#d9edf7");
+
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            const distance = calculateDistance(CLASS_LAT, CLASS_LON, lat, lon);
+
+            if (distance <= ALLOWED_RADIUS) {
+                showMessage("⏳ تم التحقق من الموقع (داخل النطاق بنجاح)، جاري إرسال وتسجيل الحضور...", "#0275d8", "#d9edf7");
+
+                const now = new Date();
+                const formattedTime = now.getFullYear() + '-' + 
+                    String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                    String(now.getDate()).padStart(2, '0') + ' ' + 
+                    String(now.getHours()).padStart(2, '0') + ':' + 
+                    String(now.getMinutes()).padStart(2, '0') + ':' + 
+                    String(now.getSeconds()).padStart(2, '0');
+
+                document.getElementById("s_time").value = formattedTime;
+
+                const data = {
+                    name: name,
+                    id: id,
+                    day: day,
+                    year: year,
+                    track: (year === "الفرقة الرابعة") ? track : "غير مخصص",
+                    course: course,
+                    section: section,
+                    loc: loc,
+                    lat: lat,
+                    lon: lon,
+                    dist: Math.round(distance),
+                    time: formattedTime,
+                    deviceId: getAdvancedHardwareFingerprint()
+                };
+
+                fetch(SCRIPT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.status === "success") {
+                        showMessage("✅ تم تسجيل حضورك بنجاح في مادة (" + course + " - " + section + ") ليوم " + day + " وتاريخ " + currentDateStr + "!", "#28a745", "#d4edda");
+                    } else {
+                        showMessage("❌ " + (result.message || "عذراً، حدث خطأ أثناء التسجيل."), "#d9534f", "#f2dede");
+                    }
+                })
+                .catch((error) => {
+                    showMessage("❌ حدث خطأ أثناء الاتصال بالخادم، يرجى المحاولة مرة أخرى.", "#d9534f", "#f2dede");
+                });
+
+            } else {
+                showMessage("❌ عذراً، أنت خارج النطاق المسموح للقاعة (المسافة الحالية: " + Math.round(distance) + " متر)!", "#d9534f", "#f2dede");
+            }
+        },
+        (error) => {
+            showMessage("❌ فشل تحديد الموقع. تأكد من تفعيل الـ GPS والسماح للمتصفح بالوصول لموقعك.", "#d9534f", "#f2dede");
+        },
+        { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+    );
 }
 </script>
 """ \
