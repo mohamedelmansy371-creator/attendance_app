@@ -96,52 +96,8 @@ form_html = """
     </div>
 
     <div style="margin-bottom: 15px;">
-        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">اسم المادة الدراسية:</label>
-        <select id="s_course" onchange="toggleSection()" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: white;">
-            <option value="">-- اختر المادة الدراسية --</option>
-            <option value="أساسيات هندسة النظم الزراعية والحيوية">أساسيات هندسة النظم الزراعية والحيوية</option>
-            <option value="رياضة هندسة">رياضة هندسة</option>
-            <option value="رياضة عام">رياضة عام</option>
-            <option value="ميكانيكا (ديناميكا - استاتيكا)">ميكانيكا (ديناميكا - استاتيكا)</option>
-            <option value="رسم هندسي (1)">رسم هندسي (1)</option>
-            <option value="رياضة تطبيقية">رياضة تطبيقية</option>
-            <option value="هيدروليكا وميكانيكا موائع">هيدروليكا وميكانيكا موائع</option>
-            <option value="نظرية آلات">نظرية آلات</option>
-            <option value="مقدمة في الحاسب الآلي">مقدمة في الحاسب الآلي</option>
-            <option value="انتقال حراري">انتقال حراري</option>
-            <option value="جرارات زراعية">جرارات زراعية</option>
-            <option value="تخطيط وتصميم المنشآت الزراعية">تخطيط وتصميم المنشآت الزراعية</option>
-            <option value="هندسة الري والصرف">هندسة الري والصرف</option>
-            <option value="هندسة البيوت المحمية">هندسة البيوت المحمية</option>
-            <option value="هندسة مزارع الإنتاج الحيواني والداجني">هندسة مزارع الإنتاج الحيواني والداجني</option>
-            <option value="التحكم البيئي في المنشآت الزراعية">التحكم البيئي في المنشآت الزراعية</option>
-            <option value="تصميم نظم الري">تصميم نظم الري</option>
-            <option value="تصميم آلات زراعية">تصميم آلات زراعية</option>
-            <option value="إدارة وتشغيل المزارع المائية">إدارة وتشغيل المزارع المائية</option>
-            <option value="ميكانيكا تربة">ميكانيكا تربة</option>
-            <option value="هيدروليكا الآبار والمضخات">هيدروليكا الآبار والمضخات</option>
-            <option value="تخطيط وتصميم نظم الصرف الحقلي">تخطيط وتصميم نظم الصرف الحقلي</option>
-            <option value="نظرية اهتزازات وتوازن">نظرية اهتزازات وتوازن</option>
-            <option value="معدات التسميد والمكافحة">معدات التسميد والمكافحة</option>
-            <option value="الخواص الطبيعية والهندسية للمنتجات الزراعية">الخواص الطبيعية والهندسية للمنتجات الزراعية</option>
-            <option value="هندسة تصنيع السماد العضوي المكمور">هندسة تصنيع السماد العضوي المكمور</option>
-            <option value="مصطلحات علمية باللغة الانجليزية">مصطلحات علمية باللغة الانجليزية</option>
-            <option value="أساليب بحث علمي">أساليب بحث علمي</option>
-        </select>
-    </div>
-
-    <div id="section_container" style="margin-bottom: 15px; display: none;">
-        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">الشق الدراسي:</label>
-        <select id="s_section" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: white;">
-            <option value="">-- اختر الشق الدراسي --</option>
-            <option value="نظري">نظري</option>
-            <option value="عملي">عملي</option>
-        </select>
-    </div>
-
-    <div style="margin-bottom: 15px;">
         <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">الفرقة الدراسية:</label>
-        <select id="s_year" onchange="toggleTrack()" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: white;">
+        <select id="s_year" onchange="onYearChange()" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: white;">
             <option value="">-- اختر الفرقة --</option>
             <option value="الفرقة الأولى">الفرقة الأولى</option>
             <option value="الفرقة الثانية">الفرقة الثانية</option>
@@ -152,12 +108,28 @@ form_html = """
 
     <div id="track_container" style="margin-bottom: 15px; display: none;">
         <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">التوجه (التخصص):</label>
-        <select id="s_track" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: white;">
+        <select id="s_track" onchange="onTrackChange()" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: white;">
             <option value="">-- اختر التوجه --</option>
             <option value="توجه آلات">توجه آلات</option>
             <option value="توجه ري">توجه ري</option>
             <option value="توجه نظم">توجه نظم</option>
             <option value="توجه عام">توجه عام</option>
+        </select>
+    </div>
+
+    <div id="course_container" style="margin-bottom: 15px; display: none;">
+        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">اسم المادة الدراسية:</label>
+        <select id="s_course" onchange="toggleSection()" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: white;">
+            <option value="">-- اختر المادة الدراسية --</option>
+        </select>
+    </div>
+
+    <div id="section_container" style="margin-bottom: 15px; display: none;">
+        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">الشق الدراسي:</label>
+        <select id="s_section" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: white;">
+            <option value="">-- اختر الشق الدراسي --</option>
+            <option value="نظري">نظري</option>
+            <option value="عملي">عملي</option>
         </select>
     </div>
 
@@ -202,6 +174,69 @@ const SCRIPT_URL = "__URL__";
 const OTP_ENABLED = __OTP_ENABLED__;
 const CORRECT_OTP = "__CORRECT_OTP__";
 
+const coursesData = {
+    "الفرقة الأولى": [
+        "رياضة عام",
+        "أساسيات هندسة النظم الزراعية والحيوية",
+        "رياضة هندسة",
+        "ميكانيكا (ديناميكا – استاتيكا)",
+        "رسم هندسي (1)"
+    ],
+    "الفرقة الثانية": [
+        "رياضة تطبيقية",
+        "هيدروليكا وميكانيكا موائع",
+        "نظرية آلات",
+        "مقدمة في الحاسب الآلي",
+        "انتقال حراري"
+    ],
+    "الفرقة الثالثة": [
+        "جرارات زراعية",
+        "تخطيط وتصميم المنشآت الزراعية",
+        "هندسة الري والصرف",
+        "هندسة البيوت المحمية",
+        "هندسة مزارع الإنتاج الحيواني والداجني",
+        "مصطلحات علمية باللغة الإنجليزية"
+    ],
+    "الفرقة الرابعة": {
+        "توجه آلات": [
+            "التحكم البيئي في المنشآت الزراعية",
+            "تصميم نظم الري",
+            "تصميم آلات زراعية",
+            "أساليب البحث العلمي",
+            "نظرية اهتزازات وتوازن",
+            "ميكانيكا تربة",
+            "معدات التسميد والمكافحة"
+        ],
+        "توجه ري": [
+            "التحكم البيئي في المنشآت الزراعية",
+            "تصميم نظم الري",
+            "تصميم آلات زراعية",
+            "أساليب البحث العلمي",
+            "هيدروليكا الآبار والمضخات",
+            "ميكانيكا تربة",
+            "تخطيط وتصميم نظم الصرف الحقلي"
+        ],
+        "توجه نظم": [
+            "التحكم البيئي في المنشآت الزراعية",
+            "تصميم نظم الري",
+            "تصميم آلات زراعية",
+            "أساليب البحث العلمي",
+            "إدارة وتشغيل المزارع المائية",
+            "الخواص الطبيعية والهندسية للمنتجات الزراعية",
+            "هندسة تصنيع السماد العضوي المكمور"
+        ],
+        "توجه عام": [
+            "التحكم البيئي في المنشآت الزراعية",
+            "تصميم نظم الري",
+            "تصميم آلات زراعية",
+            "أساليب البحث العلمي",
+            "معدات التسميد والمكافحة",
+            "تخطيط وتصميم نظم الصرف الحقلي",
+            "هندسة تصنيع السماد العضوي المكمور"
+        ]
+    }
+};
+
 document.addEventListener("DOMContentLoaded", function() {
     const ua = navigator.userAgent;
     const isChromeBrowser = /Chrome|CriOS/.test(ua);
@@ -232,6 +267,72 @@ function copyLinkAndOpen() {
     }).catch(err => {
         prompt("نسخ الرابط يدوياً:", currentUrl);
     });
+}
+
+function onYearChange() {
+    const year = document.getElementById("s_year").value;
+    const trackContainer = document.getElementById("track_container");
+    const courseContainer = document.getElementById("course_container");
+    const sectionContainer = document.getElementById("section_container");
+    
+    document.getElementById("s_track").value = "";
+    document.getElementById("s_course").innerHTML = '<option value="">-- اختر المادة الدراسية --</option>';
+    document.getElementById("s_section").value = "";
+    sectionContainer.style.display = "none";
+
+    if (year === "الفرقة الرابعة") {
+        trackContainer.style.display = "block";
+        courseContainer.style.display = "none";
+    } else if (year) {
+        trackContainer.style.display = "none";
+        courseContainer.style.display = "block";
+        
+        let select = document.getElementById("s_course");
+        coursesData[year].forEach(course => {
+            let opt = document.createElement("option");
+            opt.value = course;
+            opt.textContent = course;
+            select.appendChild(opt);
+        });
+    } else {
+        trackContainer.style.display = "none";
+        courseContainer.style.display = "none";
+    }
+}
+
+function onTrackChange() {
+    const track = document.getElementById("s_track").value;
+    const courseContainer = document.getElementById("course_container");
+    const sectionContainer = document.getElementById("section_container");
+    
+    let select = document.getElementById("s_course");
+    select.innerHTML = '<option value="">-- اختر المادة الدراسية --</option>';
+    document.getElementById("s_section").value = "";
+    sectionContainer.style.display = "none";
+
+    if (track) {
+        courseContainer.style.display = "block";
+        let courses = coursesData["الفرقة الرابعة"][track];
+        courses.forEach(course => {
+            let opt = document.createElement("option");
+            opt.value = course;
+            opt.textContent = course;
+            select.appendChild(opt);
+        });
+    } else {
+        courseContainer.style.display = "none";
+    }
+}
+
+function toggleSection() {
+    const course = document.getElementById("s_course").value;
+    const sectionContainer = document.getElementById("section_container");
+    if (course !== "") {
+        sectionContainer.style.display = "block";
+    } else {
+        sectionContainer.style.display = "none";
+        document.getElementById("s_section").value = "";
+    }
 }
 
 function getAdvancedHardwareFingerprint() {
@@ -283,28 +384,6 @@ function getAdvancedHardwareFingerprint() {
     }
 }
 
-function toggleSection() {
-    const course = document.getElementById("s_course").value;
-    const sectionContainer = document.getElementById("section_container");
-    if (course !== "") {
-        sectionContainer.style.display = "block";
-    } else {
-        sectionContainer.style.display = "none";
-        document.getElementById("s_section").value = "";
-    }
-}
-
-function toggleTrack() {
-    const year = document.getElementById("s_year").value;
-    const trackContainer = document.getElementById("track_container");
-    if (year === "الفرقة الرابعة") {
-        trackContainer.style.display = "block";
-    } else {
-        trackContainer.style.display = "none";
-        document.getElementById("s_track").value = "";
-    }
-}
-
 function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371000;
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -342,10 +421,10 @@ function verifyAndSubmit() {
     const name = document.getElementById("s_name").value.trim();
     const id = document.getElementById("s_id").value.trim();
     const day = document.getElementById("s_day").value;
-    const course = document.getElementById("s_course").value;
-    const section = document.getElementById("s_section").value;
     const year = document.getElementById("s_year").value;
     const track = document.getElementById("s_track").value;
+    const course = document.getElementById("s_course").value;
+    const section = document.getElementById("s_section").value;
     const loc = document.getElementById("s_loc").value;
     
     let studentOtp = "";
@@ -353,7 +432,7 @@ function verifyAndSubmit() {
         studentOtp = cleanDigits(document.getElementById("s_otp").value);
     }
 
-    if (!name || !id || !day || !course || !section || !year || !loc || (OTP_ENABLED && !studentOtp)) {
+    if (!name || !id || !day || !year || !course || !section || !loc || (OTP_ENABLED && !studentOtp)) {
         showMessage("❌ يرجى استيفاء جميع الحقول المطلوبة بدقة!", "#d9534f", "#f2dede");
         return;
     }
@@ -409,10 +488,10 @@ function verifyAndSubmit() {
                     name: name,
                     id: id,
                     day: day,
-                    course: course,
-                    section: section,
                     year: year,
                     track: (year === "الفرقة الرابعة") ? track : "غير مخصص",
+                    course: course,
+                    section: section,
                     loc: loc,
                     lat: lat,
                     lon: lon,
