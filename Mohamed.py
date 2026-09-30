@@ -53,7 +53,7 @@ CLASS_LON = 31.224244
 ALLOWED_RADIUS_METERS = 500
 
 # رابط الـ Web App الخاص بك
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuF5OavzH_tH3mlbEto_ftn9Ah8RZ7khfs4cV5p9QN82jl473rr6SlgRM4rjJrLw5m/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyqapTw6O-iKSa9_XIwxdL-FjdixKLe1dnP9uk_01JQkSJ2nih9ApLm6GYvLziAe0YV/exec"
 
 SHOW_OTP_FIELD = "block" if otp_enabled else "none"
 SERVER_OTP = str(current_otp).strip()
