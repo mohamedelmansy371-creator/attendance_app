@@ -60,13 +60,14 @@ SERVER_OTP = str(current_otp).strip()
 
 form_html = """
 <div id="browser_warning_container" style="display: none; font-family: Tahoma, sans-serif; padding: 30px; direction: rtl; background-color: #f8d7da; border-radius: 12px; border: 2px solid #f5c6cb; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px;">
-    <h2 style="color: #721c24; margin-bottom: 15px;">⚠️ تنبيه هـام جداً - متصفح غير مسموح</h2>
+    <h2 style="color: #721c24; margin-bottom: 15px;">⚠️ تنبيه هـام جداً - المتصفح غير مسموح</h2>
     <p style="font-size: 18px; color: #721c24; line-height: 1.6; font-weight: bold;">
         عذراً، لا يمكن تسجيل الحضور إلا من خلال <b>متصفح جوجل كروم (Google Chrome) الأساسي</b> فقط.
     </p>
-    <p style="font-size: 16px; color: #555; line-height: 1.5;">
-        يبدو أنك تفتح الرابط من تطبيق خارجي أو متصفح غير مدعوم. يرجى نسخ الرابط فتحه مباشرة داخل تطبيق <b>جوجل كروم</b> بهاتفك لتسجيل الحضور بنجاح.
+    <p style="font-size: 16px; color: #555; line-height: 1.5; margin-bottom: 20px;">
+        يبدو أنك تفتح الرابط من متصفح غير مدعوم أو من داخل تطبيق خارجي (مثل فيسبوك، واتساب، إلخ). يرجى نسخ الرابط فتحه مباشرة في تطبيق <b>جوجل كروم</b> بهاتفك.
     </p>
+    <button onclick="copyLinkAndOpen()" style="background-color: #17a2b8; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">📋 نسخ الرابط لفتحه في كروم</button>
 </div>
 
 <div id="main_app_container" style="display: none; font-family: Tahoma, sans-serif; padding: 25px; direction: rtl; background-color: #f9f9f9; border-radius: 12px; border: 1px solid #ddd; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
@@ -124,6 +125,8 @@ form_html = """
             <option value="معدات التسميد والمكافحة">معدات التسميد والمكافحة</option>
             <option value="الخواص الطبيعية والهندسية للمنتجات الزراعية">الخواص الطبيعية والهندسية للمنتجات الزراعية</option>
             <option value="هندسة تصنيع السماد العضوي المكمور">هندسة تصنيع السماد العضوي المكمور</option>
+            <option value="مصطلحات علمية باللغة الانجليزية">مصطلحات علمية باللغة الانجليزية</option>
+            <option value="أساليب بحث علمي">أساليب بحث علمي</option>
         </select>
     </div>
 
@@ -201,7 +204,9 @@ const CORRECT_OTP = "__CORRECT_OTP__";
 
 document.addEventListener("DOMContentLoaded", function() {
     const ua = navigator.userAgent;
-    const isActualChrome = /Chrome|CriOS/.test(ua) && !/Edg|OPR|SamsungBrowser|UCBrowser|Firefox/.test(ua);
+    const isChromeBrowser = /Chrome|CriOS/.test(ua);
+    const isExcludedBrowser = /Edg|OPR|SamsungBrowser|UCBrowser|Firefox|MiuiBrowser|Whale|Yandex/i.test(ua);
+    const isActualChrome = isChromeBrowser && !isExcludedBrowser;
 
     const warningBox = document.getElementById("browser_warning_container");
     const mainApp = document.getElementById("main_app_container");
@@ -220,7 +225,15 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
-// دالة توليد بصمة عتادية صلبة لا تتأثر بمسح تاريخ المتصفح أو الكوكيز
+function copyLinkAndOpen() {
+    const currentUrl = window.location.href;
+    navigator.clipboard.writeText(currentUrl).then(() => {
+        alert("تم نسخ رابط التطبيق بنجاح! يرجى فتح متصفح جوجل كروم ولصق الرابط هناك.");
+    }).catch(err => {
+        prompt("نسخ الرابط يدوياً:", currentUrl);
+    });
+}
+
 function getAdvancedHardwareFingerprint() {
     try {
         let canvas = document.createElement('canvas');
@@ -405,7 +418,7 @@ function verifyAndSubmit() {
                     lon: lon,
                     dist: Math.round(distance),
                     time: formattedTime,
-                    deviceId: getAdvancedHardwareFingerprint() // إرسال البصمة العتادية الصلبة
+                    deviceId: getAdvancedHardwareFingerprint()
                 };
 
                 fetch(SCRIPT_URL, {
