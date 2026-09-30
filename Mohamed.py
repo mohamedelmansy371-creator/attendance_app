@@ -50,7 +50,7 @@ st.write(
 # --- إحداثيات قاعة المحاضرات ---
 CLASS_LAT = 30.353160
 CLASS_LON = 31.224244
-ALLOWED_RADIUS_METERS = 100
+ALLOWED_RADIUS_METERS = 500
 
 # رابط الـ Web App الخاص بك
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGm8xBQik6aefSUMDemJYzW7JNzIJ5itxnSEcrtkTAQqQFjEngtffc3gl5U_sVr6Tk/exec"
