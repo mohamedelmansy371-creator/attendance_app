@@ -43,11 +43,12 @@ else:
     current_otp = "7890"
 
 st.title("نظام تسجيل الحضور الذكي")
-st.write(
-    "يرجى إدخال البيانات المطلوبة بدقة، ثم الضغط على زر التحقق من الموقع وتسجيل الحضور."
-)
 
-# --- إحداثيات الأماكن التسعة المختلفة (يمكنك تعديلها بدقة لكل مدرج وقاعة) ---
+# --- إعدادات وقت فتح وغلق التطبيق (صيغة 24 ساعة) ---
+APP_OPEN_HOUR = 9   # الساعة 9 صباحاً
+APP_CLOSE_HOUR = 17 # الساعة 5 مساءً (17:00)
+
+# --- إحداثيات الأماكن التسعة المختلفة ---
 LOCATIONS_COORDS = {
     "مدرج هندسة 1": {"lat": 30.719101, "lon": 31.244522},
     "مدرج هندسة 2": {"lat": 30.353300, "lon": 31.224400},
@@ -63,7 +64,7 @@ LOCATIONS_COORDS = {
 ALLOWED_RADIUS_METERS = 500
 
 # رابط الـ Web App الخاص بك
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyDZPz2ounGHnJJyqzXbC5G3LLtiA1GKCW5f3PAiwParMYdR0kU72igo-1D8d3Z0V5_/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyqapTw6O-iKSa9_XIwxdL-FjdixKLe1dnP9uk_01JQkSJ2nih9ApLm6GYvLziAe0YV/exec"
 
 SHOW_OTP_FIELD = "block" if otp_enabled else "none"
 SERVER_OTP = str(current_otp).strip()
@@ -71,7 +72,17 @@ SERVER_OTP = str(current_otp).strip()
 import json
 locations_json = json.dumps(LOCATIONS_COORDS, ensure_ascii=False)
 
-form_html = """
+form_html = f"""
+<div id="time_warning_container" style="display: none; font-family: Tahoma, sans-serif; padding: 30px; direction: rtl; background-color: #fff3cd; border-radius: 12px; border: 2px solid #ffeeba; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px;">
+    <h2 style="color: #856404; margin-bottom: 15px;">⏳ التطبيق مغلق حالياً</h2>
+    <p style="font-size: 18px; color: #856404; line-height: 1.6; font-weight: bold;">
+        عذراً، أوقات تسجيل الحضور الرسمية هي من الساعة <b>{APP_OPEN_HOUR}:00 صباحاً</b> وحتى الساعة <b>{APP_CLOSE_HOUR if APP_CLOSE_HOUR <= 12 else APP_CLOSE_HOUR - 12}:00 مساءً</b>.
+    </p>
+    <p style="font-size: 16px; color: #555; line-height: 1.5; margin-bottom: 10px;">
+        يرجى محاولة الدخول خلال المواعيد المحددة للمحاضرة.
+    </p>
+</div>
+
 <div id="browser_warning_container" style="display: none; font-family: Tahoma, sans-serif; padding: 30px; direction: rtl; background-color: #f8d7da; border-radius: 12px; border: 2px solid #f5c6cb; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px;">
     <h2 style="color: #721c24; margin-bottom: 15px;">⚠️ تنبيه هـام جداً - المتصفح غير مسموح</h2>
     <p style="font-size: 18px; color: #721c24; line-height: 1.6; font-weight: bold;">
@@ -158,7 +169,7 @@ form_html = """
         <input type="text" id="s_time" readonly placeholder="سيتم التقاط الوقت تلقائياً عند التسجيل" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; background-color: #e9ecef; box-sizing: border-box;">
     </div>
 
-    <div id="otp_box_container" style="margin-bottom: 20px; display: __SHOW_OTP__;">
+    <div id="otp_box_container" style="margin-bottom: 20px; display: {SHOW_OTP_FIELD};">
         <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #c0392b; font-size: 16px;">🔐 رمز التحقق (OTP) المعلن في القاعة:</label>
         <input type="text" inputmode="numeric" pattern="[0-9]*" id="s_otp" placeholder="أدخل الرمز التحقق" style="width: 100%; padding: 14px; border: 2px dashed #e74c3c; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: #fff5f5;">
     </div>
@@ -171,13 +182,15 @@ form_html = """
 </div>
 
 <script>
-const LOCATIONS_COORDS = __LOCATIONS_JSON__;
-const ALLOWED_RADIUS = __RADIUS__;
-const SCRIPT_URL = "__URL__";
-const OTP_ENABLED = __OTP_ENABLED__;
-const CORRECT_OTP = "__CORRECT_OTP__";
+const LOCATIONS_COORDS = {locations_json};
+const ALLOWED_RADIUS = {ALLOWED_RADIUS_METERS};
+const SCRIPT_URL = "{GOOGLE_SCRIPT_URL}";
+const OTP_ENABLED = {"true" if otp_enabled else "false"};
+const CORRECT_OTP = "{SERVER_OTP}";
+const APP_OPEN_HOUR = {APP_OPEN_HOUR};
+const APP_CLOSE_HOUR = {APP_CLOSE_HOUR};
 
-const coursesData = {
+const coursesData = {{
     "الفرقة الأولى": [
         "رياضة عام",
         "أساسيات هندسة النظم الزراعية والحيوية",
@@ -200,7 +213,7 @@ const coursesData = {
         "هندسة مزارع الإنتاج الحيواني والداجني",
         "مصطلحات علمية باللغة الإنجليزية"
     ],
-    "الفرقة الرابعة": {
+    "الفرقة الرابعة": {{
         "توجه آلات": [
             "التحكم البيئي في المنشآت الزراعية",
             "تصميم نظم الري",
@@ -237,28 +250,41 @@ const coursesData = {
             "تخطيط وتصميم نظم الصرف الحقلي",
             "هندسة تصنيع السماد العضوي المكمور"
         ]
-    }
-};
+    }}
+}};
 
 document.addEventListener("DOMContentLoaded", function() {
+    const now = new Date();
+    const currentHour = now.getHours();
+
+    const timeWarningBox = document.getElementById("time_warning_container");
+    const warningBox = document.getElementById("browser_warning_container");
+    const mainApp = document.getElementById("main_app_container");
+
+    // التحقق من أوقات الفتح والغلق
+    if (currentHour < APP_OPEN_HOUR || currentHour >= APP_CLOSE_HOUR) {
+        if (timeWarningBox) timeWarningBox.style.display = "block";
+        if (warningBox) warningBox.style.display = "none";
+        if (mainApp) mainApp.style.display = "none";
+        return;
+    }
+
     const ua = navigator.userAgent;
-    
     const isChromeBrowser = /Chrome|CriOS/.test(ua);
     const isExcludedBrowser = /Edg|OPR|SamsungBrowser|UCBrowser|Firefox|MiuiBrowser|Whale|Yandex|FBAN|FBAV|Instagram|WhatsApp|Twitter/i.test(ua);
     const isActualChrome = isChromeBrowser && !isExcludedBrowser;
 
-    const warningBox = document.getElementById("browser_warning_container");
-    const mainApp = document.getElementById("main_app_container");
-
     if (!isActualChrome) {
+        if (timeWarningBox) timeWarningBox.style.display = "none";
         if (warningBox) warningBox.style.display = "block";
         if (mainApp) mainApp.style.display = "none";
     } else {
+        if (timeWarningBox) timeWarningBox.style.display = "none";
         if (warningBox) warningBox.style.display = "none";
         if (mainApp) mainApp.style.display = "block";
         
         const daysMap = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-        const todayIndex = new Date().getDay();
+        const todayIndex = now.getDay();
         const dayInput = document.getElementById("s_day");
         if(dayInput) dayInput.value = daysMap[todayIndex];
     }
@@ -508,7 +534,6 @@ async function verifyAndSubmit() {
         const lat = bestPosition.coords.latitude;
         const lon = bestPosition.coords.longitude;
         
-        // جلب إحداثيات المكان المحدد الذي اختاره الطالب من القائمة
         const targetLocCoords = LOCATIONS_COORDS[loc];
         const distance = calculateDistance(targetLocCoords.lat, targetLocCoords.lon, lat, lon);
 
@@ -567,12 +592,6 @@ async function verifyAndSubmit() {
     }
 }
 </script>
-""" \
-.replace("__LOCATIONS_JSON__", locations_json) \
-.replace("__RADIUS__", str(ALLOWED_RADIUS_METERS)) \
-.replace("__URL__", GOOGLE_SCRIPT_URL) \
-.replace("__SHOW_OTP__", SHOW_OTP_FIELD) \
-.replace("__OTP_ENABLED__", "true" if otp_enabled else "false") \
-.replace("__CORRECT_OTP__", SERVER_OTP)
+"""
 
 components.html(form_html, height=1500)
