@@ -47,16 +47,29 @@ st.write(
     "يرجى إدخال البيانات المطلوبة بدقة، ثم الضغط على زر التحقق من الموقع وتسجيل الحضور."
 )
 
-# --- إحداثيات قاعة المحاضرات ---
-CLASS_LAT = 30.719101
-CLASS_LON = 31.244522
+# --- إحداثيات الأماكن التسعة المختلفة (يمكنك تعديلها بدقة لكل مدرج وقاعة) ---
+LOCATIONS_COORDS = {
+    "مدرج هندسة 1": {"lat": 30.719101, "lon": 31.244522},
+    "مدرج هندسة 2": {"lat": 30.353300, "lon": 31.224400},
+    "مدرج هندسة 3": {"lat": 30.353500, "lon": 31.224600},
+    "مدرج هندسة 4": {"lat": 30.353700, "lon": 31.224800},
+    "قاعة تدريس 1": {"lat": 30.352800, "lon": 31.223900},
+    "قاعة تدريس 2": {"lat": 30.352950, "lon": 31.224050},
+    "قاعة تدريس 3": {"lat": 30.353100, "lon": 31.224200},
+    "قاعة تدريس 4": {"lat": 30.353250, "lon": 31.224350},
+    "قاعة تدريس 5": {"lat": 30.353400, "lon": 31.224500}
+}
+
 ALLOWED_RADIUS_METERS = 500
 
 # رابط الـ Web App الخاص بك
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyf9-JsjwbzdqesBI1XAP2pXeU5xpSOcarXs-RG6ajf2SqyyNvTwufSbLE_a36abC7Z/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyDZPz2ounGHnJJyqzXbC5G3LLtiA1GKCW5f3PAiwParMYdR0kU72igo-1D8d3Z0V5_/exec"
 
 SHOW_OTP_FIELD = "block" if otp_enabled else "none"
 SERVER_OTP = str(current_otp).strip()
+
+import json
+locations_json = json.dumps(LOCATIONS_COORDS, ensure_ascii=False)
 
 form_html = """
 <div id="browser_warning_container" style="display: none; font-family: Tahoma, sans-serif; padding: 30px; direction: rtl; background-color: #f8d7da; border-radius: 12px; border: 2px solid #f5c6cb; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px;">
@@ -158,8 +171,7 @@ form_html = """
 </div>
 
 <script>
-const CLASS_LAT = __LAT__;
-const CLASS_LON = __LON__;
+const LOCATIONS_COORDS = __LOCATIONS_JSON__;
 const ALLOWED_RADIUS = __RADIUS__;
 const SCRIPT_URL = "__URL__";
 const OTP_ENABLED = __OTP_ENABLED__;
@@ -409,7 +421,6 @@ function cleanDigits(inputStr) {
     return matches ? matches.join('') : '';
 }
 
-// دالة مساعدة لأخذ قراءة GPS فردية بمواصفات دقة عالية ومهلة موسعة
 function getSinglePosition() {
     return new Promise((resolve, reject) => {
         if (!navigator.geolocation) {
@@ -444,6 +455,11 @@ async function verifyAndSubmit() {
         return;
     }
 
+    if (!LOCATIONS_COORDS[loc]) {
+        showMessage("❌ يرجى اختيار مكان محاضرة صحيح من القائمة!", "#d9534f", "#f2dede");
+        return;
+    }
+
     if (year === "الفرقة الرابعة" && !track) {
         showMessage("❌ يرجى اختيار التوجه الخاص بالفرقة الرابعة!", "#d9534f", "#f2dede");
         return;
@@ -468,7 +484,6 @@ async function verifyAndSubmit() {
     showMessage("⏳ جاري تثبيت وتحديد موقعك الجغرافي بدقة (جاري أخذ عدة عينات)...", "#0275d8", "#d9edf7");
 
     try {
-        // أخذ 3 قراءات متتالية لضمان استقرار المستشعر وتجاوز قفزة البداية
         let bestPosition = null;
         let minAccuracy = Infinity;
 
@@ -480,13 +495,10 @@ async function verifyAndSubmit() {
                     minAccuracy = acc;
                     bestPosition = pos;
                 }
-                // انتظار قصير بين القراءة والأخرى (1.5 ثانية) لتمكين القمر الصناعي من الثبات
                 if (i < 2) {
                     await new Promise(r => setTimeout(r, 1500));
                 }
-            } catch (e) {
-                // تجاهل خطأ محاولة فردية إذا نجحت المحاولات الأخرى
-            }
+            } catch (e) {}
         }
 
         if (!bestPosition) {
@@ -495,7 +507,10 @@ async function verifyAndSubmit() {
 
         const lat = bestPosition.coords.latitude;
         const lon = bestPosition.coords.longitude;
-        const distance = calculateDistance(CLASS_LAT, CLASS_LON, lat, lon);
+        
+        // جلب إحداثيات المكان المحدد الذي اختاره الطالب من القائمة
+        const targetLocCoords = LOCATIONS_COORDS[loc];
+        const distance = calculateDistance(targetLocCoords.lat, targetLocCoords.lon, lat, lon);
 
         if (distance <= ALLOWED_RADIUS) {
             showMessage("⏳ تم التحقق من الموقع بدقة عالية (داخل النطاق)، جاري إرسال وتسجيل الحضور...", "#0275d8", "#d9edf7");
@@ -534,7 +549,7 @@ async function verifyAndSubmit() {
             .then(response => response.json())
             .then(result => {
                 if (result.status === "success") {
-                    showMessage("✅ تم تسجيل حضورك بنجاح في مادة (" + course + " - " + section + ") ليوم " + day + " وتاريخ " + currentDateStr + "!", "#28a745", "#d4edda");
+                    showMessage("✅ تم تسجيل حضورك بنجاح في مادة (" + course + " - " + section + ") في (" + loc + ") ليوم " + day + " وتاريخ " + currentDateStr + "!", "#28a745", "#d4edda");
                 } else {
                     showMessage("❌ " + (result.message || "عذراً، حدث خطأ أثناء التسجيل."), "#d9534f", "#f2dede");
                 }
@@ -544,7 +559,7 @@ async function verifyAndSubmit() {
             });
 
         } else {
-            showMessage("❌ عذراً، أنت خارج النطاق المسموح للقاعة (المسافة الحالية: " + Math.round(distance) + " متر)!", "#d9534f", "#f2dede");
+            showMessage("❌ عذراً، أنت خارج النطاق المسموح لـ (" + loc + ") (المسافة الحالية: " + Math.round(distance) + " متر)!", "#d9534f", "#f2dede");
         }
 
     } catch (error) {
@@ -553,8 +568,7 @@ async function verifyAndSubmit() {
 }
 </script>
 """ \
-.replace("__LAT__", str(CLASS_LAT)) \
-.replace("__LON__", str(CLASS_LON)) \
+.replace("__LOCATIONS_JSON__", locations_json) \
 .replace("__RADIUS__", str(ALLOWED_RADIUS_METERS)) \
 .replace("__URL__", GOOGLE_SCRIPT_URL) \
 .replace("__SHOW_OTP__", SHOW_OTP_FIELD) \
