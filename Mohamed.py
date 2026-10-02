@@ -66,6 +66,9 @@ ALLOWED_RADIUS_METERS = 500
 # رابط الـ Web App الخاص بك
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxQxHoYWp6VX0JzvDg4RByyD6u4xPzKqINOF3XowFRCA6bSxwFH6NfulPRczNWT_gd_/exec"
 
+# الرابط الثابت للتطبيق المراد نسخه
+STATIC_APP_URL = "https://attendanceapp-qorw7xeexbprqppsqsfxvj.streamlit.app/"
+
 SHOW_OTP_FIELD = "block" if otp_enabled else "none"
 SERVER_OTP = str(current_otp).strip()
 
@@ -90,9 +93,10 @@ form_html = f"""
         عذراً، لا يمكن تسجيل الحضور إلا من خلال <b>متصفح جوجل كروم (Google Chrome) الأساسي</b> فقط.
     </p>
     <p style="font-size: 16px; color: #555; line-height: 1.5; margin-bottom: 20px;">
-        يبدو أنك تفتح الرابط من متصفح غير مدعوم أو من داخل تطبيق خارجي (مثل فيسبوك، واتساب، إلخ). يرجى نسخ الرابط فتحه مباشرة في تطبيق <b>جوجل كروم</b> بهاتفك.
+        يبدو أنك تفتح الرابط من متصفح غير مدعوم أو من داخل تطبيق خارجي (مثل فيسبوك، واتساب، إلخ). يرجى الضغط على الزر أدناه لنسخ الرابط وفتحه مباشرة في متصفح كروم.
     </p>
-    <button onclick="copyLinkAndOpen()" style="background-color: #17a2b8; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">📋 نسخ الرابط لفتحه في كروم</button>
+    <button onclick="copyFixedLinkAndOpen()" style="background-color: #17a2b8; color: white; padding: 14px 24px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 100%; margin-bottom: 15px;">📋 نسخ رابط التطبيق وفتحه في كروم</button>
+    <input type="text" id="fixed_url_box" value="{STATIC_APP_URL}" readonly style="width: 100%; padding: 10px; text-align: center; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; background-color: #fff; color: #333; box-sizing: border-box;" onclick="this.select();">
 </div>
 
 <div id="main_app_container" style="display: none; font-family: Tahoma, sans-serif; padding: 25px; direction: rtl; background-color: #f9f9f9; border-radius: 12px; border: 1px solid #ddd; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
@@ -186,6 +190,7 @@ form_html = f"""
 const LOCATIONS_COORDS = {locations_json};
 const ALLOWED_RADIUS = {ALLOWED_RADIUS_METERS};
 const SCRIPT_URL = "{GOOGLE_SCRIPT_URL}";
+const STATIC_APP_URL = "{STATIC_APP_URL}";
 const OTP_ENABLED = {"true" if otp_enabled else "false"};
 const CORRECT_OTP = "{SERVER_OTP}";
 const APP_OPEN_HOUR = {APP_OPEN_HOUR};
@@ -290,13 +295,41 @@ document.addEventListener("DOMContentLoaded", function() {{
     }}
 }});
 
-function copyLinkAndOpen() {{
-    const currentUrl = window.location.href;
-    navigator.clipboard.writeText(currentUrl).then(() => {{
-        alert("تم نسخ رابط التطبيق بنجاح! يرجى فتح متصفح جوجل كروم ولصق الرابط هناك.");
-    }}).catch(err => {{
-        prompt("نسخ الرابط يدوياً:", currentUrl);
-    }});
+function copyFixedLinkAndOpen() {{
+    if (navigator.clipboard && navigator.clipboard.writeText) {{
+        navigator.clipboard.writeText(STATIC_APP_URL).then(() => {{
+            alert("✅ تم نسخ رابط التطبيق الثابت بنجاح!\nالآن افتح تطبيق 'جوجل كروم' والصق الرابط هناك.");
+        }}).catch(() => {{
+            fallbackCopyFixed(STATIC_APP_URL);
+        }});
+    }} else {{
+        fallbackCopyFixed(STATIC_APP_URL);
+    }}
+
+    try {{
+        let intentUrl = "intent://" + STATIC_APP_URL.replace(/^https?:\/\//, '') + "#Intent;scheme=https;package=com.android.chrome;end;";
+        window.location.href = intentUrl;
+    }} catch(e) {{}}
+}}
+
+function fallbackCopyFixed(text) {{
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {{
+        const successful = document.execCommand('copy');
+        if (successful) {{
+            alert("✅ تم نسخ رابط التطبيق الثابت بنجاح! افتح جوجل كروم والصق الرابط.");
+        }} else {{
+            prompt("نسخ الرابط يدوياً بالضغط مطولاً:", text);
+        }}
+    }} catch (err) {{
+        prompt("نسخ الرابط يدوياً بالضغط مطولاً:", text);
+    }}
+    document.body.removeChild(textArea);
 }}
 
 function onYearChange() {{
@@ -507,12 +540,11 @@ async function verifyAndSubmit() {{
         String(nowCheck.getMonth() + 1).padStart(2, '0') + '-' + 
         String(nowCheck.getDate()).padStart(2, '0');
 
-    showMessage("⏳ جاري تحديد موقعك الجغرافي (Fake GPS)...", "#0275d8", "#d9edf7");
+    showMessage("⏳ جاري تحديد موقعك الجغرافي...", "#0275d8", "#d9edf7");
 
     try {{
         let samples = [];
 
-        // التقاط 3 عينات بفارق زمني 3 ثوانٍ لرصد التذبذب الطبيعي (Drift) أو الثبات المزيف
         for (let i = 0; i < 3; i++) {{
             try {{
                 let pos = await getSinglePosition();
@@ -529,10 +561,9 @@ async function verifyAndSubmit() {{
         }}
 
         if (samples.length < 2) {{
-            throw new Error("يرجى غلق وفتح الموقع الجغرافي بهاتفك والتأكد من تفعيل ال GPS حتى يستطيع التطبيق قراءة موقعك الجغرافي بسهولة");
+            throw new Error("يرجى غلق وفتح الموقع الجغرافي بهاتفك والتأكد من تفعيل ال GPS.");
         }}
 
-        // --- الفحص الأول: كشف الثبات المزيف (Fake GPS Zero-Drift Check) ---
         let isFakeStatic = true;
         for (let i = 1; i < samples.length; i++) {{
             if (samples[i].lat !== samples[0].lat || samples[i].lon !== samples[0].lon) {{
@@ -546,8 +577,6 @@ async function verifyAndSubmit() {{
             return;
         }}
 
-        // --- الفحص الثاني: فحص الارتفاع (Altitude Validation) ---
-        // بعض تطبيقات الـ Fake GPS ترسل ارتفاعاً غير منطقي (صفر أو null تماماً في كل العينات)
         let zeroAltitudeCount = 0;
         samples.forEach(s => {{
             if (s.alt === null || s.alt === undefined || s.alt === 0) {{
@@ -560,7 +589,6 @@ async function verifyAndSubmit() {{
             return;
         }}
 
-        // اختيار أفضل عينة بناءً على دقة الإشارة (Accuracy)
         let bestSample = samples.reduce((prev, curr) => (curr.acc < prev.acc) ? curr : prev);
         const lat = bestSample.lat;
         const lon = bestSample.lon;
@@ -569,7 +597,7 @@ async function verifyAndSubmit() {{
         const distance = calculateDistance(targetLocCoords.lat, targetLocCoords.lon, lat, lon);
 
         if (distance <= ALLOWED_RADIUS) {{
-            showMessage("⏳ تم اجتياز الفحوصات الأمنية بدقة (داخل النطاق وبشكل حقيقي)، جاري تسجيل حضورك...", "#0275d8", "#d9edf7");
+            showMessage("⏳ تم اجتياز الفحوصات الأمنية بدقة، جاري تسجيل حضورك...", "#0275d8", "#d9edf7");
 
             const now = new Date();
             const formattedTime = now.getFullYear() + '-' + 
@@ -619,7 +647,7 @@ async function verifyAndSubmit() {{
         }}
 
     }} catch (error) {{
-        showMessage("❌ فشل تحديد الموقع بدقة. تأكد من تفعيل الـ GPS بوضع الدقة العالية والسماح للمتصفح بالوصول لموقعك.", "#d9534f", "#f2dede");
+        showMessage("❌ فشل تحديد الموقع بدقة. تأكد من تفعيل الـ GPS بوضع الدقة العالية.", "#d9534f", "#f2dede");
     }}
 }}
 </script>
