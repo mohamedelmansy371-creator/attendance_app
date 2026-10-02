@@ -64,7 +64,7 @@ LOCATIONS_COORDS = {
 ALLOWED_RADIUS_METERS = 500
 
 # رابط الـ Web App الخاص بك
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwVEoXIauFkJStrTPV6-zMEezhG25JPzoOjPZenuyerqWo7YBHkMluujDPYaoWBMi8t/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxQxHoYWp6VX0JzvDg4RByyD6u4xPzKqINOF3XowFRCA6bSxwFH6NfulPRczNWT_gd_/exec"
 
 SHOW_OTP_FIELD = "block" if otp_enabled else "none"
 SERVER_OTP = str(current_otp).strip()
@@ -437,7 +437,7 @@ function showMessage(text, color, bgColor) {{
 
 function cleanDigits(inputStr) {{
     if (!inputStr) return "";
-    let cleaned = inputStr.toString().replace(/[\\u200B-\\u200D\\uFEFF]/g, '').trim();
+    let cleaned = inputStr.toString().replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
     let arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
     let persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
     for (let i = 0; i < 10; i++) {{
@@ -456,7 +456,7 @@ function getSinglePosition() {{
         navigator.geolocation.getCurrentPosition(
             (position) => resolve(position),
             (error) => reject(error),
-            {{ enableHighAccuracy: true, timeout: 25000, maximumAge: 0 }}
+            {{ enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }}
         );
     }});
 }}
@@ -507,38 +507,69 @@ async function verifyAndSubmit() {{
         String(nowCheck.getMonth() + 1).padStart(2, '0') + '-' + 
         String(nowCheck.getDate()).padStart(2, '0');
 
-    showMessage("⏳ جاري تثبيت وتحديد موقعك الجغرافي بدقة (جاري أخذ عدة عينات)...", "#0275d8", "#d9edf7");
+    showMessage("⏳ جاري تحديد موقعك الجغرافي (Fake GPS)...", "#0275d8", "#d9edf7");
 
     try {{
-        let bestPosition = null;
-        let minAccuracy = Infinity;
+        let samples = [];
 
+        // التقاط 3 عينات بفارق زمني 3 ثوانٍ لرصد التذبذب الطبيعي (Drift) أو الثبات المزيف
         for (let i = 0; i < 3; i++) {{
             try {{
                 let pos = await getSinglePosition();
-                let acc = pos.coords.accuracy;
-                if (acc < minAccuracy) {{
-                    minAccuracy = acc;
-                    bestPosition = pos;
-                }}
+                samples.push({{
+                    lat: pos.coords.latitude,
+                    lon: pos.coords.longitude,
+                    alt: pos.coords.altitude,
+                    acc: pos.coords.accuracy
+                }});
                 if (i < 2) {{
-                    await new Promise(r => setTimeout(r, 1500));
+                    await new Promise(r => setTimeout(r, 3000));
                 }}
             }} catch (e) {{}}
         }}
 
-        if (!bestPosition) {{
-            throw new Error("فشل التقاط إشارات الـ GPS.");
+        if (samples.length < 2) {{
+            throw new Error("يرجى غلق وفتح الموقع الجغرافي بهاتفك والتأكد من تفعيل ال GPS حتى يستطيع التطبيق قراءة موقعك الجغرافي بسهولة");
         }}
 
-        const lat = bestPosition.coords.latitude;
-        const lon = bestPosition.coords.longitude;
+        // --- الفحص الأول: كشف الثبات المزيف (Fake GPS Zero-Drift Check) ---
+        let isFakeStatic = true;
+        for (let i = 1; i < samples.length; i++) {{
+            if (samples[i].lat !== samples[0].lat || samples[i].lon !== samples[0].lon) {{
+                isFakeStatic = false;
+                break;
+            }}
+        }}
+
+        if (isFakeStatic) {{
+            showMessage("🚨 تنبيه أمني: تم رصد محاولة تسجيل غير قانونية، تم حظر محاولة التسجيل!", "#d9534f", "#f2dede");
+            return;
+        }}
+
+        // --- الفحص الثاني: فحص الارتفاع (Altitude Validation) ---
+        // بعض تطبيقات الـ Fake GPS ترسل ارتفاعاً غير منطقي (صفر أو null تماماً في كل العينات)
+        let zeroAltitudeCount = 0;
+        samples.forEach(s => {{
+            if (s.alt === null || s.alt === undefined || s.alt === 0) {{
+                zeroAltitudeCount++;
+            }}
+        }});
+
+        if (zeroAltitudeCount === samples.length) {{
+            showMessage("🚨 تنبيه أمني: تم اكتشاف محاولة تسجيل غير قانونية، تم رفض التسجيل!", "#d9534f", "#f2dede");
+            return;
+        }}
+
+        // اختيار أفضل عينة بناءً على دقة الإشارة (Accuracy)
+        let bestSample = samples.reduce((prev, curr) => (curr.acc < prev.acc) ? curr : prev);
+        const lat = bestSample.lat;
+        const lon = bestSample.lon;
         
         const targetLocCoords = LOCATIONS_COORDS[loc];
         const distance = calculateDistance(targetLocCoords.lat, targetLocCoords.lon, lat, lon);
 
         if (distance <= ALLOWED_RADIUS) {{
-            showMessage("⏳ تم التحقق من الموقع بدقة عالية (داخل النطاق)، جاري إرسال وتسجيل الحضور...", "#0275d8", "#d9edf7");
+            showMessage("⏳ تم اجتياز الفحوصات الأمنية بدقة (داخل النطاق وبشكل حقيقي)، جاري تسجيل حضورك...", "#0275d8", "#d9edf7");
 
             const now = new Date();
             const formattedTime = now.getFullYear() + '-' + 
@@ -588,7 +619,7 @@ async function verifyAndSubmit() {{
         }}
 
     }} catch (error) {{
-        showMessage("❌ فشل تحديد الموقع بدقة. تأكد من تفعيل الـ GPS والسماح للمتصفح بالوصول لموقعك بوضوح.", "#d9534f", "#f2dede");
+        showMessage("❌ فشل تحديد الموقع بدقة. تأكد من تفعيل الـ GPS بوضع الدقة العالية والسماح للمتصفح بالوصول لموقعك.", "#d9534f", "#f2dede");
     }}
 }}
 </script>
