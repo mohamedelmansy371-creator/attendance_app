@@ -46,7 +46,7 @@ st.title("نظام تسجيل الحضور الذكي")
 
 # --- إعدادات وقت فتح وغلق التطبيق (صيغة 24 ساعة) ---
 APP_OPEN_HOUR = 9   # الساعة 9 صباحاً
-APP_CLOSE_HOUR = 22 # الساعة 10 مساءً (22:00)
+APP_CLOSE_HOUR = 23 # الساعة 11 مساءً (23:00)
 
 # --- إحداثيات الأماكن التسعة المختلفة ---
 LOCATIONS_COORDS = {
@@ -64,7 +64,7 @@ LOCATIONS_COORDS = {
 ALLOWED_RADIUS_METERS = 500
 
 # رابط الـ Web App الخاص بك
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxJVsUa1Jscn1TJ4Zg5dxi6LmjQ8WT0yKsCm8_2UKicoP4HnLuu1oi9CsfiBd2JwW-W/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYIXXCwSxxTajULOCHuSQj6EVlicpK6SQ4GcxJFJ5GhnCgHIbyhTfF1ZbtciYo81E0/exec"
 
 SHOW_OTP_FIELD = "block" if otp_enabled else "none"
 SERVER_OTP = str(current_otp).strip()
@@ -85,7 +85,7 @@ form_html = f"""
 </div>
 
 <div id="browser_warning_container" style="display: none; font-family: Tahoma, sans-serif; padding: 30px; direction: rtl; background-color: #f8d7da; border-radius: 12px; border: 2px solid #f5c6cb; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px;">
-    <h2 style="color: #721c24; margin-bottom: 15px;">⚠️️ تنبيه هـام جداً - المتصفح غير مسموح</h2>
+    <h2 style="color: #721c24; margin-bottom: 15px;">⚠ تنبيه هـام جداً - المتصفح غير مسموح</h2>
     <p style="font-size: 18px; color: #721c24; line-height: 1.6; font-weight: bold;">
         عذراً، لا يمكن تسجيل الحضور إلا من خلال <b>متصفح جوجل كروم (Google Chrome) الأساسي</b> فقط.
     </p>
@@ -291,7 +291,6 @@ document.addEventListener("DOMContentLoaded", function() {{
 }});
 
 function copyLinkAndOpen() {{
-    // التقاط رابط الصفحة الرئيسية الفعلية للتطبيق لتفادي أي روابط معزولة داخلية
     let targetUrl = "";
     try {{
         targetUrl = window.parent.location.href;
@@ -537,6 +536,20 @@ async function verifyAndSubmit() {{
         if (samples.length < 2) {{
             throw new Error("يرجى التأكد من تفعيل موقعك الجغرافي");
         }}
+
+        // --- التعديل الأمني الجديد: فحص دقة الـ GPS (تطبيقات التزييف تعطي دقة غير منطقية أقل من 5 متر) ---
+        let lowAccuracyFound = false;
+        samples.forEach(s => {{
+            if (s.acc !== null && s.acc !== undefined && s.acc < 5) {{
+                lowAccuracyFound = true;
+            }}
+        }});
+
+        if (lowAccuracyFound) {{
+            showMessage("🚨 تنبيه أمني: تم رصد محاولة تسجيل غير قانونية، تم رفض التسجيل!", "#d9534f", "#f2dede");
+            return;
+        }}
+        // ----------------------------------------------------------------------------------------
 
         let isFakeStatic = true;
         for (let i = 1; i < samples.length; i++) {{
