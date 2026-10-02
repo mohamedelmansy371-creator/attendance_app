@@ -64,7 +64,7 @@ LOCATIONS_COORDS = {
 ALLOWED_RADIUS_METERS = 500
 
 # رابط الـ Web App الخاص بك
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxQxHoYWp6VX0JzvDg4RByyD6u4xPzKqINOF3XowFRCA6bSxwFH6NfulPRczNWT_gd_/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxQJmc9K0919D3EFVDjrkyr3MhowUMn0b7mmp47NHQFz3ur4INc8sVVJ9fGDt19DK7H/exec"
 
 # الرابط الثابت للتطبيق المراد نسخه
 STATIC_APP_URL = "https://attendanceapp-qorw7xeexbprqppsqsfxvj.streamlit.app/"
