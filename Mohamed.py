@@ -64,7 +64,7 @@ LOCATIONS_COORDS = {
 ALLOWED_RADIUS_METERS = 500
 
 # رابط الـ Web App الخاص بك
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyqapTw6O-iKSa9_XIwxdL-FjdixKLe1dnP9uk_01JQkSJ2nih9ApLm6GYvLziAe0YV/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwVEoXIauFkJStrTPV6-zMEezhG25JPzoOjPZenuyerqWo7YBHkMluujDPYaoWBMi8t/exec"
 
 SHOW_OTP_FIELD = "block" if otp_enabled else "none"
 SERVER_OTP = str(current_otp).strip()
@@ -80,7 +80,7 @@ form_html = f"""
         عذراً، أوقات تسجيل الحضور الرسمية هي من الساعة <b>{APP_OPEN_HOUR}:00 صباحاً</b> وحتى الساعة <b>{open_hour_12}:00 مساءً</b>.
     </p>
     <p style="font-size: 16px; color: #555; line-height: 1.5; margin-bottom: 10px;">
-       يرجى محاولة الدخول في المواعيد المحددة للمحاضرات أو السكاشن العملية.
+        يرجى محاولة الدخول خلال المواعيد المحددة للمحاضرة.
     </p>
 </div>
 
@@ -507,15 +507,7 @@ async function verifyAndSubmit() {{
         String(nowCheck.getMonth() + 1).padStart(2, '0') + '-' + 
         String(nowCheck.getDate()).padStart(2, '0');
 
-    // منع تكرار التسجيل لنفس الجهاز في نفس اليوم
-    const deviceId = getAdvancedHardwareFingerprint();
-    const storageKey = "attended_" + currentDateStr + "_" + deviceId;
-    if (localStorage.getItem(storageKey)) {{
-        showMessage("❌ عذراً، لقد تم تسجيل حضور مسبقاً من هذا الهاتف اليوم ولا يمكن التسجيل مرة أخرى!", "#d9534f", "#f2dede");
-        return;
-    }}
-
-    showMessage("⏳ جاري تثبيت وتحديد موقعك الجغرافي بدقة (جاري أخذ عدة عينات وكشف المواقع الوهمية)...", "#0275d8", "#d9edf7");
+    showMessage("⏳ جاري تثبيت وتحديد موقعك الجغرافي بدقة (جاري أخذ عدة عينات)...", "#0275d8", "#d9edf7");
 
     try {{
         let bestPosition = null;
@@ -525,12 +517,6 @@ async function verifyAndSubmit() {{
             try {{
                 let pos = await getSinglePosition();
                 let acc = pos.coords.accuracy;
-                
-                // فحص دقة الـ GPS لكشف Fake GPS (التطبيقات الوهمية غالباً تعطي دقة مشبوهة أو ثابتة بشكل غير طبيعي)
-                if (acc <= 0 || acc > 150) {{
-                    throw new Error("موقع غير دقيق أو تم اكتشاف تلاعب بالإحداثيات.");
-                }}
-
                 if (acc < minAccuracy) {{
                     minAccuracy = acc;
                     bestPosition = pos;
@@ -542,19 +528,11 @@ async function verifyAndSubmit() {{
         }}
 
         if (!bestPosition) {{
-            throw new Error("فشل التقاط إشارات الـ GPS الحقيقية أو تم رصد موقع وهمي.");
+            throw new Error("فشل التقاط إشارات الـ GPS.");
         }}
 
         const lat = bestPosition.coords.latitude;
         const lon = bestPosition.coords.longitude;
-        const accuracy = bestPosition.coords.accuracy;
-        const altitude = bestPosition.coords.altitude;
-
-        // إغلاق ثغرة Mock Location الصريحة في حال أرسل المتصفح مؤشرات تدل على ذلك
-        if (accuracy === 0 || (altitude === 0 && bestPosition.coords.altitudeAccuracy === null)) {{
-            showMessage("❌ تم اكتشاف محاولة استخدام موقع وهمي (Fake GPS). يرجى إيقاف أي تطبيقات خارجية للموقع وتفعيل الـ GPS الحقيقي.", "#d9534f", "#f2dede");
-            return;
-        }}
         
         const targetLocCoords = LOCATIONS_COORDS[loc];
         const distance = calculateDistance(targetLocCoords.lat, targetLocCoords.lon, lat, lon);
@@ -585,7 +563,7 @@ async function verifyAndSubmit() {{
                 lon: lon,
                 dist: Math.round(distance),
                 time: formattedTime,
-                deviceId: deviceId
+                deviceId: getAdvancedHardwareFingerprint()
             }};
 
             fetch(SCRIPT_URL, {{
@@ -596,8 +574,6 @@ async function verifyAndSubmit() {{
             .then(response => response.json())
             .then(result => {{
                 if (result.status === "success") {{
-                    // حفظ علامة في ذاكرة المتصفح لمنع التكرار بنفس الجهاز اليوم
-                    localStorage.setItem(storageKey, "true");
                     showMessage("✅ تم تسجيل حضورك بنجاح في مادة (" + course + " - " + section + ") في (" + loc + ") ليوم " + day + " وتاريخ " + currentDateStr + "!", "#28a745", "#d4edda");
                 }} else {{
                     showMessage("❌ " + (result.message || "عذراً، حدث خطأ أثناء التسجيل."), "#d9534f", "#f2dede");
@@ -612,7 +588,7 @@ async function verifyAndSubmit() {{
         }}
 
     }} catch (error) {{
-        showMessage("❌ فشل تحديد الموقع بدقة أو تم رصد إحداثيات وهمية. تأكد من تفعيل الـ GPS الحقيقي وإغلاق أي تطبيقات تلاعب بالموقع.", "#d9534f", "#f2dede");
+        showMessage("❌ فشل تحديد الموقع بدقة. تأكد من تفعيل الـ GPS والسماح للمتصفح بالوصول لموقعك بوضوح.", "#d9534f", "#f2dede");
     }}
 }}
 </script>
