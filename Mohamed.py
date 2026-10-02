@@ -571,7 +571,7 @@ async function verifyAndSubmit() {{
         const distance = calculateDistance(targetLocCoords.lat, targetLocCoords.lon, lat, lon);
 
         if (distance <= ALLOWED_RADIUS) {{
-            showMessage("⏳ تم اجتياز الفحوصات الأمنية بدقة (داخل النطاق وبشكل حقيقي)، جاري تسجيل حضورك...", "#0275d8", "#d9edf7");
+            showMessage("⏳ تم اجتياز الفحوصات الأمنية بدقة (داخل النطاق)، جاري تسجيل حضورك...", "#0275d8", "#d9edf7");
 
             const now = new Date();
             const formattedTime = now.getFullYear() + '-' + 
