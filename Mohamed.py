@@ -514,7 +514,7 @@ async function verifyAndSubmit() {{
         String(nowCheck.getMonth() + 1).padStart(2, '0') + '-' + 
         String(nowCheck.getDate()).padStart(2, '0');
 
-    showMessage("⏳ جاري سحب عدة قراءات متفرقة لتحليل تذبذب الموقع وكشف التطبيقات الوهمية (Fake GPS)...", "#0275d8", "#d9edf7");
+    showMessage("⏳ جاري تحديد موقعك الجغرافي (Your location is being determined)...", "#0275d8", "#d9edf7");
 
     try {{
         let samples = [];
@@ -535,7 +535,7 @@ async function verifyAndSubmit() {{
         }}
 
         if (samples.length < 2) {{
-            throw new Error("فشل التقاط عينات GPS كافية. يرجى التأكد من تفعيل GPS بوضوح.");
+            throw new Error("يرجى التأكد من تفعيل موقعك الجغرافي");
         }}
 
         let isFakeStatic = true;
@@ -547,7 +547,7 @@ async function verifyAndSubmit() {{
         }}
 
         if (isFakeStatic) {{
-            showMessage("🚨 تنبيه أمني: تم رصد استخدام تطبيق موقع جغرافي مزيف (Fake GPS ثابتاً تماماً). تم حظر محاولة التسجيل!", "#d9534f", "#f2dede");
+            showMessage("🚨 تنبيه أمني: تم رصد محاولة تسجيل غير قانونية، تم حظر محاولة التسجيل!", "#d9534f", "#f2dede");
             return;
         }}
 
@@ -559,7 +559,7 @@ async function verifyAndSubmit() {{
         }});
 
         if (zeroAltitudeCount === samples.length) {{
-            showMessage("🚨 تنبيه أمني: تم اكتشاف محاولة تلاعب بالارتفاع الجغرافي (Fake GPS Altitude). تم رفض التسجيل!", "#d9534f", "#f2dede");
+            showMessage("🚨 تنبيه أمني: تم اكتشاف محاولة تسجيل غير قانونية، تم رفض التسجيل!", "#d9534f", "#f2dede");
             return;
         }}
 
