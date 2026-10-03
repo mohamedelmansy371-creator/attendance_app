@@ -64,7 +64,7 @@ LOCATIONS_COORDS = {
 ALLOWED_RADIUS_METERS = 500
 
 # رابط الـ Web App الخاص بك
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYIXXCwSxxTajULOCHuSQj6EVlicpK6SQ4GcxJFJ5GhnCgHIbyhTfF1ZbtciYo81E0/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzkWihg7dJmJGVRYiUvFC89X2-KvQfLKS5FlY6t3UlC8nTIbVhH9Ilx7veNk9AJzFw/exec"
 
 SHOW_OTP_FIELD = "block" if otp_enabled else "none"
 SERVER_OTP = str(current_otp).strip()
