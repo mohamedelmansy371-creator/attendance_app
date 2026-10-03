@@ -64,7 +64,7 @@ LOCATIONS_COORDS = {
 ALLOWED_RADIUS_METERS = 500
 
 # رابط الـ Web App الخاص بك
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyKVqFNUciW5UxST4ewVEQy9sEfvwYThe7lBKkwk8MaE_P2qW-F2WwPZ1vLQ212O5dv/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby7YhtIIrdSJ1N9wnM-dBhAPDFL3tGuV4mMC-fsMxPBi6loUiEqpoMpuJ3tsDehDl9v/exec"
 
 SHOW_OTP_FIELD = "block" if otp_enabled else "none"
 SERVER_OTP = str(current_otp).strip()
@@ -79,12 +79,12 @@ open_period = "صباحاً" if APP_OPEN_HOUR < 12 else "مساءً"
 close_hour_12 = APP_CLOSE_HOUR if APP_CLOSE_HOUR <= 12 else APP_CLOSE_HOUR - 12
 close_period = "صباحاً" if APP_CLOSE_HOUR < 12 else "مساءً"
 
-# استخدام .format() لتجنب مشاكل الأقواس في الـ f-string
+# قالب HTML النظيف بدون استخدام format لتفادي الأخطاء تماماً
 form_html = """
 <div id="time_warning_container" style="display: none; font-family: Tahoma, sans-serif; padding: 30px; direction: rtl; background-color: #fff3cd; border-radius: 12px; border: 2px solid #ffeeba; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px;">
     <h2 style="color: #856404; margin-bottom: 15px;">⏳ التطبيق مغلق حالياً</h2>
     <p style="font-size: 18px; color: #856404; line-height: 1.6; font-weight: bold;">
-        عذراً، أوقات تسجيل الحضور الرسمية هي من الساعة <b>{open_h}:00 {open_p}</b> وحتى الساعة <b>{close_h}:00 {close_p}</b>.
+        عذراً، أوقات تسجيل الحضور الرسمية هي من الساعة <b>{OPEN_H}:00 {OPEN_P}</b> وحتى الساعة <b>{CLOSE_H}:00 {CLOSE_P}</b>.
     </p>
     <p style="font-size: 16px; color: #555; line-height: 1.5; margin-bottom: 10px;">
         يرجي محاولة الدخول خلال المواعيد المحددة للمحاضرات النظرية والسكاشن العملية.
@@ -177,7 +177,7 @@ form_html = """
         <input type="text" id="s_time" readonly placeholder="سيتم التقاط الوقت تلقائياً عند التسجيل" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; background-color: #e9ecef; box-sizing: border-box;">
     </div>
 
-    <div id="otp_box_container" style="margin-bottom: 20px; display: {show_otp_field};">
+    <div id="otp_box_container" style="margin-bottom: 20px; display: {SHOW_OTP_FIELD};">
         <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #c0392b; font-size: 16px;">🔐 رمز التحقق (OTP) المعلن في القاعة:</label>
         <input type="text" inputmode="numeric" pattern="[0-9]*" id="s_otp" placeholder="أدخل الرمز التحقق" style="width: 100%; padding: 14px; border: 2px dashed #e74c3c; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: #fff5f5;">
     </div>
@@ -190,15 +190,15 @@ form_html = """
 </div>
 
 <script>
-const LOCATIONS_COORDS = {locations_json};
-const ALLOWED_RADIUS = {allowed_radius_meters};
-const SCRIPT_URL = "{script_url}";
-const OTP_ENABLED = {otp_enabled_js};
-const CORRECT_OTP = "{server_otp}";
-const APP_OPEN_HOUR = {app_open_hour};
-const APP_CLOSE_HOUR = {app_close_hour};
+const LOCATIONS_COORDS = {LOCATIONS_JSON};
+const ALLOWED_RADIUS = {ALLOWED_RADIUS_METERS};
+const SCRIPT_URL = "{GOOGLE_SCRIPT_URL}";
+const OTP_ENABLED = {OTP_ENABLED_JS};
+const CORRECT_OTP = "{SERVER_OTP}";
+const APP_OPEN_HOUR = {APP_OPEN_HOUR};
+const APP_CLOSE_HOUR = {APP_CLOSE_HOUR};
 
-const coursesData = {{
+const coursesData = {
     "الفرقة الأولى": [
         "رياضة عام",
         "أساسيات هندسة النظم الزراعية والحيوية",
@@ -221,7 +221,7 @@ const coursesData = {{
         "هندسة مزارع الإنتاج الحيواني والداجني",
         "مصطلحات علمية باللغة الإنجليزية"
     ],
-    "الفرقة الرابعة": {{
+    "الفرقة الرابعة": {
         "توجه آلات": [
             "التحكم البيئي في المنشآت الزراعية",
             "تصميم نظم الري",
@@ -258,10 +258,10 @@ const coursesData = {{
             "تخطيط وتصميم نظم الصرف الحقلي",
             "هندسة تصنيع السماد العضوي المكمور"
         ]
-    }}
-}};
+    }
+};
 
-document.addEventListener("DOMContentLoaded", function() {{
+document.addEventListener("DOMContentLoaded", function() {
     const now = new Date();
     const currentHour = now.getHours();
 
@@ -269,23 +269,23 @@ document.addEventListener("DOMContentLoaded", function() {{
     const warningBox = document.getElementById("browser_warning_container");
     const mainApp = document.getElementById("main_app_container");
 
-    if (currentHour < APP_OPEN_HOUR || currentHour >= APP_CLOSE_HOUR) {{
+    if (currentHour < APP_OPEN_HOUR || currentHour >= APP_CLOSE_HOUR) {
         if (timeWarningBox) timeWarningBox.style.display = "block";
         if (warningBox) warningBox.style.display = "none";
         if (mainApp) mainApp.style.display = "none";
         return;
-    }}
+    }
 
     const ua = navigator.userAgent;
     const isChromeBrowser = /Chrome|CriOS/.test(ua);
     const isExcludedBrowser = /Edg|OPR|SamsungBrowser|UCBrowser|Firefox|MiuiBrowser|Whale|Yandex|FBAN|FBAV|Instagram|WhatsApp|Twitter/i.test(ua);
     const isActualChrome = isChromeBrowser && !isExcludedBrowser;
 
-    if (!isActualChrome) {{
+    if (!isActualChrome) {
         if (timeWarningBox) timeWarningBox.style.display = "none";
         if (warningBox) warningBox.style.display = "block";
         if (mainApp) mainApp.style.display = "none";
-    }} else {{
+    } else {
         if (timeWarningBox) timeWarningBox.style.display = "none";
         if (warningBox) warningBox.style.display = "none";
         if (mainApp) mainApp.style.display = "block";
@@ -294,25 +294,25 @@ document.addEventListener("DOMContentLoaded", function() {{
         const todayIndex = now.getDay();
         const dayInput = document.getElementById("s_day");
         if(dayInput) dayInput.value = daysMap[todayIndex];
-    }}
-}});
+    }
+});
 
-function copyLinkAndOpen() {{
+function copyLinkAndOpen() {
     let targetUrl = "";
-    try {{
+    try {
         targetUrl = window.parent.location.href;
-    }} catch (e) {{
+    } catch (e) {
         targetUrl = window.location.href;
-    }}
+    }
 
-    navigator.clipboard.writeText(targetUrl).then(() => {{
+    navigator.clipboard.writeText(targetUrl).then(() => {
         alert("✅ تم نسخ رابط التطبيق الحقيقي بنجاح! يرجى فتح متصفح جوجل كروم ولصق الرابط هناك.");
-    }}).catch(err => {{
+    }).catch(err => {
         prompt("انسخ الرابط يدوياً من هنا:", targetUrl);
-    }});
-}}
+    });
+}
 
-function onYearChange() {{
+function onYearChange() {
     const year = document.getElementById("s_year").value;
     const trackContainer = document.getElementById("track_container");
     const courseContainer = document.getElementById("course_container");
@@ -323,27 +323,27 @@ function onYearChange() {{
     document.getElementById("s_section").value = "";
     sectionContainer.style.display = "none";
 
-    if (year === "الفرقة الرابعة") {{
+    if (year === "الفرقة الرابعة") {
         trackContainer.style.display = "block";
         courseContainer.style.display = "none";
-    }} else if (year) {{
+    } else if (year) {
         trackContainer.style.display = "none";
         courseContainer.style.display = "block";
         
         let select = document.getElementById("s_course");
-        coursesData[year].forEach(course => {{
+        coursesData[year].forEach(course => {
             let opt = document.createElement("option");
             opt.value = course;
             opt.textContent = course;
             select.appendChild(opt);
-        }});
-    }} else {{
+        });
+    } else {
         trackContainer.style.display = "none";
         courseContainer.style.display = "none";
-    }}
-}}
+    }
+}
 
-function onTrackChange() {{
+function onTrackChange() {
     const track = document.getElementById("s_track").value;
     const courseContainer = document.getElementById("course_container");
     const sectionContainer = document.getElementById("section_container");
@@ -353,33 +353,33 @@ function onTrackChange() {{
     document.getElementById("s_section").value = "";
     sectionContainer.style.display = "none";
 
-    if (track) {{
+    if (track) {
         courseContainer.style.display = "block";
         let courses = coursesData["الفرقة الرابعة"][track];
-        courses.forEach(course => {{
+        courses.forEach(course => {
             let opt = document.createElement("option");
             opt.value = course;
             opt.textContent = course;
             select.appendChild(opt);
-        }});
-    }} else {{
+        });
+    } else {
         courseContainer.style.display = "none";
-    }}
-}}
+    }
+}
 
-function toggleSection() {{
+function toggleSection() {
     const course = document.getElementById("s_course").value;
     const sectionContainer = document.getElementById("section_container");
-    if (course !== "") {{
+    if (course !== "") {
         sectionContainer.style.display = "block";
-    }} else {{
+    } else {
         sectionContainer.style.display = "none";
         document.getElementById("s_section").value = "";
-    }}
-}}
+    }
+}
 
-function getAdvancedHardwareFingerprint() {{
-    try {{
+function getAdvancedHardwareFingerprint() {
+    try {
         let canvas = document.createElement('canvas');
         let ctx = canvas.getContext('2d');
         ctx.textBaseline = "top";
@@ -392,17 +392,17 @@ function getAdvancedHardwareFingerprint() {{
 
         let glVendor = "";
         let glRenderer = "";
-        try {{
+        try {
             let canvasGL = document.createElement('canvas');
             let gl = canvasGL.getContext('webgl') || canvasGL.getContext('experimental-webgl');
-            if (gl) {{
+            if (gl) {
                 let debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-                if (debugInfo) {{
+                if (debugInfo) {
                     glVendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
                     glRenderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
-                }}
-            }}
-        }} catch(e) {{}}
+                }
+            }
+        } catch(e) {}
 
         let components = [
             navigator.hardwareConcurrency || '4',
@@ -416,18 +416,18 @@ function getAdvancedHardwareFingerprint() {{
         ].join('###');
 
         let hash = 0;
-        for (let i = 0; i < components.length; i++) {{
+        for (let i = 0; i < components.length; i++) {
             let char = components.charCodeAt(i);
             hash = ((hash << 5) - hash) + char;
             hash = hash & hash;
-        }}
+        }
         return 'hw_fp_' + Math.abs(hash).toString(36) + '_' + screen.width + 'x' + screen.height;
-    }} catch (e) {{
+    } catch (e) {
         return 'hw_fallback_' + screen.width + 'x' + screen.height;
-    }}
-}}
+    }
+}
 
-function calculateDistance(lat1, lon1, lat2, lon2) {{
+function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371000;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
@@ -436,9 +436,9 @@ function calculateDistance(lat1, lon1, lat2, lon2) {{
               Math.sin(dLon/2) * Math.sin(dLon/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
-}}
+}
 
-function showMessage(text, color, bgColor) {{
+function showMessage(text, color, bgColor) {
     const container = document.getElementById("msg_container");
     const msg = document.getElementById("msg");
     container.style.display = "block";
@@ -446,35 +446,35 @@ function showMessage(text, color, bgColor) {{
     container.style.border = "2px solid " + color;
     msg.style.color = color;
     msg.innerHTML = text;
-}}
+}
 
-function cleanDigits(inputStr) {{
+function cleanDigits(inputStr) {
     if (!inputStr) return "";
     let cleaned = inputStr.toString().replace(/[\\u200B-\\u200D\\uFEFF]/g, '').trim();
     let arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
     let persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-    for (let i = 0; i < 10; i++) {{
+    for (let i = 0; i < 10; i++) {
         cleaned = cleaned.replace(new RegExp(arabicNumbers[i], 'g'), i).replace(new RegExp(persianNumbers[i], 'g'), i);
-    }}
+    }
     let matches = cleaned.match(/[0-9]/g);
     return matches ? matches.join('') : '';
-}}
+}
 
-function getSinglePosition() {{
-    return new Promise((resolve, reject) => {{
-        if (!navigator.geolocation) {{
+function getSinglePosition() {
+    return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
             reject("متصفح هاتفك لا يدعم تحديد الموقع الجغرافي.");
             return;
-        }}
+        }
         navigator.geolocation.getCurrentPosition(
             (position) => resolve(position),
             (error) => reject(error),
-            {{ enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }}
+            { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
         );
-    }});
-}}
+    });
+}
 
-async function verifyAndSubmit() {{
+async function verifyAndSubmit() {
     const name = document.getElementById("s_name").value.trim();
     const id = document.getElementById("s_id").value.trim();
     const day = document.getElementById("s_day").value;
@@ -485,35 +485,35 @@ async function verifyAndSubmit() {{
     const loc = document.getElementById("s_loc").value;
     
     let studentOtp = "";
-    if (OTP_ENABLED) {{
+    if (OTP_ENABLED) {
         studentOtp = cleanDigits(document.getElementById("s_otp").value);
-    }}
+    }
 
-    if (!name || !id || !day || !year || !course || !section || !loc || (OTP_ENABLED && !studentOtp)) {{
+    if (!name || !id || !day || !year || !course || !section || !loc || (OTP_ENABLED && !studentOtp)) {
         showMessage("❌ يرجى استيفاء جميع الحقول المطلوبة بدقة!", "#d9534f", "#f2dede");
         return;
-    }}
+    }
 
-    if (!LOCATIONS_COORDS[loc]) {{
+    if (!LOCATIONS_COORDS[loc]) {
         showMessage("❌ يرجى اختيار مكان محاضرة صحيح من القائمة!", "#d9534f", "#f2dede");
         return;
-    }}
+    }
 
-    if (year === "الفرقة الرابعة" && !track) {{
+    if (year === "الفرقة الرابعة" && !track) {
         showMessage("❌ يرجى اختيار التوجه الخاص بالفرقة الرابعة!", "#d9534f", "#f2dede");
         return;
-    }}
+    }
 
-    if (id.length !== 14 || isNaN(id)) {{
+    if (id.length !== 14 || isNaN(id)) {
         showMessage("❌ خطأ: يجب أن يكون الرقم القومي مكوناً من 14 رقماً بالضبط!", "#d9534f", "#f2dede");
         return;
-    }}
+    }
 
     let serverOtpCleaned = cleanDigits(CORRECT_OTP);
-    if (OTP_ENABLED && (studentOtp !== serverOtpCleaned)) {{
+    if (OTP_ENABLED && (studentOtp !== serverOtpCleaned)) {
         showMessage("❌ عذراً، رمز التحقق (OTP) الذي أدخلته غير صحيح!", "#d9534f", "#f2dede");
         return;
-    }}
+    }
 
     const nowCheck = new Date();
     const currentDateStr = nowCheck.getFullYear() + '-' + 
@@ -522,64 +522,64 @@ async function verifyAndSubmit() {{
 
     showMessage("⏳ جاري تحديد موقعك الجغرافي (Your location is being determined)...", "#0275d8", "#d9edf7");
 
-    try {{
+    try {
         let samples = [];
 
-        for (let i = 0; i < 3; i++) {{
-            try {{
+        for (let i = 0; i < 3; i++) {
+            try {
                 let pos = await getSinglePosition();
-                samples.push({{
+                samples.push({
                     lat: pos.coords.latitude,
                     lon: pos.coords.longitude,
                     alt: pos.coords.altitude,
                     acc: pos.coords.accuracy
-                }});
-                if (i < 2) {{
+                });
+                if (i < 2) {
                     await new Promise(r => setTimeout(r, 3000));
-                }}
-            }} catch (e) {{}}
-        }}
+                }
+            } catch (e) {}
+        }
 
-        if (samples.length < 2) {{
+        if (samples.length < 2) {
             throw new Error("يرجى التأكد من تفعيل موقعك الجغرافي");
-        }}
+        }
 
         let lowAccuracyFound = false;
-        samples.forEach(s => {{
-            if (s.acc !== null && s.acc !== undefined && s.acc < 5) {{
+        samples.forEach(s => {
+            if (s.acc !== null && s.acc !== undefined && s.acc < 5) {
                 lowAccuracyFound = true;
-            }}
-        }});
+            }
+        });
 
-        if (lowAccuracyFound) {{
+        if (lowAccuracyFound) {
             showMessage("🚨 تنبيه أمني: تم رصد دقة غير منطقية لإشارة الـ GPS (تطبيق موقع وهمي)، تم رفض التسجيل!", "#d9534f", "#f2dede");
             return;
-        }}
+        }
 
         let isFakeStatic = true;
-        for (let i = 1; i < samples.length; i++) {{
-            if (samples[i].lat !== samples[0].lat || samples[i].lon !== samples[0].lon) {{
+        for (let i = 1; i < samples.length; i++) {
+            if (samples[i].lat !== samples[0].lat || samples[i].lon !== samples[0].lon) {
                 isFakeStatic = false;
                 break;
-            }}
-        }}
+            }
+        }
 
-        if (isFakeStatic) {{
+        if (isFakeStatic) {
             showMessage("🚨 تنبيه أمني: تم رصد محاولة تسجيل غير قانونية، تم حظر محاولة التسجيل!", "#d9534f", "#f2dede");
             return;
-        }}
+        }
 
         let zeroAltitudeCount = 0;
-        samples.forEach(s => {{
-            if (s.alt === null || s.alt === undefined || s.alt === 0) {{
+        samples.forEach(s => {
+            if (s.alt === null || s.alt === undefined || s.alt === 0) {
                 zeroAltitudeCount++;
-            }}
-        }});
+            }
+        });
 
-        if (zeroAltitudeCount === samples.length) {{
+        if (zeroAltitudeCount === samples.length) {
             showMessage("🚨 تنبيه أمني: تم اكتشاف محاولة تسجيل غير قانونية، تم رفض التسجيل!", "#d9534f", "#f2dede");
             return;
-        }}
+        }
 
         let bestSample = samples.reduce((prev, curr) => (curr.acc < prev.acc) ? curr : prev);
         const lat = bestSample.lat;
@@ -588,7 +588,7 @@ async function verifyAndSubmit() {{
         const targetLocCoords = LOCATIONS_COORDS[loc];
         const distance = calculateDistance(targetLocCoords.lat, targetLocCoords.lon, lat, lon);
 
-        if (distance <= ALLOWED_RADIUS) {{
+        if (distance <= ALLOWED_RADIUS) {
             showMessage("⏳ تم اجتياز الفحوصات الأمنية بدقة (داخل النطاق)، جاري تسجيل حضورك...", "#0275d8", "#d9edf7");
 
             const now = new Date();
@@ -601,7 +601,7 @@ async function verifyAndSubmit() {{
 
             document.getElementById("s_time").value = formattedTime;
 
-            const data = {{
+            const data = {
                 name: name,
                 id: id,
                 day: day,
@@ -615,47 +615,50 @@ async function verifyAndSubmit() {{
                 dist: Math.round(distance),
                 time: formattedTime,
                 deviceId: getAdvancedHardwareFingerprint()
-            }};
+            };
 
-            fetch(SCRIPT_URL, {{
+            fetch(SCRIPT_URL, {
                 method: "POST",
-                headers: {{ "Content-Type": "text/plain" }},
+                headers: { "Content-Type": "text/plain" },
                 body: JSON.stringify(data)
-            }})
+            })
             .then(response => response.json())
-            .then(result => {{
-                if (result.status === "success") {{
+            .then(result => {
+                if (result.status === "success") {
                     showMessage("✅ تم تسجيل حضورك بنجاح في مادة (" + course + " - " + section + ") في (" + loc + ") ليوم " + day + " وتاريخ " + currentDateStr + "!", "#28a745", "#d4edda");
-                }} else {{
+                } else {
                     showMessage("❌ " + (result.message || "عذراً، حدث خطأ أثناء التسجيل."), "#d9534f", "#f2dede");
-                }}
-            }})
-            .catch((error) => {{
+                }
+            })
+            .catch((error) => {
                 showMessage("❌ حدث خطأ أثناء الاتصال بالخادم، يرجى المحاولة مرة أخرى.", "#d9534f", "#f2dede");
-            }});
+            });
 
-        }} else {{
+        } else {
             showMessage("❌ عذراً، أنت خارج النطاق المسموح لـ (" + loc + ") (المسافة الحالية: " + Math.round(distance) + " متر)!", "#d9534f", "#f2dede");
-        }}
+        }
 
-    } catch (error) {{
+    } catch (error) {
         showMessage("❌ فشل تحديد الموقع بدقة. تأكد من تفعيل الـ GPS بوضع الدقة العالية والسماح للمتصفح بالوصول لموقعك.", "#d9534f", "#f2dede");
-    }}
-}}
+    }
+}
 </script>
-""".format(
-    open_h=open_hour_12,
-    open_p=open_period,
-    close_h=close_hour_12,
-    close_p=close_period,
-    show_otp_field=SHOW_OTP_FIELD,
-    locations_json=locations_json,
-    allowed_radius_meters=ALLOWED_RADIUS_METERS,
-    script_url=GOOGLE_SCRIPT_URL,
-    otp_enabled_js="true" if otp_enabled else "false",
-    server_otp=SERVER_OTP,
-    app_open_hour=APP_OPEN_HOUR,
-    app_close_hour=APP_CLOSE_HOUR
+"""
+
+# استخدام replace بدلاً من format لمنع أي مشاكل في الأقواس نهائياً
+form_html = (
+    form_html.replace("{OPEN_H}", str(open_hour_12))
+    .replace("{OPEN_P}", str(open_period))
+    .replace("{CLOSE_H}", str(close_hour_12))
+    .replace("{CLOSE_P}", str(close_period))
+    .replace("{SHOW_OTP_FIELD}", str(SHOW_OTP_FIELD))
+    .replace("{LOCATIONS_JSON}", str(locations_json))
+    .replace("{ALLOWED_RADIUS_METERS}", str(ALLOWED_RADIUS_METERS))
+    .replace("{GOOGLE_SCRIPT_URL}", str(GOOGLE_SCRIPT_URL))
+    .replace("{OTP_ENABLED_JS}", "true" if otp_enabled else "false")
+    .replace("{SERVER_OTP}", str(SERVER_OTP))
+    .replace("{APP_OPEN_HOUR}", str(APP_OPEN_HOUR))
+    .replace("{APP_CLOSE_HOUR}", str(APP_CLOSE_HOUR))
 )
 
 components.html(form_html, height=1500)
