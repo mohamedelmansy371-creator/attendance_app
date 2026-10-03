@@ -45,7 +45,7 @@ else:
 st.title("نظام تسجيل الحضور الذكي")
 
 # --- إعدادات وقت فتح وغلق التطبيق (صيغة 24 ساعة) ---
-APP_OPEN_HOUR = 10   # الساعة 10 صباحاً
+APP_OPEN_HOUR = 9   # الساعة 10 صباحاً
 APP_CLOSE_HOUR = 17 # الساعة 5 مساءا (17:00)
 
 # --- إحداثيات الأماكن التسعة المختلفة ---
@@ -72,7 +72,8 @@ SERVER_OTP = str(current_otp).strip()
 import json
 locations_json = json.dumps(LOCATIONS_COORDS, ensure_ascii=False)
 open_hour_12 = APP_CLOSE_HOUR if APP_CLOSE_HOUR <= 12 else APP_CLOSE_HOUR - 12
-
+if APP_CLOSE_HOUR > 12:
+    open_hour_12 = APP_CLOSE_HOUR - 12
 form_html = f"""
 <div id="time_warning_container" style="display: none; font-family: Tahoma, sans-serif; padding: 30px; direction: rtl; background-color: #fff3cd; border-radius: 12px; border: 2px solid #ffeeba; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px;">
     <h2 style="color: #856404; margin-bottom: 15px;">⏳ التطبيق مغلق حالياً</h2>
