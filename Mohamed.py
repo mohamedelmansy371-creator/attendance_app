@@ -45,7 +45,7 @@ else:
 st.title("نظام تسجيل الحضور الذكي")
 
 # --- إعدادات وقت فتح وغلق التطبيق (صيغة 24 ساعة) ---
-APP_OPEN_HOUR = 9   # الساعة 9 صباحاً
+APP_OPEN_HOUR = 9    # الساعة 9 صباحاً
 APP_CLOSE_HOUR = 17 # الساعة 5 مساءً (17:00)
 
 # --- إحداثيات الأماكن التسعة المختلفة ---
@@ -71,13 +71,19 @@ SERVER_OTP = str(current_otp).strip()
 
 import json
 locations_json = json.dumps(LOCATIONS_COORDS, ensure_ascii=False)
-open_hour_12 = APP_CLOSE_HOUR if APP_CLOSE_HOUR <= 12 else APP_CLOSE_HOUR - 12
+
+# حساب صيغة 12 ساعة لوقت الفتح ووقت الإغلاق بدقة
+open_hour_12 = APP_OPEN_HOUR if APP_OPEN_HOUR <= 12 else APP_OPEN_HOUR - 12
+open_period = "صباحاً" if APP_OPEN_HOUR < 12 else "مساءً"
+
+close_hour_12 = APP_CLOSE_HOUR if APP_CLOSE_HOUR <= 12 else APP_CLOSE_HOUR - 12
+close_period = "صباحاً" if APP_CLOSE_HOUR < 12 else "مساءً"
 
 form_html = f"""
 <div id="time_warning_container" style="display: none; font-family: Tahoma, sans-serif; padding: 30px; direction: rtl; background-color: #fff3cd; border-radius: 12px; border: 2px solid #ffeeba; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px;">
     <h2 style="color: #856404; margin-bottom: 15px;">⏳ التطبيق مغلق حالياً</h2>
     <p style="font-size: 18px; color: #856404; line-height: 1.6; font-weight: bold;">
-        عذراً، أوقات تسجيل الحضور الرسمية هي من الساعة <b>{APP_OPEN_HOUR}:00 صباحاً</b> وحتى الساعة <b>{open_hour_12}:00 مساءً</b>.
+        عذراً، أوقات تسجيل الحضور الرسمية هي من الساعة <b>{open_hour_12}:00 {open_period}</b> وحتى الساعة <b>{close_hour_12}:00 {close_period}</b>.
     </p>
     <p style="font-size: 16px; color: #555; line-height: 1.5; margin-bottom: 10px;">
         يرجى محاولة الدخول خلال المواعيد المحددة للمحاضرات النظرية والسكاشن العملية.
@@ -537,7 +543,6 @@ async function verifyAndSubmit() {{
             throw new Error("يرجى التأكد من تفعيل موقعك الجغرافي");
         }}
 
-        // --- التعديل الأمني الجديد: فحص دقة الـ GPS (تطبيقات التزييف تعطي دقة غير منطقية أقل من 5 متر) ---
         let lowAccuracyFound = false;
         samples.forEach(s => {{
             if (s.acc !== null && s.acc !== undefined && s.acc < 5) {{
@@ -549,7 +554,6 @@ async function verifyAndSubmit() {{
             showMessage("🚨 تنبيه أمني: تم رصد دقة غير منطقية لإشارة الـ GPS (تطبيق موقع وهمي)، تم رفض التسجيل!", "#d9534f", "#f2dede");
             return;
         }}
-        // ----------------------------------------------------------------------------------------
 
         let isFakeStatic = true;
         for (let i = 1; i < samples.length; i++) {{
@@ -633,7 +637,7 @@ async function verifyAndSubmit() {{
             showMessage("❌ عذراً، أنت خارج النطاق المسموح لـ (" + loc + ") (المسافة الحالية: " + Math.round(distance) + " متر)!", "#d9534f", "#f2dede");
         }}
 
-    }} catch (error) {{
+    } catch (error) {{
         showMessage("❌ فشل تحديد الموقع بدقة. تأكد من تفعيل الـ GPS بوضع الدقة العالية والسماح للمتصفح بالوصول لموقعك.", "#d9534f", "#f2dede");
     }}
 }}
