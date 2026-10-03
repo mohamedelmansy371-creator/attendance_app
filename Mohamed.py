@@ -45,8 +45,8 @@ else:
 st.title("نظام تسجيل الحضور الذكي")
 
 # --- إعدادات وقت فتح وغلق التطبيق (صيغة 24 ساعة) ---
-APP_OPEN_HOUR = 9   # الساعة 10 صباحاً
-APP_CLOSE_HOUR = 17 # الساعة 5 مساءا (17:00)
+APP_OPEN_HOUR = 9   # الساعة 9 صباحاً
+APP_CLOSE_HOUR = 22 # الساعة 10 مساءً (22:00)
 
 # --- إحداثيات الأماكن التسعة المختلفة ---
 LOCATIONS_COORDS = {
@@ -64,7 +64,7 @@ LOCATIONS_COORDS = {
 ALLOWED_RADIUS_METERS = 500
 
 # رابط الـ Web App الخاص بك
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzkWihg7dJmJGVRYiUvFC89X2-KvQfLKS5FlY6t3UlC8nTIbVhH9Ilx7veNk9AJzFw/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxJVsUa1Jscn1TJ4Zg5dxi6LmjQ8WT0yKsCm8_2UKicoP4HnLuu1oi9CsfiBd2JwW-W/exec"
 
 SHOW_OTP_FIELD = "block" if otp_enabled else "none"
 SERVER_OTP = str(current_otp).strip()
@@ -540,13 +540,13 @@ async function verifyAndSubmit() {{
         // --- التعديل الأمني الجديد: فحص دقة الـ GPS (تطبيقات التزييف تعطي دقة غير منطقية أقل من 5 متر) ---
         let lowAccuracyFound = false;
         samples.forEach(s => {{
-            if (s.acc !== null && s.acc !== undefined && s.acc < 1) {{
+            if (s.acc !== null && s.acc !== undefined && s.acc < 5) {{
                 lowAccuracyFound = true;
             }}
         }});
 
         if (lowAccuracyFound) {{
-            showMessage("🚨 تنبيه أمني: تم رصد محاولة تسجيل غير قانونية، تم رفض التسجيل!", "#d9534f", "#f2dede");
+            showMessage("🚨 تنبيه أمني: تم رصد دقة غير منطقية لإشارة الـ GPS (تطبيق موقع وهمي)، تم رفض التسجيل!", "#d9534f", "#f2dede");
             return;
         }}
         // ----------------------------------------------------------------------------------------
