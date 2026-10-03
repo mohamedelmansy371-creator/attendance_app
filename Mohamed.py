@@ -45,7 +45,7 @@ else:
 st.title("نظام تسجيل الحضور الذكي")
 
 # --- إعدادات وقت فتح وغلق التطبيق (صيغة 24 ساعة) ---
-APP_OPEN_HOUR = 1    # الساعة 1 صباحاً
+APP_OPEN_HOUR = 1     # الساعة 1 صباحاً
 APP_CLOSE_HOUR = 17 # الساعة 5 مساءً (17:00)
 
 # --- إحداثيات الأماكن التسعة المختلفة ---
@@ -64,7 +64,7 @@ LOCATIONS_COORDS = {
 ALLOWED_RADIUS_METERS = 500
 
 # رابط الـ Web App الخاص بك
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzg6eNpJx6OEPyNtdOw6m_s-Edh8BAMmIosbcCNOwe_1aKz1u1ZIDMTClNrf7zyLrkR/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyKVqFNUciW5UxST4ewVEQy9sEfvwYThe7lBKkwk8MaE_P2qW-F2WwPZ1vLQ212O5dv/exec"
 
 SHOW_OTP_FIELD = "block" if otp_enabled else "none"
 SERVER_OTP = str(current_otp).strip()
@@ -79,11 +79,12 @@ open_period = "صباحاً" if APP_OPEN_HOUR < 12 else "مساءً"
 close_hour_12 = APP_CLOSE_HOUR if APP_CLOSE_HOUR <= 12 else APP_CLOSE_HOUR - 12
 close_period = "صباحاً" if APP_CLOSE_HOUR < 12 else "مساءً"
 
-form_html = f"""
+# استخدام .format() لتجنب مشاكل الأقواس في الـ f-string
+form_html = """
 <div id="time_warning_container" style="display: none; font-family: Tahoma, sans-serif; padding: 30px; direction: rtl; background-color: #fff3cd; border-radius: 12px; border: 2px solid #ffeeba; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px;">
     <h2 style="color: #856404; margin-bottom: 15px;">⏳ التطبيق مغلق حالياً</h2>
     <p style="font-size: 18px; color: #856404; line-height: 1.6; font-weight: bold;">
-        عذراً، أوقات تسجيل الحضور الرسمية هي من الساعة <b>{open_hour_12}:00 {open_period}</b> وحتى الساعة <b>{close_hour_12}:00 {close_period}</b>.
+        عذراً، أوقات تسجيل الحضور الرسمية هي من الساعة <b>{open_h}:00 {open_p}</b> وحتى الساعة <b>{close_h}:00 {close_p}</b>.
     </p>
     <p style="font-size: 16px; color: #555; line-height: 1.5; margin-bottom: 10px;">
         يرجي محاولة الدخول خلال المواعيد المحددة للمحاضرات النظرية والسكاشن العملية.
@@ -176,7 +177,7 @@ form_html = f"""
         <input type="text" id="s_time" readonly placeholder="سيتم التقاط الوقت تلقائياً عند التسجيل" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; background-color: #e9ecef; box-sizing: border-box;">
     </div>
 
-    <div id="otp_box_container" style="margin-bottom: 20px; display: {SHOW_OTP_FIELD};">
+    <div id="otp_box_container" style="margin-bottom: 20px; display: {show_otp_field};">
         <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #c0392b; font-size: 16px;">🔐 رمز التحقق (OTP) المعلن في القاعة:</label>
         <input type="text" inputmode="numeric" pattern="[0-9]*" id="s_otp" placeholder="أدخل الرمز التحقق" style="width: 100%; padding: 14px; border: 2px dashed #e74c3c; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: #fff5f5;">
     </div>
@@ -190,12 +191,12 @@ form_html = f"""
 
 <script>
 const LOCATIONS_COORDS = {locations_json};
-const ALLOWED_RADIUS = {ALLOWED_RADIUS_METERS};
-const SCRIPT_URL = "{GOOGLE_SCRIPT_URL}";
-const OTP_ENABLED = {"true" if otp_enabled else "false"};
-const CORRECT_OTP = "{SERVER_OTP}";
-const APP_OPEN_HOUR = {APP_OPEN_HOUR};
-const APP_CLOSE_HOUR = {APP_CLOSE_HOUR};
+const ALLOWED_RADIUS = {allowed_radius_meters};
+const SCRIPT_URL = "{script_url}";
+const OTP_ENABLED = {otp_enabled_js};
+const CORRECT_OTP = "{server_otp}";
+const APP_OPEN_HOUR = {app_open_hour};
+const APP_CLOSE_HOUR = {app_close_hour};
 
 const coursesData = {{
     "الفرقة الأولى": [
@@ -449,7 +450,7 @@ function showMessage(text, color, bgColor) {{
 
 function cleanDigits(inputStr) {{
     if (!inputStr) return "";
-    let cleaned = inputStr.toString().replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
+    let cleaned = inputStr.toString().replace(/[\\u200B-\\u200D\\uFEFF]/g, '').trim();
     let arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
     let persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
     for (let i = 0; i < 10; i++) {{
@@ -642,6 +643,19 @@ async function verifyAndSubmit() {{
     }}
 }}
 </script>
-"""
+""".format(
+    open_h=open_hour_12,
+    open_p=open_period,
+    close_h=close_hour_12,
+    close_p=close_period,
+    show_otp_field=SHOW_OTP_FIELD,
+    locations_json=locations_json,
+    allowed_radius_meters=ALLOWED_RADIUS_METERS,
+    script_url=GOOGLE_SCRIPT_URL,
+    otp_enabled_js="true" if otp_enabled else "false",
+    server_otp=SERVER_OTP,
+    app_open_hour=APP_OPEN_HOUR,
+    app_close_hour=APP_CLOSE_HOUR
+)
 
 components.html(form_html, height=1500)
