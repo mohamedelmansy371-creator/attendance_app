@@ -540,7 +540,7 @@ async function verifyAndSubmit() {{
         // --- التعديل الأمني الجديد: فحص دقة الـ GPS (تطبيقات التزييف تعطي دقة غير منطقية أقل من 5 متر) ---
         let lowAccuracyFound = false;
         samples.forEach(s => {{
-            if (s.acc !== null && s.acc !== undefined && s.acc < 5) {{
+            if (s.acc !== null && s.acc !== undefined && s.acc < 1) {{
                 lowAccuracyFound = true;
             }}
         }});
