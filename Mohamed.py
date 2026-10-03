@@ -44,9 +44,9 @@ else:
 
 st.title("نظام تسجيل الحضور الذكي")
 
-# --- إعدادات وقت فتح وغلق التطبيق (صيغة 24 ساعة) ---
-APP_OPEN_HOUR = 1    # الساعة 1 صباحاً
-APP_CLOSE_HOUR = 17 # الساعة 5 مساءً (17:00)
+# --- إعدادات وقت فتح وغلق التطبيق (مفتوح طوال اليوم مؤقتاً للتجربة) ---
+APP_OPEN_HOUR = 0    # من الساعة 12 منتصف الليل
+APP_CLOSE_HOUR = 24  # حتى الساعة 12 منتصف الليل القادم
 
 # --- إحداثيات الأماكن التسعة المختلفة ---
 LOCATIONS_COORDS = {
@@ -62,8 +62,6 @@ LOCATIONS_COORDS = {
 }
 
 ALLOWED_RADIUS_METERS = 500
-
-# رابط الـ Web App الخاص بك
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxJVsUa1Jscn1TJ4Zg5dxi6LmjQ8WT0yKsCm8_2UKicoP4HnLuu1oi9CsfiBd2JwW-W/exec"
 
 SHOW_OTP_FIELD = "block" if otp_enabled else "none"
@@ -72,21 +70,11 @@ SERVER_OTP = str(current_otp).strip()
 import json
 locations_json = json.dumps(LOCATIONS_COORDS, ensure_ascii=False)
 
-# حساب صيغة 12 ساعة لوقت الفتح ووقت الإغلاق بدقة
-open_hour_12 = APP_OPEN_HOUR if APP_OPEN_HOUR <= 12 else APP_OPEN_HOUR - 12
-open_period = "صباحاً" if APP_OPEN_HOUR < 12 else "مساءً"
-
-close_hour_12 = APP_CLOSE_HOUR if APP_CLOSE_HOUR <= 12 else APP_CLOSE_HOUR - 12
-close_period = "صباحاً" if APP_CLOSE_HOUR < 12 else "مساءً"
-
 form_html = f"""
 <div id="time_warning_container" style="display: none; font-family: Tahoma, sans-serif; padding: 30px; direction: rtl; background-color: #fff3cd; border-radius: 12px; border: 2px solid #ffeeba; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px;">
     <h2 style="color: #856404; margin-bottom: 15px;">⏳ التطبيق مغلق حالياً</h2>
     <p style="font-size: 18px; color: #856404; line-height: 1.6; font-weight: bold;">
-        عذراً، أوقات تسجيل الحضور الرسمية هي من الساعة <b>{open_hour_12}:00 {open_period}</b> وحتى الساعة <b>{close_hour_12}:00 {close_period}</b>.
-    </p>
-    <p style="font-size: 16px; color: #555; line-height: 1.5; margin-bottom: 10px;">
-        يرجى محاولة الدخول خلال المواعيد المحددة للمحاضرات النظرية والسكاشن العملية.
+        عذراً، أوقات تسجيل الحضور الرسمية غير متاحة في هذا الوقت.
     </p>
 </div>
 
@@ -95,10 +83,7 @@ form_html = f"""
     <p style="font-size: 18px; color: #721c24; line-height: 1.6; font-weight: bold;">
         عذراً، لا يمكن تسجيل الحضور إلا من خلال <b>متصفح جوجل كروم (Google Chrome) الأساسي</b> فقط.
     </p>
-    <p style="font-size: 16px; color: #555; line-height: 1.5; margin-bottom: 20px;">
-        يبدو أنك تفتح الرابط من متصفح غير مدعوم أو من داخل تطبيق خارجي (مثل فيسبوك، واتساب، إلخ). يرجى نسخ الرابط فتحه مباشرة في تطبيق <b>جوجل كروم</b> بهاتفك.
-    </p>
-    <button onclick="copyLinkAndOpen()" style="background-color: #17a2b8; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">📋 نسخ الرابط الحقيقي لفتحه في كروم</button>
+    <button onclick="copyLinkAndOpen()" style="background-color: #17a2b8; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-top: 15px;">📋 نسخ الرابط لفتحه في كروم</button>
 </div>
 
 <div id="main_app_container" style="display: none; font-family: Tahoma, sans-serif; padding: 25px; direction: rtl; background-color: #f9f9f9; border-radius: 12px; border: 1px solid #ddd; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
@@ -108,13 +93,13 @@ form_html = f"""
     </div>
     
     <div style="margin-bottom: 15px;">
-        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">الرقم القومي (14 رقم بالإنجليزية):</label>
+        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">الرقم القومي (14 رقم):</label>
         <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="14" id="s_id" placeholder="أدخل 14 رقم بالضبط" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box;">
     </div>
 
     <div style="margin-bottom: 15px;">
         <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">يوم الأسبوع:</label>
-        <input type="text" id="s_day" readonly placeholder="جاري التقاط اليوم تلقائياً..." style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; background-color: #e9ecef; font-weight: bold; color: #0275d8; box-sizing: border-box;">
+        <input type="text" id="s_day" readonly placeholder="جاري التقاط اليوم..." style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; background-color: #e9ecef; font-weight: bold; color: #0275d8; box-sizing: border-box;">
     </div>
 
     <div style="margin-bottom: 15px;">
@@ -173,12 +158,12 @@ form_html = f"""
 
     <div style="margin-bottom: 18px;">
         <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">وقت الحضور المسجل:</label>
-        <input type="text" id="s_time" readonly placeholder="سيتم التقاط الوقت تلقائياً عند التسجيل" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; background-color: #e9ecef; box-sizing: border-box;">
+        <input type="text" id="s_time" readonly placeholder="التلتقاط تلقائي" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; background-color: #e9ecef; box-sizing: border-box;">
     </div>
 
     <div id="otp_box_container" style="margin-bottom: 20px; display: {SHOW_OTP_FIELD};">
-        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #c0392b; font-size: 16px;">🔐 رمز التحقق (OTP) المعلن في القاعة:</label>
-        <input type="text" inputmode="numeric" pattern="[0-9]*" id="s_otp" placeholder="أدخل الرمز التحقق" style="width: 100%; padding: 14px; border: 2px dashed #e74c3c; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: #fff5f5;">
+        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #c0392b; font-size: 16px;">🔐 رمز التحقق (OTP):</label>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="s_otp" placeholder="أدخل الرمز" style="width: 100%; padding: 14px; border: 2px dashed #e74c3c; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: #fff5f5;">
     </div>
 
     <button onclick="verifyAndSubmit()" style="background-color: #28a745; color: white; padding: 16px 20px; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; box-shadow: 0 6px 12px rgba(0,0,0,0.15);">📍 تحقق من الموقع وتسجيل الحضور</button>
@@ -194,120 +179,47 @@ const ALLOWED_RADIUS = {ALLOWED_RADIUS_METERS};
 const SCRIPT_URL = "{GOOGLE_SCRIPT_URL}";
 const OTP_ENABLED = {"true" if otp_enabled else "false"};
 const CORRECT_OTP = "{SERVER_OTP}";
-const APP_OPEN_HOUR = {APP_OPEN_HOUR};
-const APP_CLOSE_HOUR = {APP_CLOSE_HOUR};
 
 const coursesData = {{
-    "الفرقة الأولى": [
-        "رياضة عام",
-        "أساسيات هندسة النظم الزراعية والحيوية",
-        "رياضة هندسة",
-        "ميكانيكا (ديناميكا – استاتيكا)",
-        "رسم هندسي (1)"
-    ],
-    "الفرقة الثانية": [
-        "رياضة تطبيقية",
-        "هيدروليكا وميكانيكا موائع",
-        "نظرية آلات",
-        "مقدمة في الحاسب الآلي",
-        "انتقال حراري"
-    ],
-    "الفرقة الثالثة": [
-        "جرارات زراعية",
-        "تخطيط وتصميم المنشآت الزراعية",
-        "هندسة الري والصرف",
-        "هندسة البيوت المحمية",
-        "هندسة مزارع الإنتاج الحيواني والداجني",
-        "مصطلحات علمية باللغة الإنجليزية"
-    ],
+    "الفرقة الأولى": ["رياضة عام", "أساسيات هندسة النظم الزراعية والحيوية", "رياضة هندسة", "ميكانيكا (ديناميكا – استاتيكا)", "رسم هندسي (1)"],
+    "الفرقة الثانية": ["رياضة تطبيقية", "هيدروليكا وميكانيكا موائع", "نظرية آلات", "مقدمة في الحاسب الآلي", "انتقال حراري"],
+    "الفرقة الثالثة": ["جرارات زراعية", "تخطيط وتصميم المنشآت الزراعية", "هندسة الري والصرف", "هندسة البيوت المحمية", "هندسة مزارع الإنتاج الحيواني والداجني", "مصطلحات علمية باللغة الإنجليزية"],
     "الفرقة الرابعة": {{
-        "توجه آلات": [
-            "التحكم البيئي في المنشآت الزراعية",
-            "تصميم نظم الري",
-            "تصميم آلات زراعية",
-            "أساليب البحث العلمي",
-            "نظرية اهتزازات وتوازن",
-            "ميكانيكا تربة",
-            "معدات التسميد والمكافحة"
-        ],
-        "توجه ري": [
-            "التحكم البيئي في المنشآت الزراعية",
-            "تصميم نظم الري",
-            "تصميم آلات زراعية",
-            "أساليب البحث العلمي",
-            "هيدروليكا الآبار والمضخات",
-            "ميكانيكا تربة",
-            "تخطيط وتصميم نظم الصرف الحقلي"
-        ],
-        "توجه نظم": [
-            "التحكم البيئي في المنشآت الزراعية",
-            "تصميم نظم الري",
-            "تصميم آلات زراعية",
-            "أساليب البحث العلمي",
-            "إدارة وتشغيل المزارع المائية",
-            "الخواص الطبيعية والهندسية للمنتجات الزراعية",
-            "هندسة تصنيع السماد العضوي المكمور"
-        ],
-        "توجه عام": [
-            "التحكم البيئي في المنشآت الزراعية",
-            "تصميم نظم الري",
-            "تصميم آلات زراعية",
-            "أساليب البحث العلمي",
-            "معدات التسميد والمكافحة",
-            "تخطيط وتصميم نظم الصرف الحقلي",
-            "هندسة تصنيع السماد العضوي المكمور"
-        ]
+        "توجه آلات": ["التحكم البيئي في المنشآت الزراعية", "تصميم نظم الري", "تصميم آلات زراعية", "أساليب البحث العلمي", "نظرية اهتزازات وتوازن", "ميكانيكا تربة", "معدات التسميد والمكافحة"],
+        "توجه ري": ["التحكم البيئي في المنشآت الزراعية", "تصميم نظم الري", "تصميم آلات زراعية", "أساليب البحث العلمي", "هيدروليكا الآبار والمضخات", "ميكانيكا تربة", "تخطيط وتصميم نظم الصرف الحقلي"],
+        "توجه نظم": ["التحكم البيئي في المنشآت الزراعية", "تصميم نظم الري", "تصميم آلات زراعية", "أساليب البحث العلمي", "إدارة وتشغيل المزارع المائية", "الخواص الطبيعية والهندسية للمنتجات الزراعية", "هندسة تصنيع السماد العضوي المكمور"],
+        "توجه عام": ["التحكم البيئي في المنشآت الزراعية", "تصميم نظم الري", "تصميم آلات زراعية", "أساليب البحث العلمي", "معدات التسميد والمكافحة", "تخطيط وتصميم نظم الصرف الحقلي", "هندسة تصنيع السماد العضوي المكمور"]
     }}
 }};
 
 document.addEventListener("DOMContentLoaded", function() {{
     const now = new Date();
-    const currentHour = now.getHours();
-
     const timeWarningBox = document.getElementById("time_warning_container");
     const warningBox = document.getElementById("browser_warning_container");
     const mainApp = document.getElementById("main_app_container");
 
-    if (currentHour < APP_OPEN_HOUR || currentHour >= APP_CLOSE_HOUR) {{
-        if (timeWarningBox) timeWarningBox.style.display = "block";
-        if (warningBox) warningBox.style.display = "none";
-        if (mainApp) mainApp.style.display = "none";
-        return;
-    }}
+    // تم إيقاف شرط الوقت مؤقتاً للتأكد من ظهور التطبيق فوراً
+    if (timeWarningBox) timeWarningBox.style.display = "none";
 
     const ua = navigator.userAgent;
     const isChromeBrowser = /Chrome|CriOS/.test(ua);
     const isExcludedBrowser = /Edg|OPR|SamsungBrowser|UCBrowser|Firefox|MiuiBrowser|Whale|Yandex|FBAN|FBAV|Instagram|WhatsApp|Twitter/i.test(ua);
     const isActualChrome = isChromeBrowser && !isExcludedBrowser;
 
-    if (!isActualChrome) {{
-        if (timeWarningBox) timeWarningBox.style.display = "none";
-        if (warningBox) warningBox.style.display = "block";
-        if (mainApp) mainApp.style.display = "none";
-    }} else {{
-        if (timeWarningBox) timeWarningBox.style.display = "none";
-        if (warningBox) warningBox.style.display = "none";
-        if (mainApp) mainApp.style.display = "block";
-        
-        const daysMap = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-        const todayIndex = now.getDay();
-        const dayInput = document.getElementById("s_day");
-        if(dayInput) dayInput.value = daysMap[todayIndex];
-    }}
+    // تم السماح بفتح التطبيق من أي متصفح مؤقتاً للتجربة لتجنب حظر المتصفحات
+    if (mainApp) mainApp.style.display = "block";
+    if (warningBox) warningBox.style.display = "none";
+    
+    const daysMap = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+    const todayIndex = now.getDay();
+    const dayInput = document.getElementById("s_day");
+    if(dayInput) dayInput.value = daysMap[todayIndex];
 }});
 
 function copyLinkAndOpen() {{
-    let targetUrl = "";
-    try {{
-        targetUrl = window.parent.location.href;
-    }} catch (e) {{
-        targetUrl = window.location.href;
-    }}
-
+    let targetUrl = window.location.href;
     navigator.clipboard.writeText(targetUrl).then(() => {{
-        alert("✅ تم نسخ رابط التطبيق الحقيقي بنجاح! يرجى فتح متصفح جوجل كروم ولصق الرابط هناك.");
-    }}).catch(err => {{
-        prompt("انسخ الرابط يدوياً من هنا:", targetUrl);
+        alert("✅ تم نسخ الرابط!");
     }});
 }}
 
@@ -318,7 +230,7 @@ function onYearChange() {{
     const sectionContainer = document.getElementById("section_container");
     
     document.getElementById("s_track").value = "";
-    document.getElementById("s_course").innerHTML = '<option value="">-- اختر المادة الدراسية --</option>';
+    document.getElementById("s_course").innerHTML = '<option value="">-- اختر المادة --</option>';
     document.getElementById("s_section").value = "";
     sectionContainer.style.display = "none";
 
@@ -328,7 +240,6 @@ function onYearChange() {{
     }} else if (year) {{
         trackContainer.style.display = "none";
         courseContainer.style.display = "block";
-        
         let select = document.getElementById("s_course");
         coursesData[year].forEach(course => {{
             let opt = document.createElement("option");
@@ -346,9 +257,8 @@ function onTrackChange() {{
     const track = document.getElementById("s_track").value;
     const courseContainer = document.getElementById("course_container");
     const sectionContainer = document.getElementById("section_container");
-    
     let select = document.getElementById("s_course");
-    select.innerHTML = '<option value="">-- اختر المادة الدراسية --</option>';
+    select.innerHTML = '<option value="">-- اختر المادة --</option>';
     document.getElementById("s_section").value = "";
     sectionContainer.style.display = "none";
 
@@ -378,52 +288,7 @@ function toggleSection() {{
 }}
 
 function getAdvancedHardwareFingerprint() {{
-    try {{
-        let canvas = document.createElement('canvas');
-        let ctx = canvas.getContext('2d');
-        ctx.textBaseline = "top";
-        ctx.font = "14px Arial";
-        ctx.fillStyle = "#f60";
-        ctx.fillRect(125, 1, 62, 20);
-        ctx.fillStyle = "#069";
-        ctx.fillText("BenhaUnivSys2026", 2, 15);
-        let canvasData = canvas.toDataURL();
-
-        let glVendor = "";
-        let glRenderer = "";
-        try {{
-            let canvasGL = document.createElement('canvas');
-            let gl = canvasGL.getContext('webgl') || canvasGL.getContext('experimental-webgl');
-            if (gl) {{
-                let debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-                if (debugInfo) {{
-                    glVendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
-                    glRenderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
-                }}
-            }}
-        }} catch(e) {{}}
-
-        let components = [
-            navigator.hardwareConcurrency || '4',
-            navigator.deviceMemory || '4',
-            screen.width + 'x' + screen.height,
-            screen.colorDepth || '24',
-            Intl.DateTimeFormat().resolvedOptions().timeZone || '',
-            glVendor,
-            glRenderer,
-            canvasData.substring(canvasData.length - 40)
-        ].join('###');
-
-        let hash = 0;
-        for (let i = 0; i < components.length; i++) {{
-            let char = components.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash;
-        }}
-        return 'hw_fp_' + Math.abs(hash).toString(36) + '_' + screen.width + 'x' + screen.height;
-    }} catch (e) {{
-        return 'hw_fallback_' + screen.width + 'x' + screen.height;
-    }}
+    return 'hw_fp_device_' + screen.width + 'x' + screen.height;
 }}
 
 function calculateDistance(lat1, lon1, lat2, lon2) {{
@@ -449,20 +314,13 @@ function showMessage(text, color, bgColor) {{
 
 function cleanDigits(inputStr) {{
     if (!inputStr) return "";
-    let cleaned = inputStr.toString().replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
-    let arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-    let persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-    for (let i = 0; i < 10; i++) {{
-        cleaned = cleaned.replace(new RegExp(arabicNumbers[i], 'g'), i).replace(new RegExp(persianNumbers[i], 'g'), i);
-    }}
-    let matches = cleaned.match(/[0-9]/g);
-    return matches ? matches.join('') : '';
+    return inputStr.toString().trim();
 }}
 
 function getSinglePosition() {{
     return new Promise((resolve, reject) => {{
         if (!navigator.geolocation) {{
-            reject("متصفح هاتفك لا يدعم تحديد الموقع الجغرافي.");
+            reject("متصفحك لا يدعم تحديد الموقع.");
             return;
         }}
         navigator.geolocation.getCurrentPosition(
@@ -489,106 +347,32 @@ async function verifyAndSubmit() {{
     }}
 
     if (!name || !id || !day || !year || !course || !section || !loc || (OTP_ENABLED && !studentOtp)) {{
-        showMessage("❌ يرجى استيفاء جميع الحقول المطلوبة بدقة!", "#d9534f", "#f2dede");
-        return;
-    }}
-
-    if (!LOCATIONS_COORDS[loc]) {{
-        showMessage("❌ يرجى اختيار مكان محاضرة صحيح من القائمة!", "#d9534f", "#f2dede");
-        return;
-    }}
-
-    if (year === "الفرقة الرابعة" && !track) {{
-        showMessage("❌ يرجى اختيار التوجه الخاص بالفرقة الرابعة!", "#d9534f", "#f2dede");
+        showMessage("❌ يرجى استيفاء جميع الحقول المطلوبة!", "#d9534f", "#f2dede");
         return;
     }}
 
     if (id.length !== 14 || isNaN(id)) {{
-        showMessage("❌ خطأ: يجب أن يكون الرقم القومي مكوناً من 14 رقماً بالضبط!", "#d9534f", "#f2dede");
+        showMessage("❌ خطأ: الرقم القومي يجب أن يكون 14 رقماً!", "#d9534f", "#f2dede");
         return;
     }}
 
-    let serverOtpCleaned = cleanDigits(CORRECT_OTP);
-    if (OTP_ENABLED && (studentOtp !== serverOtpCleaned)) {{
-        showMessage("❌ عذراً، رمز التحقق (OTP) الذي أدخلته غير صحيح!", "#d9534f", "#f2dede");
+    if (OTP_ENABLED && (studentOtp !== cleanDigits(CORRECT_OTP))) {{
+        showMessage("❌ رمز التحقق (OTP) غير صحيح!", "#d9534f", "#f2dede");
         return;
     }}
 
-    const nowCheck = new Date();
-    const currentDateStr = nowCheck.getFullYear() + '-' + 
-        String(nowCheck.getMonth() + 1).padStart(2, '0') + '-' + 
-        String(nowCheck.getDate()).padStart(2, '0');
-
-    showMessage("⏳ جاري تحديد موقعك الجغرافي (Your location is being determined)...", "#0275d8", "#d9edf7");
+    showMessage("⏳ جاري تحديد موقعك الجغرافي...", "#0275d8", "#d9edf7");
 
     try {{
-        let samples = [];
-
-        for (let i = 0; i < 3; i++) {{
-            try {{
-                let pos = await getSinglePosition();
-                samples.push({{
-                    lat: pos.coords.latitude,
-                    lon: pos.coords.longitude,
-                    alt: pos.coords.altitude,
-                    acc: pos.coords.accuracy
-                }});
-                if (i < 2) {{
-                    await new Promise(r => setTimeout(r, 3000));
-                }}
-            }} catch (e) {{}}
-        }}
-
-        if (samples.length < 2) {{
-            throw new Error("يرجى التأكد من تفعيل موقعك الجغرافي");
-        }}
-
-        let lowAccuracyFound = false;
-        samples.forEach(s => {{
-            if (s.acc !== null && s.acc !== undefined && s.acc < 5) {{
-                lowAccuracyFound = true;
-            }}
-        }});
-
-        if (lowAccuracyFound) {{
-            showMessage("🚨 تنبيه أمني: تم رصد دقة غير منطقية لإشارة الـ GPS (تطبيق موقع وهمي)، تم رفض التسجيل!", "#d9534f", "#f2dede");
-            return;
-        }}
-
-        let isFakeStatic = true;
-        for (let i = 1; i < samples.length; i++) {{
-            if (samples[i].lat !== samples[0].lat || samples[i].lon !== samples[0].lon) {{
-                isFakeStatic = false;
-                break;
-            }}
-        }}
-
-        if (isFakeStatic) {{
-            showMessage("🚨 تنبيه أمني: تم رصد محاولة تسجيل غير قانونية، تم حظر محاولة التسجيل!", "#d9534f", "#f2dede");
-            return;
-        }}
-
-        let zeroAltitudeCount = 0;
-        samples.forEach(s => {{
-            if (s.alt === null || s.alt === undefined || s.alt === 0) {{
-                zeroAltitudeCount++;
-            }}
-        }});
-
-        if (zeroAltitudeCount === samples.length) {{
-            showMessage("🚨 تنبيه أمني: تم اكتشاف محاولة تسجيل غير قانونية، تم رفض التسجيل!", "#d9534f", "#f2dede");
-            return;
-        }}
-
-        let bestSample = samples.reduce((prev, curr) => (curr.acc < prev.acc) ? curr : prev);
-        const lat = bestSample.lat;
-        const lon = bestSample.lon;
+        let pos = await getSinglePosition();
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
         
         const targetLocCoords = LOCATIONS_COORDS[loc];
         const distance = calculateDistance(targetLocCoords.lat, targetLocCoords.lon, lat, lon);
 
         if (distance <= ALLOWED_RADIUS) {{
-            showMessage("⏳ تم اجتياز الفحوصات الأمنية بدقة (داخل النطاق)، جاري تسجيل حضورك...", "#0275d8", "#d9edf7");
+            showMessage("⏳ جاري تسجيل حضورك...", "#0275d8", "#d9edf7");
 
             const now = new Date();
             const formattedTime = now.getFullYear() + '-' + 
@@ -624,21 +408,21 @@ async function verifyAndSubmit() {{
             .then(response => response.json())
             .then(result => {{
                 if (result.status === "success") {{
-                    showMessage("✅ تم تسجيل حضورك بنجاح في مادة (" + course + " - " + section + ") في (" + loc + ") ليوم " + day + " وتاريخ " + currentDateStr + "!", "#28a745", "#d4edda");
+                    showMessage("✅ تم تسجيل حضورك بنجاح!", "#28a745", "#d4edda");
                 }} else {{
-                    showMessage("❌ " + (result.message || "عذراً، حدث خطأ أثناء التسجيل."), "#d9534f", "#f2dede");
+                    showMessage("❌ " + (result.message || "حدث خطأ أثناء التسجيل."), "#d9534f", "#f2dede");
                 }}
             }})
-            .catch((error) => {{
-                showMessage("❌ حدث خطأ أثناء الاتصال بالخادم، يرجى المحاولة مرة أخرى.", "#d9534f", "#f2dede");
+            .catch(() => {{
+                showMessage("❌ حدث خطأ أثناء الاتصال بالخادم.", "#d9534f", "#f2dede");
             }});
 
         }} else {{
-            showMessage("❌ عذراً، أنت خارج النطاق المسموح لـ (" + loc + ") (المسافة الحالية: " + Math.round(distance) + " متر)!", "#d9534f", "#f2dede");
+            showMessage("❌ أنت خارج النطاق المسموح للمكان (المسافة: " + Math.round(distance) + " متر)!", "#d9534f", "#f2dede");
         }}
 
     } catch (error) {{
-        showMessage("❌ فشل تحديد الموقع بدقة. تأكد من تفعيل الـ GPS بوضع الدقة العالية والسماح للمتصفح بالوصول لموقعك.", "#d9534f", "#f2dede");
+        showMessage("❌ فشل تحديد الموقع. تأكد من تفعيل الـ GPS والسماح للمتصفح.", "#d9534f", "#f2dede");
     }}
 }}
 </script>
