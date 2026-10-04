@@ -60,7 +60,7 @@ st.title("نظام تسجيل الحضور الذكي")
 
 # --- إعدادات وقت فتح وغلق التطبيق (صيغة 24 ساعة) ---
 APP_OPEN_HOUR = 1      # الساعة 1 صباحاً
-APP_CLOSE_HOUR = 22 # الساعة 10 مساءً (22:00)
+APP_CLOSE_HOUR = 17 # الساعة 5 مساءً (17:00)
 
 # --- إحداثيات الأماكن التسعة المختلفة ---
 LOCATIONS_COORDS = {
@@ -78,7 +78,7 @@ LOCATIONS_COORDS = {
 ALLOWED_RADIUS_METERS = 500
 
 # رابط الـ Web App الخاص بك
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzjEI6tmjQFZpdPt0Wh0YsJE70r_vEdsYQ5ZQOPvjl2Y0XUCkImBEdi4CJTroILD5GK/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbwXZnPrRmkcBDWIIaN04wWeHVo_1ufhVp7UPFmkpoJGuLiXVhSSR0Hyz7BVv6MvLO/exec"
 
 SHOW_OTP_FIELD = "block" if otp_enabled else "none"
 SERVER_OTP = str(current_otp).strip()
@@ -659,7 +659,6 @@ async function verifyAndSubmit() {
 </script>
 """
 
-# استخدام replace بدلاً من format لمنع أي مشاكل في الأقواس نهائياً
 form_html = (
     form_html.replace("{OPEN_H}", str(open_hour_12))
     .replace("{OPEN_P}", str(open_period))
