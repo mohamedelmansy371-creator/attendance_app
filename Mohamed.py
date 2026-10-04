@@ -5,8 +5,22 @@ import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 
-# إعدادات صفحة التطبيق
+# إعدادات صفحة التطبيق مع إخفاء الشريط العلوي (GitHub & Fork) بالكامل
 st.set_page_config(page_title="تسجيل الحضور الجامعي الذكي", page_icon="📍")
+
+hide_header_style = """
+    <style>
+    /* إخفاء الشريط العلوي بالكامل لمنع ظهور أيقونة GitHub و Fork */
+    [data-testid="stHeader"] {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    /* إخفاء القائمة الرئيسية والفوتر للإضافة للأمان والتنسيق */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    </style>
+"""
+st.markdown(hide_header_style, unsafe_allow_html=True)
 
 # --- لوحة التحكم الجانبية للمشرف (أنت) ---
 st.sidebar.title("🔐 لوحة تحكم المشرف")
@@ -45,8 +59,8 @@ else:
 st.title("نظام تسجيل الحضور الذكي")
 
 # --- إعدادات وقت فتح وغلق التطبيق (صيغة 24 ساعة) ---
-APP_OPEN_HOUR = 1     # الساعة 1 صباحاً
-APP_CLOSE_HOUR = 17 # الساعة 5 مساءً (17:00)
+APP_OPEN_HOUR = 1      # الساعة 1 صباحاً
+APP_CLOSE_HOUR = 22 # الساعة 10 مساءً (22:00)
 
 # --- إحداثيات الأماكن التسعة المختلفة ---
 LOCATIONS_COORDS = {
@@ -450,7 +464,7 @@ function showMessage(text, color, bgColor) {
 
 function cleanDigits(inputStr) {
     if (!inputStr) return "";
-    let cleaned = inputStr.toString().replace(/[\\u200B-\\u200D\\uFEFF]/g, '').trim();
+    let cleaned = inputStr.toString().replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
     let arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
     let persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
     for (let i = 0; i < 10; i++) {
