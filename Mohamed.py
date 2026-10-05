@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 import pandas as pd
 import streamlit as st
-import streamlit.components.v1 as components 
+import streamlit.components.v1 as components
 
 # إعدادات صفحة التطبيق مع إخفاء الشريط العلوي (GitHub & Fork) بالكامل
 st.set_page_config(page_title="تسجيل الحضور الجامعي الذكي", page_icon="📍")
@@ -65,7 +65,7 @@ APP_CLOSE_HOUR = 24 # الساعة 5 مساءً (17:00)
 # --- إحداثيات الأماكن التسعة المختلفة ---
 LOCATIONS_COORDS = {
     "مدرج هندسة 1": {"lat": 30.353500, "lon": 31.224400},
-    "مدرج هندسة 2": {"lat": 30.719101, "lon": 31.244522},
+    "مدرج هندسة 2": {"lat": 30.353500, "lon": 31.224400},
     "مدرج هندسة 3": {"lat": 30.353500, "lon": 31.224600},
     "مدرج هندسة 4": {"lat": 30.353700, "lon": 31.224800},
     "قاعة تدريس 1": {"lat": 30.352800, "lon": 31.223900},
