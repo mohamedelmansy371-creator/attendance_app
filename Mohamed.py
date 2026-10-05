@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 import pandas as pd
 import streamlit as st
-import streamlit.components.v1 as components
+import streamlit.components.v1 as components 
 
 # إعدادات صفحة التطبيق مع إخفاء الشريط العلوي (GitHub & Fork) بالكامل
 st.set_page_config(page_title="تسجيل الحضور الجامعي الذكي", page_icon="📍")
