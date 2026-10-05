@@ -59,10 +59,10 @@ else:
 st.title("نظام تسجيل الحضور الذكي")
 
 # --- إعدادات وقت فتح وغلق التطبيق (صيغة 24 ساعة) ---
-APP_OPEN_HOUR = 9      # الساعة 9 صباحاً
-APP_CLOSE_HOUR = 24 # الساعة 5 مساءً (17:00)
+APP_OPEN_HOUR = 1      # الساعة 9 صباحاً
+APP_CLOSE_HOUR = 17 # الساعة 5 مساءً (17:00)
 
-# --- إحداثيات الأماكن التسعة المختلفة ---
+# --- إحداثيات الأماكن المختلفة (تم إضافة مدرج اقتصاد 1 و 2) ---
 LOCATIONS_COORDS = {
     "مدرج هندسة 1": {"lat": 30.353500, "lon": 31.224400},
     "مدرج هندسة 2": {"lat": 30.353500, "lon": 31.224400},
@@ -72,7 +72,9 @@ LOCATIONS_COORDS = {
     "قاعة تدريس 2": {"lat": 30.352950, "lon": 31.224050},
     "قاعة تدريس 3": {"lat": 30.353100, "lon": 31.224200},
     "قاعة تدريس 4": {"lat": 30.353250, "lon": 31.224350},
-    "قاعة تدريس 5": {"lat": 30.353400, "lon": 31.224500}
+    "قاعة تدريس 5": {"lat": 30.353400, "lon": 31.224500},
+    "مدرج إقتصاد 1": {"lat": 30.354000, "lon": 31.225000},
+    "مدرج إقتصاد 2": {"lat": 30.354200, "lon": 31.225200}
 }
 
 ALLOWED_RADIUS_METERS = 500
@@ -183,6 +185,8 @@ form_html = """
             <option value="قاعة تدريس 3">قاعة تدريس 3</option>
             <option value="قاعة تدريس 4">قاعة تدريس 4</option>
             <option value="قاعة تدريس 5">قاعة تدريس 5</option>
+            <option value="مدرج إقتصاد 1">مدرج إقتصاد 1</option>
+            <option value="مدرج إقتصاد 2">مدرج إقتصاد 2</option>
         </select>
     </div>
 
@@ -394,7 +398,6 @@ function toggleSection() {
 
 function getAdvancedHardwareFingerprint() {
     try {
-        // 1. بصمة رسومية متقدمة عبر Canvas مع تدرجات وأشكال فريدة
         let canvas = document.createElement('canvas');
         canvas.width = 220;
         canvas.height = 50;
@@ -410,7 +413,6 @@ function getAdvancedHardwareFingerprint() {
         ctx.fillText("SecureGPS", 6, 42);
         let canvasData = canvas.toDataURL();
 
-        // 2. استخراج معلومات دقيقة لمعالج الرسوميات (GPU / WebGL)
         let glVendor = "unknown";
         let glRenderer = "unknown";
         try {
@@ -425,20 +427,18 @@ function getAdvancedHardwareFingerprint() {
             }
         } catch(e) {}
 
-        // 3. تجميع كافة مكونات العتاد في مصفوفة واحدة فريدة
         let components = [
-            navigator.hardwareConcurrency || 'na',      // عدد أنوية المعالج
-            navigator.deviceMemory || 'na',              // الذاكرة العشوائية
-            screen.width + 'x' + screen.height,          // دقة الشاشة
-            screen.colorDepth || 'na',                   // عمق الألوان
-            navigator.maxTouchPoints || 0,               // نقاط اللمس المتعدد
-            glVendor,                                    // المصنع لكرت الشاشة
-            glRenderer,                                  // موديل كرت الشاشة
-            navigator.language || 'na',                  // لغة النظام/المتصفح
-            canvasData.substring(canvasData.length - 40)// بصمة جزء فريد من الـ Canvas
+            navigator.hardwareConcurrency || 'na',
+            navigator.deviceMemory || 'na',
+            screen.width + 'x' + screen.height,
+            screen.colorDepth || 'na',
+            navigator.maxTouchPoints || 0,
+            glVendor,
+            glRenderer,
+            navigator.language || 'na',
+            canvasData.substring(canvasData.length - 40)
         ].join('###');
 
-        // 4. حساب Hash دقيق ومتسق لتحويل المكونات إلى بصمة نصية قصيرة وثابتة
         let hash = 0;
         for (let i = 0; i < components.length; i++) {
             let char = components.charCodeAt(i);
