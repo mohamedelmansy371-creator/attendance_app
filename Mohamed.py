@@ -93,7 +93,7 @@ open_period = "صباحاً" if APP_OPEN_HOUR < 12 else "مساءً"
 close_hour_12 = APP_CLOSE_HOUR if APP_CLOSE_HOUR <= 12 else APP_CLOSE_HOUR - 12
 close_period = "صباحاً" if APP_CLOSE_HOUR < 12 else "مساءً"
 
-# قالب HTML النظيف بدون استخدام format لتفادي الأخطاء تماماً
+# قالب HTML النظيف مدعوم بدالة بصمة العتاد المطورة
 form_html = """
 <div id="time_warning_container" style="display: none; font-family: Tahoma, sans-serif; padding: 30px; direction: rtl; background-color: #fff3cd; border-radius: 12px; border: 2px solid #ffeeba; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px;">
     <h2 style="color: #856404; margin-bottom: 15px;">⏳ التطبيق مغلق حالياً</h2>
@@ -394,18 +394,25 @@ function toggleSection() {
 
 function getAdvancedHardwareFingerprint() {
     try {
+        // 1. بصمة رسومية متقدمة عبر Canvas مع تدرجات وأشكال فريدة
         let canvas = document.createElement('canvas');
+        canvas.width = 220;
+        canvas.height = 50;
         let ctx = canvas.getContext('2d');
-        ctx.textBaseline = "top";
-        ctx.font = "14px Arial";
-        ctx.fillStyle = "#f60";
-        ctx.fillRect(125, 1, 62, 20);
-        ctx.fillStyle = "#069";
-        ctx.fillText("BenhaUnivSys2026", 2, 15);
+        ctx.textBaseline = "alphabetic";
+        ctx.fillStyle = "#f39c12";
+        ctx.fillRect(110, 2, 70, 25);
+        ctx.fillStyle = "#2980b9";
+        ctx.font = "12pt 'Courier New'";
+        ctx.fillText("Benha_AgriSys_2026", 4, 20);
+        ctx.fillStyle = "rgba(39, 174, 96, 0.8)";
+        ctx.font = "16pt Arial";
+        ctx.fillText("SecureGPS", 6, 42);
         let canvasData = canvas.toDataURL();
 
-        let glVendor = "";
-        let glRenderer = "";
+        // 2. استخراج معلومات دقيقة لمعالج الرسوميات (GPU / WebGL)
+        let glVendor = "unknown";
+        let glRenderer = "unknown";
         try {
             let canvasGL = document.createElement('canvas');
             let gl = canvasGL.getContext('webgl') || canvasGL.getContext('experimental-webgl');
@@ -418,26 +425,30 @@ function getAdvancedHardwareFingerprint() {
             }
         } catch(e) {}
 
+        // 3. تجميع كافة مكونات العتاد في مصفوفة واحدة فريدة
         let components = [
-            navigator.hardwareConcurrency || '4',
-            navigator.deviceMemory || '4',
-            screen.width + 'x' + screen.height,
-            screen.colorDepth || '24',
-            Intl.DateTimeFormat().resolvedOptions().timeZone || '',
-            glVendor,
-            glRenderer,
-            canvasData.substring(canvasData.length - 40)
+            navigator.hardwareConcurrency || 'na',      // عدد أنوية المعالج
+            navigator.deviceMemory || 'na',              // الذاكرة العشوائية
+            screen.width + 'x' + screen.height,          // دقة الشاشة
+            screen.colorDepth || 'na',                   // عمق الألوان
+            navigator.maxTouchPoints || 0,               // نقاط اللمس المتعدد
+            glVendor,                                    // المصنع لكرت الشاشة
+            glRenderer,                                  // موديل كرت الشاشة
+            navigator.language || 'na',                  // لغة النظام/المتصفح
+            canvasData.substring(canvasData.length - 40)// بصمة جزء فريد من الـ Canvas
         ].join('###');
 
+        // 4. حساب Hash دقيق ومتسق لتحويل المكونات إلى بصمة نصية قصيرة وثابتة
         let hash = 0;
         for (let i = 0; i < components.length; i++) {
             let char = components.charCodeAt(i);
             hash = ((hash << 5) - hash) + char;
             hash = hash & hash;
         }
-        return 'hw_fp_' + Math.abs(hash).toString(36) + '_' + screen.width + 'x' + screen.height;
+        
+        return 'hw_v2_' + Math.abs(hash).toString(36) + '_' + screen.width + 'x' + screen.height;
     } catch (e) {
-        return 'hw_fallback_' + screen.width + 'x' + screen.height;
+        return 'hw_fallback_' + Math.random().toString(36).substring(2);
     }
 }
 
@@ -659,7 +670,7 @@ async function verifyAndSubmit() {
 </script>
 """
 
-# استخدام replace بدلاً من format لمنع أي مشاكل في الأقواس نهائياً
+# استخدام replace لربط المتغيرات بقالب الـ HTML بأمان تام
 form_html = (
     form_html.replace("{OPEN_H}", str(open_hour_12))
     .replace("{OPEN_P}", str(open_period))
