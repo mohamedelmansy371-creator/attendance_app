@@ -25,7 +25,7 @@ hide_header_style = """
 st.markdown(hide_header_style, unsafe_allow_html=True)
 
 # --- التقاط معرف الجهاز (device_serial) من الرابط وإرساله تلقائياً لجوجل شيت ---
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzrI9nRuAtxqtsVsmkqWOyguRp3O0FyzWFCA3ocZVKiAlQVS9xilkJztcqJOUti0w8Y/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxiZVAU4_1B-nXDZigXexbwtYUO-pum3DXABp8w52Cc_fyrPS0uoiWM6eUP2VPTAW9c/exec"
 
 query_params = st.query_params
 device_serial = query_params.get("device_serial", None)
