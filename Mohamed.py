@@ -64,7 +64,7 @@ else:
 
 st.title("نظام تسجيل الحضور الذكي")
 
-APP_OPEN_HOUR = 1        
+APP_OPEN_HOUR = 0        
 APP_CLOSE_HOUR = 23  
 
 LOCATIONS_COORDS = {
