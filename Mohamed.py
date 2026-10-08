@@ -59,7 +59,7 @@ else:
 st.title("نظام تسجيل الحضور الذكي")
 
 # --- إعدادات وقت فتح وغلق التطبيق (صيغة 24 ساعة) ---
-APP_OPEN_HOUR = 1      # الساعة 9 صباحاً
+APP_OPEN_HOUR = 1      # الساعة 1 صباحاً
 APP_CLOSE_HOUR = 17 # الساعة 5 مساءً (17:00)
 
 # --- إحداثيات الأماكن المختلفة (تم إضافة مدرج اقتصاد 1 و 2) ---
@@ -80,7 +80,7 @@ LOCATIONS_COORDS = {
 ALLOWED_RADIUS_METERS = 500
 
 # رابط الـ Web App الخاص بك
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwIoZTPxh2SERi3kiMJVSEcpdtqrpYVf8snOg3V7Bl5_1vWf6TCIo5G72Ya3TNfv7Gy/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbymdwo6zrisOOP9mbGotsm_v19j7isW7fuzxd-t7V9_mguxjG-GmZu8hglbPH_R_ZAR/exec"
 
 SHOW_OTP_FIELD = "block" if otp_enabled else "none"
 SERVER_OTP = str(current_otp).strip()
@@ -95,7 +95,7 @@ open_period = "صباحاً" if APP_OPEN_HOUR < 12 else "مساءً"
 close_hour_12 = APP_CLOSE_HOUR if APP_CLOSE_HOUR <= 12 else APP_CLOSE_HOUR - 12
 close_period = "صباحاً" if APP_CLOSE_HOUR < 12 else "مساءً"
 
-# قالب HTML النظيف مدعوم بدالة بصمة العتاد المطورة
+# قالب HTML النظيف بمعرف فريد لا يتشابه أبداً بين الأجهزة
 form_html = """
 <div id="time_warning_container" style="display: none; font-family: Tahoma, sans-serif; padding: 30px; direction: rtl; background-color: #fff3cd; border-radius: 12px; border: 2px solid #ffeeba; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px;">
     <h2 style="color: #856404; margin-bottom: 15px;">⏳ التطبيق مغلق حالياً</h2>
@@ -116,6 +116,16 @@ form_html = """
         يبدو أنك تفتح الرابط من متصفح غير مدعوم أو من داخل تطبيق خارجي (مثل فيسبوك، واتساب، إلخ). يرجى نسخ الرابط فتحه مباشرة في تطبيق <b>جوجل كروم</b> بهاتفك.
     </p>
     <button onclick="copyLinkAndOpen()" style="background-color: #17a2b8; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">📋 نسخ الرابط الحقيقي لفتحه في كروم</button>
+</div>
+
+<div id="device_locked_container" style="display: none; font-family: Tahoma, sans-serif; padding: 30px; direction: rtl; background-color: #f8d7da; border-radius: 12px; border: 2px solid #f5c6cb; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px;">
+    <h2 style="color: #721c24; margin-bottom: 15px;">🚨 تنبيه أمني - الهاتف مستخدم مسبقاً</h2>
+    <p style="font-size: 18px; color: #721c24; line-height: 1.6; font-weight: bold;">
+        عذراً، لقد تم بالفعل استخدام هذا الهاتف لتسجيل حضور طالب آخر مسبقاً.
+    </p>
+    <p style="font-size: 16px; color: #555; line-height: 1.5; margin-bottom: 10px;">
+        لا يُسمح بتسجيل أكثر من طالب من نفس الهاتف حرصاً على النزاهة والأمان. يرجى استخدام هاتفك الشخصي المستقل.
+    </p>
 </div>
 
 <div id="main_app_container" style="display: none; font-family: Tahoma, sans-serif; padding: 25px; direction: rtl; background-color: #f9f9f9; border-radius: 12px; border: 1px solid #ddd; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
@@ -285,11 +295,13 @@ document.addEventListener("DOMContentLoaded", function() {
 
     const timeWarningBox = document.getElementById("time_warning_container");
     const warningBox = document.getElementById("browser_warning_container");
+    const lockedBox = document.getElementById("device_locked_container");
     const mainApp = document.getElementById("main_app_container");
 
     if (currentHour < APP_OPEN_HOUR || currentHour >= APP_CLOSE_HOUR) {
         if (timeWarningBox) timeWarningBox.style.display = "block";
         if (warningBox) warningBox.style.display = "none";
+        if (lockedBox) lockedBox.style.display = "none";
         if (mainApp) mainApp.style.display = "none";
         return;
     }
@@ -302,17 +314,29 @@ document.addEventListener("DOMContentLoaded", function() {
     if (!isActualChrome) {
         if (timeWarningBox) timeWarningBox.style.display = "none";
         if (warningBox) warningBox.style.display = "block";
+        if (lockedBox) lockedBox.style.display = "none";
         if (mainApp) mainApp.style.display = "none";
-    } else {
+        return;
+    }
+
+    // فحص قفل الهاتف عبر المعرف الفريد الخاص بالمتصفح
+    if (localStorage.getItem("benha_device_used_status") === "locked") {
         if (timeWarningBox) timeWarningBox.style.display = "none";
         if (warningBox) warningBox.style.display = "none";
-        if (mainApp) mainApp.style.display = "block";
-        
-        const daysMap = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-        const todayIndex = now.getDay();
-        const dayInput = document.getElementById("s_day");
-        if(dayInput) dayInput.value = daysMap[todayIndex];
+        if (lockedBox) lockedBox.style.display = "block";
+        if (mainApp) mainApp.style.display = "none";
+        return;
     }
+
+    if (timeWarningBox) timeWarningBox.style.display = "none";
+    if (warningBox) warningBox.style.display = "none";
+    if (lockedBox) lockedBox.style.display = "none";
+    if (mainApp) mainApp.style.display = "block";
+    
+    const daysMap = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+    const todayIndex = now.getDay();
+    const dayInput = document.getElementById("s_day");
+    if(dayInput) dayInput.value = daysMap[todayIndex];
 });
 
 function copyLinkAndOpen() {
@@ -396,60 +420,15 @@ function toggleSection() {
     }
 }
 
-function getAdvancedHardwareFingerprint() {
-    try {
-        let canvas = document.createElement('canvas');
-        canvas.width = 220;
-        canvas.height = 50;
-        let ctx = canvas.getContext('2d');
-        ctx.textBaseline = "alphabetic";
-        ctx.fillStyle = "#f39c12";
-        ctx.fillRect(110, 2, 70, 25);
-        ctx.fillStyle = "#2980b9";
-        ctx.font = "12pt 'Courier New'";
-        ctx.fillText("Benha_AgriSys_2026", 4, 20);
-        ctx.fillStyle = "rgba(39, 174, 96, 0.8)";
-        ctx.font = "16pt Arial";
-        ctx.fillText("SecureGPS", 6, 42);
-        let canvasData = canvas.toDataURL();
-
-        let glVendor = "unknown";
-        let glRenderer = "unknown";
-        try {
-            let canvasGL = document.createElement('canvas');
-            let gl = canvasGL.getContext('webgl') || canvasGL.getContext('experimental-webgl');
-            if (gl) {
-                let debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-                if (debugInfo) {
-                    glVendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
-                    glRenderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
-                }
-            }
-        } catch(e) {}
-
-        let components = [
-            navigator.hardwareConcurrency || 'na',
-            navigator.deviceMemory || 'na',
-            screen.width + 'x' + screen.height,
-            screen.colorDepth || 'na',
-            navigator.maxTouchPoints || 0,
-            glVendor,
-            glRenderer,
-            navigator.language || 'na',
-            canvasData.substring(canvasData.length - 40)
-        ].join('###');
-
-        let hash = 0;
-        for (let i = 0; i < components.length; i++) {
-            let char = components.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash;
-        }
-        
-        return 'hw_v2_' + Math.abs(hash).toString(36) + '_' + screen.width + 'x' + screen.height;
-    } catch (e) {
-        return 'hw_fallback_' + Math.random().toString(36).substring(2);
+// دالة توليد معرف عشوائي فريد وحصري تماماً لكل متصفح (يمنع التشابه بين الهواتف المتطابقة نهائياً)
+function getUniqueBrowserToken() {
+    let token = localStorage.getItem("benha_unique_device_token");
+    if (!token) {
+        // توليد معرف عشوائي فريد بنسبة 100% غير قابل للتكرار
+        token = 'token_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        localStorage.setItem("benha_unique_device_token", token);
     }
+    return token;
 }
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -501,7 +480,7 @@ function getSinglePosition() {
 
 async function verifyAndSubmit() {
     const name = document.getElementById("s_name").value.trim();
-    const id = document.getElementById("s_id").value.trim();
+    const id = cleanDigits(document.getElementById("s_id").value.trim());
     const day = document.getElementById("s_day").value;
     const year = document.getElementById("s_year").value;
     const track = document.getElementById("s_track").value;
@@ -639,7 +618,7 @@ async function verifyAndSubmit() {
                 lon: lon,
                 dist: Math.round(distance),
                 time: formattedTime,
-                deviceId: getAdvancedHardwareFingerprint()
+                deviceId: getUniqueBrowserToken()
             };
 
             fetch(SCRIPT_URL, {
@@ -650,6 +629,8 @@ async function verifyAndSubmit() {
             .then(response => response.json())
             .then(result => {
                 if (result.status === "success") {
+                    // قفل هذا المتصفح نهائياً بعد نجاح أول تسجيل
+                    localStorage.setItem("benha_device_used_status", "locked");
                     showMessage("✅ تم تسجيل حضورك بنجاح في مادة (" + course + " - " + section + ") في (" + loc + ") ليوم " + day + " وتاريخ " + currentDateStr + "!", "#28a745", "#d4edda");
                 } else {
                     showMessage("❌ " + (result.message || "عذراً، حدث خطأ أثناء التسجيل."), "#d9534f", "#f2dede");
