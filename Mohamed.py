@@ -7,28 +7,27 @@ import streamlit.components.v1 as components
 import json
 import requests
 
-# إعدادات صفحة التطبيق مع إخفاء الشريط العلوي (GitHub & Fork) بالكامل
 st.set_page_config(page_title="تسجيل الحضور الجامعي الذكي", page_icon="📍")
 
 hide_header_style = """
     <style>
-    /* إخفاء الشريط العلوي بالكامل لمنع ظهور أيقونة GitHub و Fork */
     [data-testid="stHeader"] {
         display: none !important;
         visibility: hidden !important;
     }
-    /* إخفاء القائمة الرئيسية والفوتر للإضافة للأمان والتنسيق */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     </style>
 """
 st.markdown(hide_header_style, unsafe_allow_html=True)
 
-# --- التقاط معرف الجهاز (device_serial) من الرابط وإرساله تلقائياً لجوجل شيت ---
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyNyIC7CETDqOaAOhIshRow2qPmH0yMVQTKPofhN4z8xSnfi38gyhpo1BpdN1lL0jlI/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3As-hBYrojIcAjxvcYVP_CBMGW6GX79YUBAZQxI6m2MMUvkQIcdxlGSSG5NIX3MTM/exec"
 
 query_params = st.query_params
 device_serial = query_params.get("device_serial", None)
+
+# التحقق من وجود المعرف في الرابط
+has_valid_serial = "true" if (device_serial and str(device_serial).strip() != "") else "false"
 
 if device_serial:
     try:
@@ -40,7 +39,6 @@ if device_serial:
     except Exception as e:
         pass
 
-# --- لوحة التحكم الجانبية للمشرف (أنت) ---
 st.sidebar.title("🔐 لوحة تحكم المشرف")
 admin_password_input = st.sidebar.text_input(
     "كلمة مرور المشرف", type="password", placeholder="أدخل كلمة المرور"
@@ -55,9 +53,7 @@ if admin_password_input == ADMIN_SECRET_PASS:
     st.sidebar.success("تم تسجيل الدخول بنجاح كمشرف ✅")
     st.sidebar.markdown("---")
     st.sidebar.subheader("إدارة رمز التحقق (OTP)")
-
     use_otp = st.sidebar.checkbox("تفعيل نظام رمز التحقق (OTP)", value=True)
-
     if use_otp:
         otp_enabled = True
         current_otp = st.sidebar.text_input(
@@ -94,10 +90,8 @@ LOCATIONS_COORDS = {
 }
 
 ALLOWED_RADIUS_METERS = 500
-
 SHOW_OTP_FIELD = "block" if otp_enabled else "none"
 SERVER_OTP = str(current_otp).strip()
-
 locations_json = json.dumps(LOCATIONS_COORDS, ensure_ascii=False)
 
 open_hour_12 = APP_OPEN_HOUR if APP_OPEN_HOUR <= 12 else APP_OPEN_HOUR - 12
@@ -107,19 +101,21 @@ close_hour_12 = APP_CLOSE_HOUR if APP_CLOSE_HOUR <= 12 else APP_CLOSE_HOUR - 12
 close_period = "صباحاً" if APP_CLOSE_HOUR < 12 else "مساءً"
 
 form_html = """
+<div id="app_block_container" style="display: none; font-family: Tahoma, sans-serif; padding: 35px; direction: rtl; background-color: #f8d7da; border-radius: 12px; border: 2px solid #f5c6cb; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px;">
+    <h2 style="color: #721c24; margin-bottom: 15px;">🚫 تنبيه أمني - ممنوع الدخول المباشر</h2>
+    <p style="font-size: 18px; color: #721c24; line-height: 1.6; font-weight: bold;">
+        عذراً، لا يمكن تسجيل الحضور من خلال متصفح الإنترنت بشكل مباشر.
+    </p>
+    <p style="font-size: 16px; color: #555; line-height: 1.6; margin-bottom: 20px;">
+        يجب عليك فتح التطبيق الرسمي الخاص بالحضور من على هاتفك المحمول لكي يتم التحقق من بيانات هاتفك وتسجيل الحضور بنجاح.
+    </p>
+</div>
+
 <div id="time_warning_container" style="display: none; font-family: Tahoma, sans-serif; padding: 30px; direction: rtl; background-color: #fff3cd; border-radius: 12px; border: 2px solid #ffeeba; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px;">
     <h2 style="color: #856404; margin-bottom: 15px;">⏳ التطبيق مغلق حالياً</h2>
     <p style="font-size: 18px; color: #856404; line-height: 1.6; font-weight: bold;">
         عذراً، أوقات تسجيل الحضور الرسمية هي من الساعة <b>{OPEN_H}:00 {OPEN_P}</b> وحتى الساعة <b>{CLOSE_H}:00 {CLOSE_P}</b>.
     </p>
-</div>
-
-<div id="browser_warning_container" style="display: none; font-family: Tahoma, sans-serif; padding: 30px; direction: rtl; background-color: #f8d7da; border-radius: 12px; border: 2px solid #f5c6cb; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px;">
-    <h2 style="color: #721c24; margin-bottom: 15px;">⚠ تنبيه هـام جداً - المتصفح غير مسموح</h2>
-    <p style="font-size: 18px; color: #721c24; line-height: 1.6; font-weight: bold;">
-        عذراً، لا يمكن تسجيل الحضور إلا من خلال <b>متصفح جوجل كروم (Google Chrome) الأساسي</b> فقط.
-    </p>
-    <button onclick="copyLinkAndOpen()" style="background-color: #17a2b8; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">📋 نسخ الرابط الحقيقي لفتحه في كروم</button>
 </div>
 
 <div id="main_app_container" style="display: none; font-family: Tahoma, sans-serif; padding: 25px; direction: rtl; background-color: #f9f9f9; border-radius: 12px; border: 1px solid #ddd; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
@@ -219,6 +215,7 @@ const OTP_ENABLED = {OTP_ENABLED_JS};
 const CORRECT_OTP = "{SERVER_OTP}";
 const APP_OPEN_HOUR = {APP_OPEN_HOUR};
 const APP_CLOSE_HOUR = {APP_CLOSE_HOUR};
+const HAS_VALID_SERIAL = {HAS_VALID_SERIAL_JS};
 
 const coursesData = {
     "الفرقة الأولى": [
@@ -284,55 +281,39 @@ const coursesData = {
 };
 
 document.addEventListener("DOMContentLoaded", function() {
-    const now = new Date();
-    const currentHour = now.getHours();
-
+    const blockContainer = document.getElementById("app_block_container");
     const timeWarningBox = document.getElementById("time_warning_container");
-    const warningBox = document.getElementById("browser_warning_container");
     const mainApp = document.getElementById("main_app_container");
 
-    if (currentHour < APP_OPEN_HOUR || currentHour >= APP_CLOSE_HOUR) {
-        if (timeWarningBox) timeWarningBox.style.display = "block";
-        if (warningBox) warningBox.style.display = "none";
+    // 1. فحص هل تم فتح الرابط من التطبيق (وجود الـ device_serial) أم لا
+    if (!HAS_VALID_SERIAL) {
+        if (blockContainer) blockContainer.style.display = "block";
+        if (timeWarningBox) timeWarningBox.style.display = "none";
         if (mainApp) mainApp.style.display = "none";
         return;
     }
 
-    const ua = navigator.userAgent;
-    const isChromeBrowser = /Chrome|CriOS/.test(ua);
-    const isExcludedBrowser = /Edg|OPR|SamsungBrowser|UCBrowser|Firefox|MiuiBrowser|Whale|Yandex|FBAN|FBAV|Instagram|WhatsApp|Twitter/i.test(ua);
-    const isActualChrome = isChromeBrowser && !isExcludedBrowser;
+    // 2. فحص أوقات فتح وغلق التطبيق
+    const now = new Date();
+    const currentHour = now.getHours();
 
-    if (!isActualChrome) {
-        if (timeWarningBox) timeWarningBox.style.display = "none";
-        if (warningBox) warningBox.style.display = "block";
+    if (currentHour < APP_OPEN_HOUR || currentHour >= APP_CLOSE_HOUR) {
+        if (blockContainer) blockContainer.style.display = "none";
+        if (timeWarningBox) timeWarningBox.style.display = "block";
         if (mainApp) mainApp.style.display = "none";
-    } else {
-        if (timeWarningBox) timeWarningBox.style.display = "none";
-        if (warningBox) warningBox.style.display = "none";
-        if (mainApp) mainApp.style.display = "block";
-        
-        const daysMap = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-        const todayIndex = now.getDay();
-        const dayInput = document.getElementById("s_day");
-        if(dayInput) dayInput.value = daysMap[todayIndex];
+        return;
     }
+
+    // إذا تجاوز كل الفحوصات بنجاح، اعرض التطبيق
+    if (blockContainer) blockContainer.style.display = "none";
+    if (timeWarningBox) timeWarningBox.style.display = "none";
+    if (mainApp) mainApp.style.display = "block";
+    
+    const daysMap = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+    const todayIndex = now.getDay();
+    const dayInput = document.getElementById("s_day");
+    if(dayInput) dayInput.value = daysMap[todayIndex];
 });
-
-function copyLinkAndOpen() {
-    let targetUrl = "";
-    try {
-        targetUrl = window.parent.location.href;
-    } catch (e) {
-        targetUrl = window.location.href;
-    }
-
-    navigator.clipboard.writeText(targetUrl).then(() => {
-        alert("✅ تم نسخ رابط التطبيق الحقيقي بنجاح! يرجى فتح متصفح جوجل كروم ولصق الرابط هناك.");
-    }).catch(err => {
-        prompt("انسخ الرابط يدوياً من هنا:", targetUrl);
-    });
-}
 
 function onYearChange() {
     const year = document.getElementById("s_year").value;
@@ -449,7 +430,6 @@ function getAdvancedHardwareFingerprint() {
         
         let browserFingerprint = 'hw_v2_' + Math.abs(hash).toString(36) + '_' + screen.width + 'x' + screen.height;
 
-        // دمج رقم الـ Android ID (device_serial القادم من رابط الصفحة) مع بصمة المتصفح العتادية
         const urlParams = new URLSearchParams(window.location.search);
         let androidId = urlParams.get("device_serial");
         
@@ -550,11 +530,6 @@ async function verifyAndSubmit() {
         showMessage("❌ عذراً، رمز التحقق (OTP) الذي أدخلته غير صحيح!", "#d9534f", "#f2dede");
         return;
     }
-
-    const nowCheck = new Date();
-    const currentDateStr = nowCheck.getFullYear() + '-' + 
-        String(nowCheck.getMonth() + 1).padStart(2, '0') + '-' + 
-        String(nowCheck.getDate()).padStart(2, '0');
 
     showMessage("⏳ جاري تحديد موقعك الجغرافي...", "#0275d8", "#d9edf7");
 
@@ -682,6 +657,7 @@ form_html = (
     .replace("{SERVER_OTP}", str(SERVER_OTP))
     .replace("{APP_OPEN_HOUR}", str(APP_OPEN_HOUR))
     .replace("{APP_CLOSE_HOUR}", str(APP_CLOSE_HOUR))
+    .replace("{HAS_VALID_SERIAL_JS}", has_valid_serial)
 )
 
 components.html(form_html, height=1500)
