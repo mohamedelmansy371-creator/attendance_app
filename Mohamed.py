@@ -21,7 +21,7 @@ hide_header_style = """
 """
 st.markdown(hide_header_style, unsafe_allow_html=True)
 
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyJhYUz3ZZezxFRi0juawOkfXk4ZtAwSfmVk_IM9GV5EFAl2vUF_34_aODIDv6QF4GX/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz4HOTYSXhHIufE6qrg0k44pOh59SHB-0Xsk0acInKip-HVP1PBGLaU0pA8mzJrLjnU/exec"
 
 query_params = st.query_params
 device_serial = query_params.get("device_serial", None)
