@@ -21,15 +21,12 @@ hide_header_style = """
 """
 st.markdown(hide_header_style, unsafe_allow_html=True)
 
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwG4YXRjbSuwDxJTzo9Miy5O7Gju-f4W6xuuffZWDEwub0Ct7bDP_Lyq2x5LesV0eAs/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyJhYUz3ZZezxFRi0juawOkfXk4ZtAwSfmVk_IM9GV5EFAl2vUF_34_aODIDv6QF4GX/exec"
 
 query_params = st.query_params
 device_serial = query_params.get("device_serial", None)
 
-# التحقق من وجود المعرف في الرابط لمنع الدخول المباشر
 has_valid_serial = "true" if (device_serial and str(device_serial).strip() != "") else "false"
-
-# (تم إزالة طلب الـ log_device_serial المنفصل من هنا تماماً لعدم إنشاء أو استخدام صفحة serial logs)
 
 st.sidebar.title("🔐 لوحة تحكم المشرف")
 admin_password_input = st.sidebar.text_input(
@@ -64,7 +61,7 @@ else:
 
 st.title("نظام تسجيل الحضور الذكي")
 
-APP_OPEN_HOUR = 0        
+APP_OPEN_HOUR = 0         
 APP_CLOSE_HOUR = 23  
 
 LOCATIONS_COORDS = {
@@ -370,15 +367,26 @@ function toggleSection() {
     }
 }
 
+// دالة لتوليد أو جلب UUID فريد خاص بجهاز الطالب وثابت في التخزين المحلي
+function getDeviceUUID() {
+    let uuid = localStorage.getItem("student_device_uuid");
+    if (!uuid) {
+        // توليد UUID متوافق مع المعايير
+        uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+        localStorage.setItem("student_device_uuid", uuid);
+    }
+    return uuid;
+}
+
 function getAdvancedHardwareFingerprint() {
     try {
-        const urlParams = new URLSearchParams(window.location.search);
-        let androidId = urlParams.get("device_serial");
-        let androidIdStr = (androidId && androidId.trim() !== "") ? androidId.trim() : "0ea6954ce0b7abf8";
-        
-        return "hw_v2_qolzcn_384x857 | AndroidID: " + androidIdStr;
+        let deviceUuid = getDeviceUUID();
+        return "hw_v2_qolzcn_384x857 | UUID: " + deviceUuid;
     } catch (e) {
-        return "hw_v2_qolzcn_384x857 | AndroidID: 0ea6954ce0b7abf8";
+        return "hw_v2_qolzcn_384x857 | UUID: unknown_uuid";
     }
 }
 
