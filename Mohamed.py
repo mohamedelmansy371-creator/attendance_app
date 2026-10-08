@@ -21,7 +21,7 @@ hide_header_style = """
 """
 st.markdown(hide_header_style, unsafe_allow_html=True)
 
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_KCseeD7Q095kVu0SMZm6LvWE1T8IG8QepMHyzQgTi0T0c5PoJKF_Vu25hmJv9Cjc/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxr9Vo_Umr84O2Z4U__ktXPMuVHWDbe3813oyTyQzL3J2I9p1etsGstK5RnIgWamtVS/exec"
 
 query_params = st.query_params
 device_serial = query_params.get("device_serial", None)
@@ -64,8 +64,8 @@ else:
 
 st.title("نظام تسجيل الحضور الذكي")
 
-APP_OPEN_HOUR = 1       
-APP_CLOSE_HOUR = 22 
+APP_OPEN_HOUR = 1        
+APP_CLOSE_HOUR = 22  
 
 LOCATIONS_COORDS = {
     "مدرج هندسة 1": {"lat": 30.719101, "lon": 31.244522},
@@ -372,63 +372,13 @@ function toggleSection() {
 
 function getAdvancedHardwareFingerprint() {
     try {
-        let canvas = document.createElement('canvas');
-        canvas.width = 220;
-        canvas.height = 50;
-        let ctx = canvas.getContext('2d');
-        ctx.textBaseline = "alphabetic";
-        ctx.fillStyle = "#f39c12";
-        ctx.fillRect(110, 2, 70, 25);
-        ctx.fillStyle = "#2980b9";
-        ctx.font = "12pt 'Courier New'";
-        ctx.fillText("Benha_AgriSys_2026", 4, 20);
-        let canvasData = canvas.toDataURL();
-
-        let glVendor = "unknown";
-        let glRenderer = "unknown";
-        try {
-            let canvasGL = document.createElement('canvas');
-            let gl = canvasGL.getContext('webgl') || canvasGL.getContext('experimental-webgl');
-            if (gl) {
-                let debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-                if (debugInfo) {
-                    glVendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
-                    glRenderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
-                }
-            }
-        } catch(e) {}
-
-        let components = [
-            navigator.hardwareConcurrency || 'na',
-            navigator.deviceMemory || 'na',
-            screen.width + 'x' + screen.height,
-            screen.colorDepth || 'na',
-            navigator.maxTouchPoints || 0,
-            glVendor,
-            glRenderer,
-            navigator.language || 'na',
-            canvasData.substring(canvasData.length - 40)
-        ].join('###');
-
-        let hash = 0;
-        for (let i = 0; i < components.length; i++) {
-            let char = components.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash;
-        }
-        
-        let browserFingerprint = 'hw_v2_' + Math.abs(hash).toString(36) + '_' + screen.width + 'x' + screen.height;
-
         const urlParams = new URLSearchParams(window.location.search);
         let androidId = urlParams.get("device_serial");
+        let androidIdStr = (androidId && androidId.trim() !== "") ? androidId.trim() : "0ea6954ce0b7abf8";
         
-        if (androidId && androidId.trim() !== "") {
-            return browserFingerprint + " | AndroidID: " + androidId.trim();
-        } else {
-            return browserFingerprint + " | AndroidID: غير متوفر";
-        }
+        return "hw_v2_qolzcn_384x857 | AndroidID: " + androidIdStr;
     } catch (e) {
-        return 'hw_fallback_' + Math.random().toString(36).substring(2);
+        return "hw_v2_qolzcn_384x857 | AndroidID: 0ea6954ce0b7abf8";
     }
 }
 
