@@ -25,7 +25,7 @@ hide_header_style = """
 st.markdown(hide_header_style, unsafe_allow_html=True)
 
 # --- التقاط معرف الجهاز (device_serial) من الرابط وإرساله تلقائياً لجوجل شيت ---
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxiZVAU4_1B-nXDZigXexbwtYUO-pum3DXABp8w52Cc_fyrPS0uoiWM6eUP2VPTAW9c/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyNyIC7CETDqOaAOhIshRow2qPmH0yMVQTKPofhN4z8xSnfi38gyhpo1BpdN1lL0jlI/exec"
 
 query_params = st.query_params
 device_serial = query_params.get("device_serial", None)
@@ -36,7 +36,6 @@ if device_serial:
             "action": "log_device_serial",
             "device_serial": device_serial
         }
-        # إرسال الطلب في الخلفية إلى جوجل شيت دون التأثير على الواجهة
         requests.post(GOOGLE_SCRIPT_URL, json=payload, timeout=5)
     except Exception as e:
         pass
@@ -77,11 +76,9 @@ else:
 
 st.title("نظام تسجيل الحضور الذكي")
 
-# --- إعدادات وقت فتح وغلق التطبيق (صيغة 24 ساعة) ---
-APP_OPEN_HOUR = 1       # الساعة 9 صباحاً
-APP_CLOSE_HOUR = 22 # الساعة 5 مساءً (17:00)
+APP_OPEN_HOUR = 1       
+APP_CLOSE_HOUR = 22 
 
-# --- إحداثيات الأماكن المختلفة (تم إضافة مدرج اقتصاد 1 و 2) ---
 LOCATIONS_COORDS = {
     "مدرج هندسة 1": {"lat": 30.719101, "lon": 31.244522},
     "مدرج هندسة 2": {"lat": 30.353500, "lon": 31.224400},
@@ -103,22 +100,17 @@ SERVER_OTP = str(current_otp).strip()
 
 locations_json = json.dumps(LOCATIONS_COORDS, ensure_ascii=False)
 
-# حساب صيغة 12 ساعة لوقت الفتح ووقت الإغلاق بدقة
 open_hour_12 = APP_OPEN_HOUR if APP_OPEN_HOUR <= 12 else APP_OPEN_HOUR - 12
 open_period = "صباحاً" if APP_OPEN_HOUR < 12 else "مساءً"
 
 close_hour_12 = APP_CLOSE_HOUR if APP_CLOSE_HOUR <= 12 else APP_CLOSE_HOUR - 12
 close_period = "صباحاً" if APP_CLOSE_HOUR < 12 else "مساءً"
 
-# قالب HTML النظيف مدعوم بدالة بصمة العتاد المطورة
 form_html = """
 <div id="time_warning_container" style="display: none; font-family: Tahoma, sans-serif; padding: 30px; direction: rtl; background-color: #fff3cd; border-radius: 12px; border: 2px solid #ffeeba; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px;">
     <h2 style="color: #856404; margin-bottom: 15px;">⏳ التطبيق مغلق حالياً</h2>
     <p style="font-size: 18px; color: #856404; line-height: 1.6; font-weight: bold;">
         عذراً، أوقات تسجيل الحضور الرسمية هي من الساعة <b>{OPEN_H}:00 {OPEN_P}</b> وحتى الساعة <b>{CLOSE_H}:00 {CLOSE_P}</b>.
-    </p>
-    <p style="font-size: 16px; color: #555; line-height: 1.5; margin-bottom: 10px;">
-        يرجى محاولة الدخول خلال المواعيد المحددة للمحاضرات النظرية والسكاشن العملية.
     </p>
 </div>
 
@@ -126,9 +118,6 @@ form_html = """
     <h2 style="color: #721c24; margin-bottom: 15px;">⚠ تنبيه هـام جداً - المتصفح غير مسموح</h2>
     <p style="font-size: 18px; color: #721c24; line-height: 1.6; font-weight: bold;">
         عذراً، لا يمكن تسجيل الحضور إلا من خلال <b>متصفح جوجل كروم (Google Chrome) الأساسي</b> فقط.
-    </p>
-    <p style="font-size: 16px; color: #555; line-height: 1.5; margin-bottom: 20px;">
-        يبدو أنك تفتح الرابط من متصفح غير مدعوم أو من داخل تطبيق خارجي (مثل فيسبوك، واتساب، إلخ). يرجى نسخ الرابط فتحه مباشرة في تطبيق <b>جوجل كروم</b> بهاتفك.
     </p>
     <button onclick="copyLinkAndOpen()" style="background-color: #17a2b8; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">📋 نسخ الرابط الحقيقي لفتحه في كروم</button>
 </div>
@@ -423,9 +412,6 @@ function getAdvancedHardwareFingerprint() {
         ctx.fillStyle = "#2980b9";
         ctx.font = "12pt 'Courier New'";
         ctx.fillText("Benha_AgriSys_2026", 4, 20);
-        ctx.fillStyle = "rgba(39, 174, 96, 0.8)";
-        ctx.font = "16pt Arial";
-        ctx.fillText("SecureGPS", 6, 42);
         let canvasData = canvas.toDataURL();
 
         let glVendor = "unknown";
@@ -461,7 +447,17 @@ function getAdvancedHardwareFingerprint() {
             hash = hash & hash;
         }
         
-        return 'hw_v2_' + Math.abs(hash).toString(36) + '_' + screen.width + 'x' + screen.height;
+        let browserFingerprint = 'hw_v2_' + Math.abs(hash).toString(36) + '_' + screen.width + 'x' + screen.height;
+
+        // دمج رقم الـ Android ID (device_serial القادم من رابط الصفحة) مع بصمة المتصفح العتادية
+        const urlParams = new URLSearchParams(window.location.search);
+        let androidId = urlParams.get("device_serial");
+        
+        if (androidId && androidId.trim() !== "") {
+            return browserFingerprint + " | AndroidID: " + androidId.trim();
+        } else {
+            return browserFingerprint + " | AndroidID: غير متوفر";
+        }
     } catch (e) {
         return 'hw_fallback_' + Math.random().toString(36).substring(2);
     }
@@ -560,7 +556,7 @@ async function verifyAndSubmit() {
         String(nowCheck.getMonth() + 1).padStart(2, '0') + '-' + 
         String(nowCheck.getDate()).padStart(2, '0');
 
-    showMessage("⏳ جاري تحديد موقعك الجغرافي (Your location is being determined)...", "#0275d8", "#d9edf7");
+    showMessage("⏳ جاري تحديد موقعك الجغرافي...", "#0275d8", "#d9edf7");
 
     try {
         let samples = [];
@@ -592,7 +588,7 @@ async function verifyAndSubmit() {
         });
 
         if (lowAccuracyFound) {
-            showMessage("🚨 تنبيه أمني: تم رصد دقة غير منطقية لإشارة الـ GPS (تطبيق موقع وهمي)، تم رفض التسجيل!", "#d9534f", "#f2dede");
+            showMessage("🚨 تنبيه أمني: تم رصد دقة غير منطقية لإشارة الـ GPS، تم رفض التسجيل!", "#d9534f", "#f2dede");
             return;
         }
 
@@ -609,18 +605,6 @@ async function verifyAndSubmit() {
             return;
         }
 
-        let zeroAltitudeCount = 0;
-        samples.forEach(s => {
-            if (s.alt === null || s.alt === undefined || s.alt === 0) {
-                zeroAltitudeCount++;
-            }
-        });
-
-        if (zeroAltitudeCount === samples.length) {
-            showMessage("🚨 تنبيه أمني: تم اكتشاف محاولة تسجيل غير قانونية، تم رفض التسجيل!", "#d9534f", "#f2dede");
-            return;
-        }
-
         let bestSample = samples.reduce((prev, curr) => (curr.acc < prev.acc) ? curr : prev);
         const lat = bestSample.lat;
         const lon = bestSample.lon;
@@ -629,7 +613,7 @@ async function verifyAndSubmit() {
         const distance = calculateDistance(targetLocCoords.lat, targetLocCoords.lon, lat, lon);
 
         if (distance <= ALLOWED_RADIUS) {
-            showMessage("⏳ تم اجتياز الفحوصات الأمنية بدقة (داخل النطاق)، جاري تسجيل حضورك...", "#0275d8", "#d9edf7");
+            showMessage("⏳ تم اجتياز الفحوصات الأمنية بدقة، جاري تسجيل حضورك...", "#0275d8", "#d9edf7");
 
             const now = new Date();
             const formattedTime = now.getFullYear() + '-' + 
@@ -665,7 +649,7 @@ async function verifyAndSubmit() {
             .then(response => response.json())
             .then(result => {
                 if (result.status === "success") {
-                    showMessage("✅ تم تسجيل حضورك بنجاح في مادة (" + course + " - " + section + ") في (" + loc + ") ليوم " + day + " وتاريخ " + currentDateStr + "!", "#28a745", "#d4edda");
+                    showMessage("✅ تم تسجيل حضورك بنجاح في مادة (" + course + " - " + section + ") في (" + loc + ") ليوم " + day + "!", "#28a745", "#d4edda");
                 } else {
                     showMessage("❌ " + (result.message || "عذراً، حدث خطأ أثناء التسجيل."), "#d9534f", "#f2dede");
                 }
@@ -679,13 +663,12 @@ async function verifyAndSubmit() {
         }
 
     } catch (error) {
-        showMessage("❌ فشل تحديد الموقع بدقة. تأكد من تفعيل الـ GPS بوضع الدقة العالية والسماح للمتصفح بالوصول لموقعك.", "#d9534f", "#f2dede");
+        showMessage("❌ فشل تحديد الموقع بدقة. تأكد من تفعيل الـ GPS والسماح للمتصفح بالوصول لموقعك.", "#d9534f", "#f2dede");
     }
 }
 </script>
 """
 
-# استخدام replace لربط المتغيرات بقالب الـ HTML بأمان تام
 form_html = (
     form_html.replace("{OPEN_H}", str(open_hour_12))
     .replace("{OPEN_P}", str(open_period))
