@@ -65,7 +65,7 @@ else:
 st.title("نظام تسجيل الحضور الذكي")
 
 APP_OPEN_HOUR = 1        
-APP_CLOSE_HOUR = 22  
+APP_CLOSE_HOUR = 23  
 
 LOCATIONS_COORDS = {
     "مدرج هندسة 1": {"lat": 30.719101, "lon": 31.244522},
