@@ -21,23 +21,15 @@ hide_header_style = """
 """
 st.markdown(hide_header_style, unsafe_allow_html=True)
 
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3As-hBYrojIcAjxvcYVP_CBMGW6GX79YUBAZQxI6m2MMUvkQIcdxlGSSG5NIX3MTM/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_KCseeD7Q095kVu0SMZm6LvWE1T8IG8QepMHyzQgTi0T0c5PoJKF_Vu25hmJv9Cjc/exec"
 
 query_params = st.query_params
 device_serial = query_params.get("device_serial", None)
 
-# التحقق من وجود المعرف في الرابط
+# التحقق من وجود المعرف في الرابط لمنع الدخول المباشر
 has_valid_serial = "true" if (device_serial and str(device_serial).strip() != "") else "false"
 
-if device_serial:
-    try:
-        payload = {
-            "action": "log_device_serial",
-            "device_serial": device_serial
-        }
-        requests.post(GOOGLE_SCRIPT_URL, json=payload, timeout=5)
-    except Exception as e:
-        pass
+# (تم إزالة طلب الـ log_device_serial المنفصل من هنا تماماً لعدم إنشاء أو استخدام صفحة serial logs)
 
 st.sidebar.title("🔐 لوحة تحكم المشرف")
 admin_password_input = st.sidebar.text_input(
@@ -285,7 +277,6 @@ document.addEventListener("DOMContentLoaded", function() {
     const timeWarningBox = document.getElementById("time_warning_container");
     const mainApp = document.getElementById("main_app_container");
 
-    // 1. فحص هل تم فتح الرابط من التطبيق (وجود الـ device_serial) أم لا
     if (!HAS_VALID_SERIAL) {
         if (blockContainer) blockContainer.style.display = "block";
         if (timeWarningBox) timeWarningBox.style.display = "none";
@@ -293,7 +284,6 @@ document.addEventListener("DOMContentLoaded", function() {
         return;
     }
 
-    // 2. فحص أوقات فتح وغلق التطبيق
     const now = new Date();
     const currentHour = now.getHours();
 
@@ -304,7 +294,6 @@ document.addEventListener("DOMContentLoaded", function() {
         return;
     }
 
-    // إذا تجاوز كل الفحوصات بنجاح، اعرض التطبيق
     if (blockContainer) blockContainer.style.display = "none";
     if (timeWarningBox) timeWarningBox.style.display = "none";
     if (mainApp) mainApp.style.display = "block";
