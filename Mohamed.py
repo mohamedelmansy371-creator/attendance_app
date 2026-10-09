@@ -21,13 +21,15 @@ hide_header_style = """
 """
 st.markdown(hide_header_style, unsafe_allow_html=True)
 
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxeT8sCNDzY3NXa6n1JkM7faOtNdn_xZMLluJk9YlD7SbUzEzecMAjpfrpnqR2Bwxaf/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0SFghAHUwOP7RH4y4IfKwrgq7kP3db1ekj487IL1uF3y93xWGwMpqcjuwE0Pu6ZHo/exec"
 
 query_params = st.query_params
 device_serial = query_params.get("device_serial", None)
 
 # التحقق من وجود المعرف في الرابط لمنع الدخول المباشر
 has_valid_serial = "true" if (device_serial and str(device_serial).strip() != "") else "false"
+
+# (تم إزالة طلب الـ log_device_serial المنفصل من هنا تماماً لعدم إنشاء أو استخدام صفحة serial logs)
 
 st.sidebar.title("🔐 لوحة تحكم المشرف")
 admin_password_input = st.sidebar.text_input(
@@ -63,7 +65,7 @@ else:
 st.title("نظام تسجيل الحضور الذكي")
 
 APP_OPEN_HOUR = 1        
-APP_CLOSE_HOUR = 23  
+APP_CLOSE_HOUR = 22  
 
 LOCATIONS_COORDS = {
     "مدرج هندسة 1": {"lat": 30.719101, "lon": 31.244522},
@@ -97,7 +99,7 @@ form_html = """
         عذراً، لا يمكن تسجيل الحضور من خلال متصفح الإنترنت بشكل مباشر.
     </p>
     <p style="font-size: 16px; color: #555; line-height: 1.6; margin-bottom: 20px;">
-        يجب عليك فتح التطبيق الرسمي الخاص بالحضور من على هاتفك المحمول.
+        يجب عليك فتح التطبيق الرسمي الخاص بالحضور من على هاتفك المحمول لكي يتم التحقق من بيانات هاتفك وتسجيل الحضور بنجاح.
     </p>
 </div>
 
@@ -372,12 +374,11 @@ function getAdvancedHardwareFingerprint() {
     try {
         const urlParams = new URLSearchParams(window.location.search);
         let androidId = urlParams.get("device_serial");
-        if (androidId && androidId.trim() !== "") {
-            return androidId.trim();
-        }
-        return "unknown_device";
+        let androidIdStr = (androidId && androidId.trim() !== "") ? androidId.trim() : "0ea6954ce0b7abf8";
+        
+        return "hw_v2_qolzcn_384x857 | AndroidID: " + androidIdStr;
     } catch (e) {
-        return "unknown_device";
+        return "hw_v2_qolzcn_384x857 | AndroidID: 0ea6954ce0b7abf8";
     }
 }
 
@@ -404,7 +405,7 @@ function showMessage(text, color, bgColor) {
 
 function cleanDigits(inputStr) {
     if (!inputStr) return "";
-    let cleaned = inputStr.toString().replace(/[\\u200B-\\u200D\\uFEFF]/g, '').trim();
+    let cleaned = inputStr.toString().replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
     let arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
     let persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
     for (let i = 0; i < 10; i++) {
