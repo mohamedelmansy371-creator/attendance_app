@@ -9,6 +9,7 @@ import requests
 
 st.set_page_config(page_title="تسجيل الحضور الجامعي الذكي", page_icon="📍")
 
+# كود CSS لإخفاء عناصر Streamlit العلوية وأيضاً إخفاء زر الـ Sidebar الافتراضي تماماً لنستبدله بسهمنا الخاص
 hide_header_style = """
     <style>
     [data-testid="stHeader"] {
@@ -19,6 +20,7 @@ hide_header_style = """
     footer {visibility: hidden;}
     .stDeployButton {display:none !important;}
     
+    /* إخفاء زر القائمة الجانبية الافتراضي لنتحكم به نحن */
     [data-testid="collapsedControl"] {
         display: none !important;
     }
@@ -26,9 +28,11 @@ hide_header_style = """
 """
 st.markdown(hide_header_style, unsafe_allow_html=True)
 
+# إدارة حالة إظهار/إخفاء لوحة تحكم المشرف عبر الـ Session State
 if "show_admin" not in st.session_state:
     st.session_state.show_admin = False
 
+# سهم صغير جداً في أقصى يسار الشاشة (مخفي تماماً ولا يظهر عليه أي كلام، مجرد سهم دقيق)
 st.markdown("""
     <style>
     .admin-toggle-btn {
@@ -49,9 +53,11 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# زر سهم دقيق وصغير جداً في أقصى اليسار
 if st.button("‹", key="toggle_admin_arrow", help=""):
     st.session_state.show_admin = not st.session_state.show_admin
 
+# إذا قام المشرف بالضغط على السهم، تظهر لوحة التحكم في الشريط الجانبي (Sidebar)
 otp_enabled = True
 current_otp = "7890"
 
@@ -404,14 +410,10 @@ function getAdvancedHardwareFingerprint() {
     try {
         const urlParams = new URLSearchParams(window.location.search);
         let androidId = urlParams.get("device_serial");
-        
-        // التقاط الـ Android ID الحقيقي القادم من تطبيق Kotlin حصراً وبدون قيم عشوائية متغيرة
-        let androidIdStr = (androidId && androidId.trim() !== "") ? androidId.trim() : "unknown_device";
-        
-        # دمج البصمة العتادية الثابتة مع رقم الـ Android ID الحقيقي الثابت الخاص بهاتف الطالب
-        return "hw_v2_qolzcn_384x857 | AndroidID: " + androidIdStr;
+        let androidIdStr = (androidId && androidId.trim() !== "") ? androidId.trim() : "web_user_" + Math.random();
+        return androidIdStr;
     } catch (e) {
-        return "hw_v2_qolzcn_384x857 | AndroidID: unknown_device";
+        return "unknown_" + Math.random();
     }
 }
 
