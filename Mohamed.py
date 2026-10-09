@@ -33,7 +33,7 @@ has_valid_serial = "true" if (device_serial and str(device_serial).strip() != ""
 
 st.sidebar.title("🔐 لوحة تحكم المشرف")
 admin_password_input = st.sidebar.text_input(
-    "كلمة مرور المشرف", type="password", placeholder="أدخل كلمة المرور"
+    "كلمة مرور المشرف", type="password", placeholder="أدخل كلمة المرور"
 )
 
 ADMIN_SECRET_PASS = "5994"
