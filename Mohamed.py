@@ -42,25 +42,25 @@ otp_enabled = False
 current_otp = ""
 
 if admin_password_input == ADMIN_SECRET_PASS:
-    st.sidebar.success("تم تسجيل الدخول بنجاح كمشرف ✅")
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("إدارة رمز التحقق (OTP)")
-    use_otp = st.sidebar.checkbox("تفعيل نظام رمز التحقق (OTP)", value=True)
-    if use_otp:
-        otp_enabled = True
-        current_otp = st.sidebar.text_input(
-            "الرمز الحالي للمحاضرة",
-            value="7890",
-            help="اكتب الرمز الذي ستعطيه للطلاب في المدرج",
-        )
-    else:
-        otp_enabled = False
-        current_otp = ""
+    st.sidebar.success("تم تسجيل الدخول بنجاح كمشرف ✅")
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("إدارة رمز التحقق (OTP)")
+    use_otp = st.sidebar.checkbox("تفعيل نظام رمز التحقق (OTP)", value=True)
+    if use_otp:
+        otp_enabled = True
+        current_otp = st.sidebar.text_input(
+            "الرمز الحالي للمحاضرة",
+            value="7890",
+            help="اكتب الرمز الذي ستعطيه للطلاب في المدرج",
+        )
+    else:
+        otp_enabled = False
+        current_otp = ""
 else:
-    if admin_password_input != "":
-        st.sidebar.error("كلمة المرور غير صحيحة")
-    otp_enabled = True
-    current_otp = "7890"
+    if admin_password_input != "":
+        st.sidebar.error("كلمة المرور غير صحيحة")
+    otp_enabled = True
+    current_otp = "7890"
 
 st.title("نظام تسجيل الحضور الذكي")
 
