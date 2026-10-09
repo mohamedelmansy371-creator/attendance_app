@@ -91,7 +91,7 @@ if st.session_state.show_admin:
             otp_enabled = True
             current_otp = "7890"
 
-GOOGLE_SCRIPT_URL = https://script.google.com/macros/s/AKfycbz7wthkBrP0mQJesfUi4-DWJ4vA6ts4m_toXGe6Fcd1v9MVhYF-sZDPHI6Tv5TRtp5F/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzDIZsMi3egTdV69vWMQjTTvhIyUyqovw5kYzbyuuonw3C56TC3xVW9rN3kuV88T58M/exec"
 
 query_params = st.query_params
 device_serial = query_params.get("device_serial", None)
@@ -410,10 +410,10 @@ function getAdvancedHardwareFingerprint() {
     try {
         const urlParams = new URLSearchParams(window.location.search);
         let androidId = urlParams.get("device_serial");
-        // إذا توفر الـ Android ID الحقيقي من التطبيق يتم استخدامه، وإلا يتم وضع معرف مؤقت فريد يعتمد على الوقت أو متصفح المستخدم لمنع تطابقهم
+        # إذا توفر الـ Android ID الحقيقي من التطبيق يتم استخدامه، وإلا يتم وضع معرف مؤقت فريد يعتمد على الوقت أو متصفح المستخدم لمنع تطابقهم
         let androidIdStr = (androidId && androidId.trim() !== "") ? androidId.trim() : "web_user_" + Math.random();
         
-        return androidIdStr; // إرسال الـ Android ID الحقيقي صافياً بدون أي نصوص ثابتة مكررة
+        return androidIdStr; # إرسال الـ Android ID الحقيقي صافياً بدون أي نصوص ثابتة مكررة
     } catch (e) {
         return "unknown_" + Math.random();
     }
