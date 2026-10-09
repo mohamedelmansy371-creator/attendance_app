@@ -17,6 +17,7 @@ hide_header_style = """
     }
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
+    .stDeployButton {display:none !important;}
     </style>
 """
 st.markdown(hide_header_style, unsafe_allow_html=True)
@@ -26,41 +27,43 @@ GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby1Ex3JjMWYrflTX73b
 query_params = st.query_params
 device_serial = query_params.get("device_serial", None)
 
-# التحقق من وجود المعرف في الرابط لمنع الدخول المباشر
 has_valid_serial = "true" if (device_serial and str(device_serial).strip() != "") else "false"
 
-st.sidebar.title("🔐 لوحة تحكم المشرف")
-admin_password_input = st.sidebar.text_input(
-    "كلمة مرور المشرف", type="password", placeholder="أدخل كلمة المرور"
-)
-
-ADMIN_SECRET_PASS = "5994"
-
-otp_enabled = False
-current_otp = ""
-
-if admin_password_input == ADMIN_SECRET_PASS:
-    st.sidebar.success("تم تسجيل الدخول بنجاح كمشرف ✅")
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("إدارة رمز التحقق (OTP)")
-    use_otp = st.sidebar.checkbox("تفعيل نظام رمز التحقق (OTP)", value=True)
-    if use_otp:
-        otp_enabled = True
-        current_otp = st.sidebar.text_input(
-            "الرمز الحالي للمحاضرة",
-            value="7890",
-            help="اكتب الرمز الذي ستعطيه للطلاب في المدرج",
-        )
-    else:
-        otp_enabled = False
-        current_otp = ""
-else:
-    if admin_password_input != "":
-        st.sidebar.error("كلمة المرور غير صحيحة")
-    otp_enabled = True
-    current_otp = "7890"
-
 st.title("نظام تسجيل الحضور الذكي")
+
+# نقل لوحة تحكم المشرف إلى أسفل الصفحة بدلاً من الشريط الجانبي
+st.markdown("---")
+with st.expander("🔐 لوحة تحكم المشرف (اضغط للتسجيل والإدارة)"):
+    admin_password_input = st.text_input(
+        "كلمة مرور المشرف", type="password", placeholder="أدخل كلمة المرور", key="admin_pass"
+    )
+
+    ADMIN_SECRET_PASS = "5994"
+
+    otp_enabled = False
+    current_otp = ""
+
+    if admin_password_input == ADMIN_SECRET_PASS:
+        st.success("تم تسجيل الدخول بنجاح كمشرف ✅")
+        st.markdown("---")
+        st.subheader("إدارة رمز التحقق (OTP)")
+        use_otp = st.checkbox("تفعيل نظام رمز التحقق (OTP)", value=True, key="use_otp_box")
+        if use_otp:
+            otp_enabled = True
+            current_otp = st.text_input(
+                "الرمز الحالي للمحاضرة",
+                value="7890",
+                help="اكتب الرمز الذي ستعطيه للطلاب في المدرج",
+                key="otp_val_box"
+            )
+        else:
+            otp_enabled = False
+            current_otp = ""
+    else:
+        if admin_password_input != "":
+            st.error("كلمة المرور غير صحيحة")
+        otp_enabled = True
+        current_otp = "7890"
 
 APP_OPEN_HOUR = 0          
 APP_CLOSE_HOUR = 23   
