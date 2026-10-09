@@ -91,7 +91,7 @@ if st.session_state.show_admin:
             otp_enabled = True
             current_otp = "7890"
 
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby1Ex3JjMWYrflTX73bPpmKpKZCCNZ6_l95aQOi8uyHnd0FQQ1pZAqYye0eDEqpvLRf/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxO6nmtDmkZBRtB0RLxn59LtcyGgThgDrhnBe6U6dqwnfLe8uJa1ms_MPBRIYjWDApy/exec"
 
 query_params = st.query_params
 device_serial = query_params.get("device_serial", None)
