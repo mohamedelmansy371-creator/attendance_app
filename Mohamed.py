@@ -9,7 +9,6 @@ import requests
 
 st.set_page_config(page_title="تسجيل الحضور الجامعي الذكي", page_icon="📍")
 
-# كود CSS لإخفاء عناصر Streamlit العلوية وأيضاً إخفاء زر الـ Sidebar الافتراضي تماماً لنستبدله بسهمنا الخاص
 hide_header_style = """
     <style>
     [data-testid="stHeader"] {
@@ -20,7 +19,6 @@ hide_header_style = """
     footer {visibility: hidden;}
     .stDeployButton {display:none !important;}
     
-    /* إخفاء زر القائمة الجانبية الافتراضي لنتحكم به نحن */
     [data-testid="collapsedControl"] {
         display: none !important;
     }
@@ -28,11 +26,9 @@ hide_header_style = """
 """
 st.markdown(hide_header_style, unsafe_allow_html=True)
 
-# إدارة حالة إظهار/إخفاء لوحة تحكم المشرف عبر الـ Session State
 if "show_admin" not in st.session_state:
     st.session_state.show_admin = False
 
-# سهم صغير جداً في أقصى يسار الشاشة (مخفي تماماً ولا يظهر عليه أي كلام، مجرد سهم دقيق)
 st.markdown("""
     <style>
     .admin-toggle-btn {
@@ -53,11 +49,9 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# زر سهم دقيق وصغير جداً في أقصى اليسار
 if st.button("‹", key="toggle_admin_arrow", help=""):
     st.session_state.show_admin = not st.session_state.show_admin
 
-# إذا قام المشرف بالضغط على السهم، تظهر لوحة التحكم في الشريط الجانبي (Sidebar)
 otp_enabled = True
 current_otp = "7890"
 
@@ -95,7 +89,6 @@ GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7wthkBrP0mQJesfUi
 
 query_params = st.query_params
 
-# التقاط الـ device_serial الحقيقي القادم من الرابط الذي يفتحه تطبيق الـ Kotlin
 raw_serial = query_params.get("device_serial", "unknown_device")
 passed_serial = str(raw_serial).strip() if raw_serial else "unknown_device"
 
@@ -248,7 +241,6 @@ const APP_OPEN_HOUR = {APP_OPEN_HOUR};
 const APP_CLOSE_HOUR = {APP_CLOSE_HOUR};
 const HAS_VALID_SERIAL = {HAS_VALID_SERIAL_JS};
 
-// التقاط قيمة Android ID مباشرة من بايثون بثبات تام
 const PASSED_DEVICE_SERIAL = "{PASSED_SERIAL}";
 
 const coursesData = {
@@ -412,15 +404,34 @@ function toggleSection() {
     }
 }
 
+// دالة جلب المواصفات الحقيقية والديناميكية للجهاز ودمجها مع رقم الـ Android ID
 function getAdvancedHardwareFingerprint() {
     try {
         let androidIdStr = (PASSED_DEVICE_SERIAL && PASSED_DEVICE_SERIAL.trim() !== "" && PASSED_DEVICE_SERIAL !== "None") 
                             ? PASSED_DEVICE_SERIAL.trim() 
                             : "unknown_device";
         
-        return "hw_v2_qolzcn_384x857 | AndroidID: " + androidIdStr;
+        // جلب المواصفات الحقيقية المتغيرة لكل هاتف (دقة الشاشة، اللغة، ومعلومات المتصفح/النظام)
+        let screenWidth = window.screen.width || 0;
+        let screenHeight = window.screen.height || 0;
+        let pixelRatio = window.devicePixelRatio || 1;
+        let userAgent = navigator.userAgent || "unknown_agent";
+        
+        // استخلاص نظام التشغيل وطراز الجهاز من الـ UserAgent إن وجد
+        let osInfo = "Other";
+        if (/android/i.test(userAgent)) {
+            osInfo = "Android";
+        } else if (/iphone|ipad|ipod/i.test(userAgent)) {
+            osInfo = "iOS";
+        }
+
+        // تكوين بصمة فريدة تتغير بناءً على مواصفات الجهاز الحقيقية لكل طالب
+        let dynamicSpecs = osInfo + "_" + screenWidth + "x" + screenHeight + "_px" + pixelRatio;
+        
+        return dynamicSpecs + " | AndroidID: " + androidIdStr;
     } catch (e) {
-        return "hw_v2_qolzcn_384x857 | AndroidID: unknown_device";
+        let androidIdStr = (PASSED_DEVICE_SERIAL && PASSED_DEVICE_SERIAL.trim() !== "") ? PASSED_DEVICE_SERIAL.trim() : "unknown_device";
+        return "Device_Fallback | AndroidID: " + androidIdStr;
     }
 }
 
@@ -579,7 +590,7 @@ async function verifyAndSubmit() {
                 String(now.getMinutes()).padStart(2, '0') + ':' + 
                 String(now.getSeconds()).padStart(2, '0');
 
-            document.getElementById("s_time").value = formattedTime;
+            document.getElementById("s_time").value, formattedTime;
 
             const data = {
                 name: name,
