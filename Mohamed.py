@@ -9,6 +9,7 @@ import requests
 
 st.set_page_config(page_title="تسجيل الحضور الجامعي الذكي", page_icon="📍")
 
+# كود CSS لإخفاء عناصر Streamlit العلوية وأيضاً إخفاء زر الـ Sidebar الافتراضي تماماً لنستبدله بسهمنا الخاص
 hide_header_style = """
     <style>
     [data-testid="stHeader"] {
@@ -18,42 +19,68 @@ hide_header_style = """
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     .stDeployButton {display:none !important;}
+    
+    /* إخفاء زر القائمة الجانبية الافتراضي لنتحكم به نحن */
+    [data-testid="collapsedControl"] {
+        display: none !important;
+    }
     </style>
 """
 st.markdown(hide_header_style, unsafe_allow_html=True)
 
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby1Ex3JjMWYrflTX73bPpmKpKZCCNZ6_l95aQOi8uyHnd0FQQ1pZAqYye0eDEqpvLRf/exec"
+# إدارة حالة إظهار/إخفاء لوحة تحكم المشرف عبر الـ Session State
+if "show_admin" not in st.session_state:
+    st.session_state.show_admin = False
 
-query_params = st.query_params
-device_serial = query_params.get("device_serial", None)
+# سهم صغير جداً في أقصى يسار الشاشة (مخفي تماماً ولا يظهر عليه أي كلام، مجرد سهم دقيق)
+st.markdown("""
+    <style>
+    .admin-toggle-btn {
+        position: fixed;
+        top: 10px;
+        left: 5px;
+        z-index: 999999;
+        background: transparent;
+        border: none;
+        color: #888;
+        font-size: 14px;
+        cursor: pointer;
+        padding: 2px 5px;
+    }
+    .admin-toggle-btn:hover {
+        color: #000;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-has_valid_serial = "true" if (device_serial and str(device_serial).strip() != "") else "false"
+# زر سهم دقيق وصغير جداً في أقصى اليسار
+if st.button("‹", key="toggle_admin_arrow", help=""):
+    st.session_state.show_admin = not st.session_state.show_admin
 
-# وضع زر تحكم المشرف مخفياً داخل قائمة منسدقة (Popover) صغيرة في أعلى الصفحة بعيداً عن أين تضارب
-col1, col2 = st.columns([8, 2])
-with col2:
-    with st.popover("⚙️ إعدادات المشرف"):
+# إذا قام المشرف بالضغط على السهم، تظهر لوحة التحكم في الشريط الجانبي (Sidebar)
+otp_enabled = True
+current_otp = "7890"
+
+if st.session_state.show_admin:
+    with st.sidebar:
+        st.title("🔐 لوحة تحكم المشرف")
         admin_password_input = st.text_input(
-            "كلمة مرور المشرف", type="password", placeholder="أدخل كلمة المرور", key="admin_pass"
+            "كلمة مرور المشرف", type="password", placeholder="أدخل كلمة المرور"
         )
 
         ADMIN_SECRET_PASS = "5994"
 
-        otp_enabled = False
-        current_otp = ""
-
         if admin_password_input == ADMIN_SECRET_PASS:
-            st.success("تم تسجيل الدخول بنجاح ✅")
+            st.success("تم تسجيل الدخول بنجاح كمشرف ✅")
             st.markdown("---")
             st.subheader("إدارة رمز التحقق (OTP)")
-            use_otp = st.checkbox("تفعيل نظام رمز التحقق (OTP)", value=True, key="use_otp_box")
+            use_otp = st.checkbox("تفعيل نظام رمز التحقق (OTP)", value=True)
             if use_otp:
                 otp_enabled = True
                 current_otp = st.text_input(
                     "الرمز الحالي للمحاضرة",
                     value="7890",
                     help="اكتب الرمز الذي ستعطيه للطلاب في المدرج",
-                    key="otp_val_box"
                 )
             else:
                 otp_enabled = False
@@ -63,6 +90,13 @@ with col2:
                 st.error("كلمة المرور غير صحيحة")
             otp_enabled = True
             current_otp = "7890"
+
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby1Ex3JjMWYrflTX73bPpmKpKZCCNZ6_l95aQOi8uyHnd0FQQ1pZAqYye0eDEqpvLRf/exec"
+
+query_params = st.query_params
+device_serial = query_params.get("device_serial", None)
+
+has_valid_serial = "true" if (device_serial and str(device_serial).strip() != "") else "false"
 
 st.title("نظام تسجيل الحضور الذكي")
 
