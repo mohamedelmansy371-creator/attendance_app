@@ -85,7 +85,7 @@ if st.session_state.show_admin:
             otp_enabled = True
             current_otp = "7890"
 
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzqaRA2Zf1KlD4gViWj2UxTxNoL9tjRjniBWeytfdvRpJkxxA-KMp82Dc9nqoshhEKi/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx7X2uUHmw05WesYhTl9Zo_j1FGhFUVC4Sd4936erDWcW5PX3_go5duc0MLrvE6hvk3/exec"
 
 query_params = st.query_params
 
