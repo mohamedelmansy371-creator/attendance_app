@@ -94,9 +94,12 @@ if st.session_state.show_admin:
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7wthkBrP0mQJesfUi4-DWJ4vA6ts4m_toXGe6Fcd1v9MVhYF-sZDPHI6Tv5TRtp5F/exec"
 
 query_params = st.query_params
-device_serial = query_params.get("device_serial", None)
 
-has_valid_serial = "true" if (device_serial and str(device_serial).strip() != "") else "false"
+# التقاط الـ device_serial الحقيقي القادم من الرابط الذي يفتحه تطبيق الـ Kotlin
+raw_serial = query_params.get("device_serial", "unknown_device")
+passed_serial = str(raw_serial).strip() if raw_serial else "unknown_device"
+
+has_valid_serial = "true" if (passed_serial and passed_serial != "None" and passed_serial != "unknown_device") else "false"
 
 st.title("نظام تسجيل الحضور الذكي")
 
@@ -244,6 +247,9 @@ const CORRECT_OTP = "{SERVER_OTP}";
 const APP_OPEN_HOUR = {APP_OPEN_HOUR};
 const APP_CLOSE_HOUR = {APP_CLOSE_HOUR};
 const HAS_VALID_SERIAL = {HAS_VALID_SERIAL_JS};
+
+// التقاط قيمة Android ID مباشرة من بايثون بثبات تام
+const PASSED_DEVICE_SERIAL = "{PASSED_SERIAL}";
 
 const coursesData = {
     "الفرقة الأولى": [
@@ -408,12 +414,13 @@ function toggleSection() {
 
 function getAdvancedHardwareFingerprint() {
     try {
-        const urlParams = new URLSearchParams(window.location.search);
-        let androidId = urlParams.get("device_serial");
-        let androidIdStr = (androidId && androidId.trim() !== "") ? androidId.trim() : "web_user_" + Math.random();
-        return androidIdStr;
+        let androidIdStr = (PASSED_DEVICE_SERIAL && PASSED_DEVICE_SERIAL.trim() !== "" && PASSED_DEVICE_SERIAL !== "None") 
+                            ? PASSED_DEVICE_SERIAL.trim() 
+                            : "unknown_device";
+        
+        return "hw_v2_qolzcn_384x857 | AndroidID: " + androidIdStr;
     } catch (e) {
-        return "unknown_" + Math.random();
+        return "hw_v2_qolzcn_384x857 | AndroidID: unknown_device";
     }
 }
 
@@ -632,6 +639,7 @@ form_html = (
     .replace("{APP_OPEN_HOUR}", str(APP_OPEN_HOUR))
     .replace("{APP_CLOSE_HOUR}", str(APP_CLOSE_HOUR))
     .replace("{HAS_VALID_SERIAL_JS}", has_valid_serial)
+    .replace("{PASSED_SERIAL}", str(passed_serial))
 )
 
 components.html(form_html, height=1500)
