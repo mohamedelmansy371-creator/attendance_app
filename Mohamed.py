@@ -21,11 +21,12 @@ hide_header_style = """
 """
 st.markdown(hide_header_style, unsafe_allow_html=True)
 
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz4HOTYSXhHIufE6qrg0k44pOh59SHB-0Xsk0acInKip-HVP1PBGLaU0pA8mzJrLjnU/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxeT8sCNDzY3NXa6n1JkM7faOtNdn_xZMLluJk9YlD7SbUzEzecMAjpfrpnqR2Bwxaf/exec"
 
 query_params = st.query_params
 device_serial = query_params.get("device_serial", None)
 
+# التحقق من وجود المعرف في الرابط لمنع الدخول المباشر
 has_valid_serial = "true" if (device_serial and str(device_serial).strip() != "") else "false"
 
 st.sidebar.title("🔐 لوحة تحكم المشرف")
@@ -61,7 +62,7 @@ else:
 
 st.title("نظام تسجيل الحضور الذكي")
 
-APP_OPEN_HOUR = 0         
+APP_OPEN_HOUR = 1        
 APP_CLOSE_HOUR = 23  
 
 LOCATIONS_COORDS = {
@@ -367,26 +368,16 @@ function toggleSection() {
     }
 }
 
-// دالة لتوليد أو جلب UUID فريد خاص بجهاز الطالب وثابت في التخزين المحلي
-function getDeviceUUID() {
-    let uuid = localStorage.getItem("student_device_uuid");
-    if (!uuid) {
-        // توليد UUID متوافق مع المعايير
-        uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
-        localStorage.setItem("student_device_uuid", uuid);
-    }
-    return uuid;
-}
-
 function getAdvancedHardwareFingerprint() {
     try {
-        let deviceUuid = getDeviceUUID();
-        return "hw_v2_qolzcn_384x857 | UUID: " + deviceUuid;
+        const urlParams = new URLSearchParams(window.location.search);
+        let androidId = urlParams.get("device_serial");
+        if (androidId && androidId.trim() !== "") {
+            return androidId.trim();
+        }
+        return "unknown_device";
     } catch (e) {
-        return "hw_v2_qolzcn_384x857 | UUID: unknown_uuid";
+        return "unknown_device";
     }
 }
 
@@ -413,7 +404,7 @@ function showMessage(text, color, bgColor) {
 
 function cleanDigits(inputStr) {
     if (!inputStr) return "";
-    let cleaned = inputStr.toString().replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
+    let cleaned = inputStr.toString().replace(/[\\u200B-\\u200D\\uFEFF]/g, '').trim();
     let arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
     let persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
     for (let i = 0; i < 10; i++) {
