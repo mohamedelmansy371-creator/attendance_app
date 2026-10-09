@@ -410,11 +410,12 @@ function getAdvancedHardwareFingerprint() {
     try {
         const urlParams = new URLSearchParams(window.location.search);
         let androidId = urlParams.get("device_serial");
-        let androidIdStr = (androidId && androidId.trim() !== "") ? androidId.trim() : "0ea6954ce0b7abf8";
+        // إذا توفر الـ Android ID الحقيقي من التطبيق يتم استخدامه، وإلا يتم وضع معرف مؤقت فريد يعتمد على الوقت أو متصفح المستخدم لمنع تطابقهم
+        let androidIdStr = (androidId && androidId.trim() !== "") ? androidId.trim() : "web_user_" + Math.random();
         
-        return "hw_v2_qolzcn_384x857 | AndroidID: " + androidIdStr;
+        return androidIdStr; // إرسال الـ Android ID الحقيقي صافياً بدون أي نصوص ثابتة مكررة
     } catch (e) {
-        return "hw_v2_qolzcn_384x857 | AndroidID: 0ea6954ce0b7abf8";
+        return "unknown_" + Math.random();
     }
 }
 
