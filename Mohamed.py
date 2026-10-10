@@ -62,7 +62,7 @@ if st.session_state.show_admin:
             "كلمة مرور المشرف", type="password", placeholder="أدخل كلمة المرور"
         )
 
-        ADMIN_SECRET_PASS = "5994"
+        ADMIN_SECRET_PASS = st.secrets.get("ADMIN_PASSWORD", "5994")
 
         if admin_password_input == ADMIN_SECRET_PASS:
             st.success("تم تسجيل الدخول بنجاح كمشرف ✅")
@@ -85,7 +85,7 @@ if st.session_state.show_admin:
             otp_enabled = True
             current_otp = "7890"
 
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx7X2uUHmw05WesYhTl9Zo_j1FGhFUVC4Sd4936erDWcW5PX3_go5duc0MLrvE6hvk3/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbaqD14H__MwLXFlaIBMFsNWw_A7V3MMulgQtXsS_p-age3plUlHINvTzFNo2L11vP/exec"
 
 query_params = st.query_params
 
@@ -404,20 +404,17 @@ function toggleSection() {
     }
 }
 
-// دالة جلب المواصفات الحقيقية والديناميكية للجهاز ودمجها مع رقم الـ Android ID
 function getAdvancedHardwareFingerprint() {
     try {
         let androidIdStr = (PASSED_DEVICE_SERIAL && PASSED_DEVICE_SERIAL.trim() !== "" && PASSED_DEVICE_SERIAL !== "None") 
                             ? PASSED_DEVICE_SERIAL.trim() 
                             : "unknown_device";
         
-        // جلب المواصفات الحقيقية المتغيرة لكل هاتف (دقة الشاشة، اللغة، ومعلومات المتصفح/النظام)
         let screenWidth = window.screen.width || 0;
         let screenHeight = window.screen.height || 0;
         let pixelRatio = window.devicePixelRatio || 1;
         let userAgent = navigator.userAgent || "unknown_agent";
         
-        // استخلاص نظام التشغيل وطراز الجهاز من الـ UserAgent إن وجد
         let osInfo = "Other";
         if (/android/i.test(userAgent)) {
             osInfo = "Android";
@@ -425,7 +422,6 @@ function getAdvancedHardwareFingerprint() {
             osInfo = "iOS";
         }
 
-        // تكوين بصمة فريدة تتغير بناءً على مواصفات الجهاز الحقيقية لكل طالب
         let dynamicSpecs = osInfo + "_" + screenWidth + "x" + screenHeight + "_px" + pixelRatio;
         
         return dynamicSpecs + " | AndroidID: " + androidIdStr;
@@ -590,7 +586,7 @@ async function verifyAndSubmit() {
                 String(now.getMinutes()).padStart(2, '0') + ':' + 
                 String(now.getSeconds()).padStart(2, '0');
 
-            document.getElementById("s_time").value, formattedTime;
+            document.getElementById("s_time").value = formattedTime;
 
             const data = {
                 name: name,
@@ -604,7 +600,6 @@ async function verifyAndSubmit() {
                 lat: lat,
                 lon: lon,
                 dist: Math.round(distance),
-                time: formattedTime,
                 deviceId: getAdvancedHardwareFingerprint()
             };
 
