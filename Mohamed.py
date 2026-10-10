@@ -99,7 +99,6 @@ st.title("نظام تسجيل الحضور الذكي")
 APP_OPEN_HOUR = 0          
 APP_CLOSE_HOUR = 23   
 
-# تم إضافة مدرجات المحاصيل الثلاثة مع إحداثياتها (يمكنك تعديل الأرقام بدقة حسب إحداثياتها الفعلية)
 LOCATIONS_COORDS = {
     "مدرج هندسة 1": {"lat": 30.719101, "lon": 31.244522},
     "مدرج هندسة 2": {"lat": 30.353500, "lon": 31.224400},
@@ -158,8 +157,10 @@ form_html = """
     </div>
 
     <div style="margin-bottom: 15px;">
-        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">يوم الأسبوع:</label>
-        <input type="text" id="s_day" readonly placeholder="جاري التقاط اليوم تلقائياً..." style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; background-color: #e9ecef; font-weight: bold; color: #0275d8; box-sizing: border-box;">
+        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">يوم الأسبوع الحالي والتوقيت:</label>
+        <input type="text" id="s_day_time" readonly placeholder="جاري التقاط اليوم والوقت..." style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; background-color: #e9ecef; font-weight: bold; color: #0275d8; box-sizing: border-box;">
+        <input type="hidden" id="s_day">
+        <input type="hidden" id="s_hour">
     </div>
 
     <div style="margin-bottom: 15px;">
@@ -185,39 +186,23 @@ form_html = """
     </div>
 
     <div id="course_container" style="margin-bottom: 15px; display: none;">
-        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">اسم المادة الدراسية:</label>
-        <select id="s_course" onchange="toggleSection()" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: white;">
+        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">اسم المادة الدراسية (المتاحة في توقيتك الحالي):</label>
+        <select id="s_course" onchange="onCourseChange()" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: white;">
             <option value="">-- اختر المادة الدراسية --</option>
         </select>
     </div>
 
     <div id="section_container" style="margin-bottom: 15px; display: none;">
-        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">الشق الدراسي:</label>
-        <select id="s_section" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: white;">
+        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">الشق الدراسي المتاح:</label>
+        <select id="s_section" onchange="onSectionChange()" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: white;">
             <option value="">-- اختر الشق الدراسي --</option>
-            <option value="نظري">نظري</option>
-            <option value="عملي">عملي</option>
         </select>
     </div>
 
-    <div style="margin-bottom: 18px;">
-        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">مكان المحاضرة:</label>
+    <div id="loc_container" style="margin-bottom: 18px; display: none;">
+        <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #333; font-size: 16px;">مكان المحاضرة المتاح:</label>
         <select id="s_loc" style="width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: white;">
             <option value="">-- اختر المكان --</option>
-            <option value="مدرج هندسة 1">مدرج هندسة 1</option>
-            <option value="مدرج هندسة 2">مدرج هندسة 2</option>
-            <option value="مدرج هندسة 3">مدرج هندسة 3</option>
-            <option value="مدرج هندسة 4">مدرج هندسة 4</option>
-            <option value="قاعة تدريس 1">قاعة تدريس 1</option>
-            <option value="قاعة تدريس 2">قاعة تدريس 2</option>
-            <option value="قاعة تدريس 3">قاعة تدريس 3</option>
-            <option value="قاعة تدريس 4">قاعة تدريس 4</option>
-            <option value="قاعة تدريس 5">قاعة تدريس 5</option>
-            <option value="مدرج إقتصاد 1">مدرج إقتصاد 1</option>
-            <option value="مدرج إقتصاد 2">مدرج إقتصاد 2</option>
-            <option value="مدرج محاصيل 1">مدرج محاصيل 1</option>
-            <option value="مدرج محاصيل 2">مدرج محاصيل 2</option>
-            <option value="مدرج محاصيل 3">مدرج محاصيل 3</option>
         </select>
     </div>
 
@@ -250,66 +235,266 @@ const HAS_VALID_SERIAL = {HAS_VALID_SERIAL_JS};
 
 const PASSED_DEVICE_SERIAL = "{PASSED_SERIAL}";
 
-const coursesData = {
-    "الفرقة الأولى": [
-        "رياضة عام",
-        "أساسيات هندسة النظم الزراعية والحيوية",
-        "رياضة هندسة",
-        "ميكانيكا (ديناميكا – استاتيكا)",
-        "رسم هندسي (1)"
-    ],
-    "الفرقة الثانية": [
-        "رياضة تطبيقية",
-        "هيدروليكا وميكانيكا موائع",
-        "نظرية آلات",
-        "مقدمة في الحاسب الآلي",
-        "انتقال حراري"
-    ],
-    "الفرقة الثالثة": [
-        "جرارات زراعية",
-        "تخطيط وتصميم المنشآت الزراعية",
-        "هندسة الري والصرف",
-        "هندسة البيوت المحمية",
-        "هندسة مزارع الإنتاج الحيواني والداجني",
-        "مصطلحات علمية باللغة الإنجليزية"
-    ],
-    "الفرقة الرابعة": {
-        "توجه آلات": [
-            "التحكم البيئي في المنشآت الزراعية",
-            "تصميم نظم الري",
-            "تصميم آلات زراعية",
-            "أساليب البحث العلمي",
-            "نظرية اهتزازات وتوازن",
-            "ميكانيكا تربة",
-            "معدات التسميد والمكافحة"
+// جدول المحاضرات والسكاشن بناءً على التفاصيل المُرسلة تماماً (مع اعتماد مدرج هندسة 3)
+const scheduleData = {
+    "الفرقة الأولى": {
+        "الأحد": [
+            { startHour: 11, endHour: 13, course: "رياضة عام", section: "نظري", locs: ["مدرج محاصيل 1"] },
+            { startHour: 13, endHour: 15, course: "رياضة عام", section: "عملي", locs: ["مدرج هندسة 2"] },
+            { startHour: 13, endHour: 15, course: "رسم هندسي (1)", section: "عملي", locs: ["قاعة تدريس 1", "قاعة تدريس 2"] },
+            { startHour: 9, endHour: 11, course: "جرارات زراعية", section: "نظري", locs: ["مدرج هندسة 3"] },
+            { startHour: 11, endHour: 13, course: "هندسة البيوت المحمية", section: "نظري", locs: ["مدرج هندسة 3"] },
+            { startHour: 11, endHour: 13, course: "تخطيط وتصميم المنشآت الزراعية", section: "نظري", locs: ["مدرج هندسة 3"] },
+            { startHour: 13, endHour: 15, course: "هندسة مزارع الإنتاج الحيواني والداجني", section: "نظري", locs: ["مدرج هندسة 3"] },
+            { startHour: 13, endHour: 15, course: "هندسة مزارع الإنتاج الحيواني والداجني", section: "عملي", locs: ["مدرج هندسة 3"] }
         ],
-        "توجه ري": [
-            "التحكم البيئي في المنشآت الزراعية",
-            "تصميم نظم الري",
-            "تصميم آلات زراعية",
-            "أساليب البحث العلمي",
-            "هيدروليكا الآبار والمضخات",
-            "ميكانيكا تربة",
-            "تخطيط وتصميم نظم الصرف الحقلي"
+        "الإثنين": [
+            { startHour: 11, endHour: 13, course: "رياضة عام", section: "نظري", locs: ["مدرج محاصيل 2", "مدرج هندسة 4"] },
+            { startHour: 9, endHour: 11, course: "ميكانيكا (ديناميكا – استاتيكا)", section: "عملي", locs: ["قاعة تدريس 4"] },
+            { startHour: 13, endHour: 15, course: "ميكانيكا (ديناميكا – استاتيكا)", section: "عملي", locs: ["قاعة تدريس 3"] },
+            { startHour: 9, endHour: 11, course: "رسم هندسي (1)", section: "عملي", locs: ["قاعة تدريس 1"] },
+            { startHour: 13, endHour: 15, course: "رسم هندسي (1)", section: "عملي", locs: ["قاعة تدريس 2"] },
+            { startHour: 9, endHour: 11, course: "هندسة الري والصرف", section: "نظري", locs: ["مدرج هندسة 3"] },
+            { startHour: 11, endHour: 13, course: "هندسة البيوت المحمية", section: "عملي", locs: ["مدرج هندسة 1"] },
+            { startHour: 11, endHour: 13, course: "تخطيط وتصميم المنشآت الزراعية", section: "عملي", locs: ["قاعة تدريس 3"] }
         ],
-        "توجه نظم": [
-            "التحكم البيئي في المنشآت الزراعية",
-            "تصميم نظم الري",
-            "تصميم آلات زراعية",
-            "أساليب البحث العلمي",
-            "إدارة وتشغيل المزارع المائية",
-            "الخواص الطبيعية والهندسية للمنتجات الزراعية",
-            "هندسة تصنيع السماد العضوي المكمور"
+        "الثلاثاء": [
+            { startHour: 11, endHour: 13, course: "رياضة عام", section: "نظري", locs: ["مدرج محاصيل 1"] },
+            { startHour: 9, endHour: 11, course: "رياضة عام", section: "عملي", locs: ["مدرج هندسة 3"] },
+            { startHour: 9, endHour: 11, course: "رياضة هندسة", section: "نظري", locs: ["مدرج هندسة 1"] },
+            { startHour: 13, endHour: 15, course: "رياضة هندسة", section: "عملي", locs: ["مدرج هندسة 2"] },
+            { startHour: 11, endHour: 13, course: "رسم هندسي (1)", section: "عملي", locs: ["قاعة تدريس 1"] },
+            { startHour: 13, endHour: 15, course: "رسم هندسي (1)", section: "عملي", locs: ["قاعة تدريس 1"] },
+            { startHour: 9, endHour: 11, course: "هندسة الري والصرف", section: "عملي", locs: ["مدرج هندسة 4"] },
+            { startHour: 11, endHour: 13, course: "مصطلحات علمية باللغة الإنجليزية", section: "نظري", locs: ["مدرج هندسة 4"] },
+            { startHour: 11, endHour: 13, course: "مصطلحات علمية باللغة الإنجليزية", section: "عملي", locs: ["مدرج هندسة 4"] },
+            { startHour: 13, endHour: 15, course: "تخطيط وتصميم المنشآت الزراعية", section: "عملي", locs: ["قاعة تدريس 4"] }
         ],
-        "توجه عام": [
-            "التحكم البيئي في المنشآت الزراعية",
-            "تصميم نظم الري",
-            "تصميم آلات زراعية",
-            "أساليب البحث العلمي",
-            "معدات التسميد والمكافحة",
-            "تخطيط وتصميم نظم الصرف الحقلي",
-            "هندسة تصنيع السماد العضوي المكمور"
+        "الأربعاء": [
+            { startHour: 11, endHour: 13, course: "رياضة عام", section: "نظري", locs: ["مدرج محاصيل 2", "مدرج هندسة 1"] },
+            { startHour: 11, endHour: 13, course: "رياضة عام", section: "عملي", locs: ["مدرج هندسة 2"] },
+            { startHour: 13, endHour: 15, course: "رياضة عام", section: "عملي", locs: ["مدرج هندسة 2"] },
+            { startHour: 13, endHour: 15, course: "أساسيات هندسة النظم الزراعية والحيوية", section: "نظري", locs: ["مدرج هندسة 1"] },
+            { startHour: 13, endHour: 15, course: "أساسيات هندسة النظم الزراعية والحيوية", section: "عملي", locs: ["مدرج هندسة 1"] },
+            { startHour: 9, endHour: 11, course: "رسم هندسي (1)", section: "نظري", locs: ["مدرج هندسة 1"] },
+            { startHour: 11, endHour: 13, course: "رسم هندسي (1)", section: "عملي", locs: ["قاعة تدريس 1", "قاعة تدريس 2"] },
+            { startHour: 11, endHour: 13, course: "جرارات زراعية", section: "عملي", locs: ["قاعة تدريس 4"] },
+            { startHour: 13, endHour: 15, course: "جرارات زراعية", section: "عملي", locs: ["قاعة تدريس 4"] },
+            { startHour: 15, endHour: 17, course: "هندسة البيوت المحمية", section: "عملي", locs: ["مدرج هندسة 3"] },
+            { startHour: 11, endHour: 13, course: "تخطيط وتصميم المنشآت الزراعية", section: "عملي", locs: ["قاعة تدريس 3"] },
+            { startHour: 13, endHour: 15, course: "تخطيط وتصميم المنشآت الزراعية", section: "عملي", locs: ["قاعة تدريس 3"] }
+        ],
+        "الخميس": [
+            { startHour: 11, endHour: 13, course: "رياضة عام", section: "عملي", locs: ["مدرج هندسة 2", "مدرج إقتصاد 1"] },
+            { startHour: 13, endHour: 15, course: "رياضة عام", section: "عملي", locs: ["مدرج إقتصاد 1"] },
+            { startHour: 13, endHour: 15, course: "رياضة هندسة", section: "عملي", locs: ["قاعة تدريس 3"] },
+            { startHour: 9, endHour: 11, course: "رياضة هندسة", section: "عملي", locs: ["قاعة تدريس 3"] },
+            { startHour: 13, endHour: 15, course: "رياضة هندسة", section: "عملي", locs: ["مدرج هندسة 1"] },
+            { startHour: 11, endHour: 13, course: "ميكانيكا (ديناميكا – استاتيكا)", section: "نظري", locs: ["مدرج هندسة 1"] },
+            { startHour: 9, endHour: 11, course: "ميكانيكا (ديناميكا – استاتيكا)", section: "عملي", locs: ["مدرج هندسة 4"] },
+            { startHour: 13, endHour: 15, course: "ميكانيكا (ديناميكا – استاتيكا)", section: "عملي", locs: ["مدرج هندسة 2"] },
+            { startHour: 9, endHour: 11, course: "رسم هندسي (1)", section: "عملي", locs: ["قاعة تدريس 1"] },
+            { startHour: 13, endHour: 15, course: "رسم هندسي (1)", section: "عملي", locs: ["قاعة تدريس 2"] },
+            { startHour: 11, endHour: 13, course: "جرارات زراعية", section: "عملي", locs: ["مدرج هندسة 4"] }
+        ],
+        "السبت": [
+            { startHour: 9, endHour: 11, course: "رياضة عام", section: "عملي", locs: ["مدرج هندسة 2"] },
+            { startHour: 11, endHour: 13, course: "رياضة عام", section: "عملي", locs: ["مدرج هندسة 2"] },
+            { startHour: 13, endHour: 15, course: "رياضة عام", section: "عملي", locs: ["مدرج هندسة 2", "مدرج هندسة 3", "مدرج هندسة 4"] }
         ]
+    },
+    "الفرقة الثانية": {
+        "السبت": [
+            { startHour: 9, endHour: 11, course: "رياضة تطبيقية", section: "نظري", locs: ["مدرج هندسة 3"] },
+            { startHour: 11, endHour: 13, course: "هيدروليكا وميكانيكا موائع", section: "نظري", locs: ["مدرج هندسة 3"] },
+            { startHour: 13, endHour: 15, course: "هيدروليكا وميكانيكا موائع", section: "عملي", locs: ["مدرج هندسة 1"] },
+            { startHour: 13, endHour: 15, course: "نظرية آلات", section: "عملي", locs: ["قاعة تدريس 3"] }
+        ],
+        "الأحد": [
+            { startHour: 9, endHour: 11, course: "رياضة تطبيقية", section: "عملي", locs: ["قاعة تدريس 4"] },
+            { startHour: 9, endHour: 11, course: "نظرية آلات", section: "عملي", locs: ["قاعة تدريس 3"] },
+            { startHour: 13, endHour: 15, course: "نظرية آلات", section: "عملي", locs: ["مدرج هندسة 4"] }
+        ],
+        "الثلاثاء": [
+            { startHour: 13, endHour: 15, course: "رياضة تطبيقية", section: "عملي", locs: ["قاعة تدريس 3"] },
+            { startHour: 9, endHour: 11, course: "هيدروليكا وميكانيكا موائع", section: "عملي", locs: ["قاعة تدريس 4"] },
+            { startHour: 13, endHour: 15, course: "هيدروليكا وميكانيكا موائع", section: "عملي", locs: ["مدرج هندسة 4"] },
+            { startHour: 11, endHour: 13, course: "نظرية آلات", section: "نظري", locs: ["مدرج هندسة 3"] },
+            { startHour: 13, endHour: 15, course: "نظرية آلات", section: "عملي", locs: ["مدرج هندسة 3"] },
+            { startHour: 9, endHour: 11, course: "انتقال حراري", section: "عملي", locs: ["قاعة تدريس 3"] },
+            { startHour: 11, endHour: 13, course: "مقدمة في الحاسب الآلي", section: "نظري", locs: ["مدرج هندسة 3"] },
+            { startHour: 11, endHour: 13, course: "مقدمة في الحاسب الآلي", section: "عملي", locs: ["مدرج هندسة 3"] }
+        ],
+        "الأربعاء": [
+            { startHour: 9, endHour: 11, course: "انتقال حراري", section: "نظري", locs: ["مدرج هندسة 3"] },
+            { startHour: 13, endHour: 15, course: "انتقال حراري", section: "عملي", locs: ["مدرج هندسة 4"] }
+        ],
+        "الخميس": [
+            { startHour: 11, endHour: 13, course: "رياضة تطبيقية", section: "عملي", locs: ["قاعة تدريس 3"] },
+            { startHour: 13, endHour: 15, course: "رياضة تطبيقية", section: "عملي", locs: ["مدرج هندسة 4"] },
+            { startHour: 11, endHour: 13, course: "هيدروليكا وميكانيكا موائع", section: "عملي", locs: ["مدرج هندسة 3"] },
+            { startHour: 11, endHour: 13, course: "انتقال حراري", section: "عملي", locs: ["قاعة تدريس 4"] },
+            { startHour: 13, endHour: 15, course: "انتقال حراري", section: "عملي", locs: ["مدرج هندسة 3"] }
+        ]
+    },
+    "الفرقة الثالثة": {
+        "الأحد": [
+            { startHour: 9, endHour: 11, course: "جرارات زراعية", section: "نظري", locs: ["مدرج هندسة 3"] },
+            { startHour: 11, endHour: 13, course: "هندسة البيوت المحمية", section: "نظري", locs: ["مدرج هندسة 3"] },
+            { startHour: 11, endHour: 13, course: "تخطيط وتصميم المنشآت الزراعية", section: "نظري", locs: ["مدرج هندسة 3"] },
+            { startHour: 13, endHour: 15, course: "هندسة مزارع الإنتاج الحيواني والداجني", section: "نظري", locs: ["مدرج هندسة 3"] },
+            { startHour: 13, endHour: 15, course: "هندسة مزارع الإنتاج الحيواني والداجني", section: "عملي", locs: ["مدرج هندسة 3"] }
+        ],
+        "الإثنين": [
+            { startHour: 9, endHour: 11, course: "هندسة الري والصرف", section: "نظري", locs: ["مدرج هندسة 3"] },
+            { startHour: 13, endHour: 15, course: "هندسة البيوت المحمية", section: "عملي", locs: ["مدرج هندسة 1"] },
+            { startHour: 11, endHour: 13, course: "تخطيط وتصميم المنشآت الزراعية", section: "عملي", locs: ["قاعة تدريس 3"] }
+        ],
+        "الثلاثاء": [
+            { startHour: 9, endHour: 11, course: "هندسة الري والصرف", section: "عملي", locs: ["مدرج هندسة 4"] },
+            { startHour: 11, endHour: 13, course: "مصطلحات علمية باللغة الإنجليزية", section: "نظري", locs: ["مدرج هندسة 4"] },
+            { startHour: 11, endHour: 13, course: "مصطلحات علمية باللغة الإنجليزية", section: "عملي", locs: ["مدرج هندسة 4"] },
+            { startHour: 13, endHour: 15, course: "تخطيط وتصميم المنشآت الزراعية", section: "عملي", locs: ["قاعة تدريس 4"] }
+        ],
+        "الأربعاء": [
+            { startHour: 11, endHour: 13, course: "جرارات زراعية", section: "عملي", locs: ["قاعة تدريس 4"] },
+            { startHour: 13, endHour: 15, course: "جرارات زراعية", section: "عملي", locs: ["قاعة تدريس 4"] },
+            { startHour: 15, endHour: 17, course: "هندسة البيوت المحمية", section: "عملي", locs: ["مدرج هندسة 3"] },
+            { startHour: 11, endHour: 13, course: "تخطيط وتصميم المنشآت الزراعية", section: "عملي", locs: ["قاعة تدريس 3"] },
+            { startHour: 13, endHour: 15, course: "تخطيط وتصميم المنشآت الزراعية", section: "عملي", locs: ["قاعة تدريس 3"] }
+        ],
+        "الخميس": [
+            { startHour: 11, endHour: 13, course: "جرارات زراعية", section: "عملي", locs: ["مدرج هندسة 4"] }
+        ]
+    },
+    "الفرقة الرابعة": {
+        "توجه آلات": {
+            "السبت": [
+                { startHour: 9, endHour: 11, course: "التحكم البيئي في المنشآت الزراعية", section: "عملي", locs: ["مدرج هندسة 1"] },
+                { startHour: 9, endHour: 11, course: "تصميم آلات زراعية", section: "عملي", locs: ["مدرج هندسة 4"] },
+                { startHour: 13, endHour: 15, course: "نظرية اهتزازات وتوازن", section: "عملي", locs: ["قاعة تدريس 4"] },
+                { startHour: 11, endHour: 13, course: "ميكانيكا تربة", section: "نظري", locs: ["مدرج هندسة 4"] },
+                { startHour: 11, endHour: 13, course: "معدات التسميد والمكافحة", section: "عملي", locs: ["قاعة تدريس 4"] }
+            ],
+            "الأحد": [
+                { startHour: 11, endHour: 13, course: "تصميم نظم الري", section: "نظري", locs: ["مدرج هندسة 4"] },
+                { startHour: 13, endHour: 15, course: "تصميم نظم الري", section: "عملي", locs: ["مدرج هندسة 1"] },
+                { startHour: 9, endHour: 11, course: "تصميم آلات زراعية", section: "نظري", locs: ["مدرج هندسة 4"] }
+            ],
+            "الإثنين": [
+                { startHour: 11, endHour: 13, course: "التحكم البيئي في المنشآت الزراعية", section: "نظري", locs: ["مدرج هندسة 3"] },
+                { startHour: 13, endHour: 15, course: "تصميم نظم الري", section: "عملي", locs: ["مدرج هندسة 4"] },
+                { startHour: 13, endHour: 15, course: "ميكانيكا تربة", section: "عملي", locs: ["مدرج هندسة 3"] },
+                { startHour: 9, endHour: 11, course: "معدات التسميد والمكافحة", section: "نظري", locs: ["مدرج هندسة 4"] }
+            ],
+            "الثلاثاء": [
+                { startHour: 11, endHour: 13, course: "أساليب البحث العلمي", section: "نظري", locs: ["مدرج هندسة 4"] },
+                { startHour: 11, endHour: 13, course: "أساليب البحث العلمي", section: "عملي", locs: ["مدرج هندسة 4"] }
+            ],
+            "الأربعاء": [
+                { startHour: 13, endHour: 15, course: "التحكم البيئي في المنشآت الزراعية", section: "عملي", locs: ["مدرج هندسة 3"] },
+                { startHour: 11, endHour: 13, course: "تصميم آلات زراعية", section: "عملي", locs: ["مدرج هندسة 4"] },
+                { startHour: 9, endHour: 11, course: "نظرية اهتزازات وتوازن", section: "نظري", locs: ["قاعة تدريس 3"] },
+                { startHour: 13, endHour: 15, course: "معدات التسميد والمكافحة", section: "عملي", locs: ["قاعة تدريس 2", "قاعة تدريس 5"] }
+            ]
+        },
+        "توجه ري": {
+            "السبت": [
+                { startHour: 9, endHour: 11, course: "التحكم البيئي في المنشآت الزراعية", section: "عملي", locs: ["مدرج هندسة 1"] },
+                { startHour: 9, endHour: 11, course: "تصميم آلات زراعية", section: "عملي", locs: ["مدرج هندسة 4"] },
+                { startHour: 11, endHour: 13, course: "ميكانيكا تربة", section: "نظري", locs: ["مدرج هندسة 4"] }
+            ],
+            "الأحد": [
+                { startHour: 11, endHour: 13, course: "تصميم نظم الري", section: "نظري", locs: ["مدرج هندسة 4"] },
+                { startHour: 13, endHour: 15, course: "تصميم نظم الري", section: "عملي", locs: ["مدرج هندسة 1"] },
+                { startHour: 9, endHour: 11, course: "تصميم آلات زراعية", section: "نظري", locs: ["مدرج هندسة 4"] }
+            ],
+            "الإثنين": [
+                { startHour: 11, endHour: 13, course: "التحكم البيئي في المنشآت الزراعية", section: "نظري", locs: ["مدرج هندسة 3"] },
+                { startHour: 13, endHour: 15, course: "تصميم نظم الري", section: "عملي", locs: ["مدرج هندسة 4"] },
+                { startHour: 13, endHour: 15, course: "ميكانيكا تربة", section: "عملي", locs: ["مدرج هندسة 3"] },
+                { startHour: 9, endHour: 11, course: "هيدروليكا الآبار والمضخات", section: "عملي", locs: ["قاعة تدريس 3"] }
+            ],
+            "الثلاثاء": [
+                { startHour: 11, endHour: 13, course: "أساليب البحث العلمي", section: "نظري", locs: ["مدرج هندسة 4"] },
+                { startHour: 11, endHour: 13, course: "أساليب البحث العلمي", section: "عملي", locs: ["مدرج هندسة 4"] },
+                { startHour: 13, endHour: 15, course: "تخطيط وتصميم نظم الصرف الحقلي", section: "عملي", locs: ["قاعة تدريس 2", "قاعة تدريس 5"] },
+                { startHour: 13, endHour: 15, course: "هيدروليكا الآبار والمضخات", section: "نظري", locs: ["قاعة تدريس 4", "قاعة تدريس 5"] },
+                { startHour: 11, endHour: 13, course: "هيدروليكا الآبار والمضخات", section: "عملي", locs: ["قاعة تدريس 3", "قاعة تدريس 4", "قاعة تدريس 5"] },
+                { startHour: 13, endHour: 15, course: "هيدروليكا الآبار والمضخات", section: "عملي", locs: ["قاعة تدريس 4", "قاعة تدريس 5"] }
+            ],
+            "الأربعاء": [
+                { startHour: 13, endHour: 15, course: "التحكم البيئي في المنشآت الزراعية", section: "عملي", locs: ["مدرج هندسة 3"] },
+                { startHour: 11, endHour: 13, course: "تصميم آلات زراعية", section: "عملي", locs: ["مدرج هندسة 4"] },
+                { startHour: 9, endHour: 11, course: "تخطيط وتصميم نظم الصرف الحقلي", section: "نظري", locs: ["مدرج هندسة 4"] },
+                { startHour: 9, endHour: 11, course: "تخطيط وتصميم نظم الصرف الحقلي", section: "عملي", locs: ["مدرج هندسة 4"] },
+                { startHour: 13, endHour: 15, course: "تخطيط وتصميم نظم الصرف الحقلي", section: "عملي", locs: ["قاعة تدريس 1", "قاعة تدريس 5"] }
+            ]
+        },
+        "توجه نظم": {
+            "السبت": [
+                { startHour: 9, endHour: 11, course: "التحكم البيئي في المنشآت الزراعية", section: "عملي", locs: ["مدرج هندسة 1"] },
+                { startHour: 9, endHour: 11, course: "تصميم آلات زراعية", section: "عملي", locs: ["مدرج هندسة 4"] },
+                { startHour: 11, endHour: 13, course: "الخواص الطبيعية والهندسية للمنتجات الزراعية", section: "نظري", locs: ["قاعة تدريس 3"] },
+                { startHour: 11, endHour: 13, course: "الخواص الطبيعية والهندسية للمنتجات الزراعية", section: "عملي", locs: ["قاعة تدريس 3"] },
+                { startHour: 13, endHour: 15, course: "هندسة تصنيع السماد العضوي المكمور", section: "عملي", locs: ["قاعة تدريس 1", "قاعة تدريس 5"] }
+            ],
+            "الأحد": [
+                { startHour: 11, endHour: 13, course: "تصميم نظم الري", section: "نظري", locs: ["مدرج هندسة 4"] },
+                { startHour: 13, endHour: 15, course: "تصميم نظم الري", section: "عملي", locs: ["مدرج هندسة 1"] },
+                { startHour: 9, endHour: 11, course: "تصميم آلات زراعية", section: "نظري", locs: ["مدرج هندسة 4"] },
+                { startHour: 13, endHour: 15, course: "هندسة تصنيع السماد العضوي المكمور", section: "نظري", locs: ["مدرج هندسة 3"] },
+                { startHour: 13, endHour: 15, course: "هندسة تصنيع السماد العضوي المكمور", section: "عملي", locs: ["مدرج هندسة 3"] }
+            ],
+            "الإثنين": [
+                { startHour: 11, endHour: 13, course: "التحكم البيئي في المنشآت الزراعية", section: "نظري", locs: ["مدرج هندسة 3"] },
+                { startHour: 13, endHour: 15, course: "تصميم نظم الري", section: "عملي", locs: ["مدرج هندسة 4"] },
+                { startHour: 11, endHour: 13, course: "إدارة وتشغيل المزارع المائية", section: "نظري", locs: ["مدرج هندسة 3"] },
+                { startHour: 9, endHour: 11, course: "الخواص الطبيعية والهندسية للمنتجات الزراعية", section: "عملي", locs: ["قاعة تدريس 2", "قاعة تدريس 5"] }
+            ],
+            "الثلاثاء": [
+                { startHour: 11, endHour: 13, course: "أساليب البحث العلمي", section: "نظري", locs: ["مدرج هندسة 4"] },
+                { startHour: 11, endHour: 13, course: "أساليب البحث العلمي", section: "عملي", locs: ["مدرج هندسة 4"] }
+            ],
+            "الأربعاء": [
+                { startHour: 13, endHour: 15, course: "التحكم البيئي في المنشآت الزراعية", section: "عملي", locs: ["مدرج هندسة 3"] },
+                { startHour: 11, endHour: 13, course: "تصميم آلات زراعية", section: "عملي", locs: ["مدرج هندسة 4"] },
+                { startHour: 9, endHour: 11, course: "إدارة وتشغيل المزارع المائية", section: "عملي", locs: ["قاعة تدريس 4"] }
+            ]
+        },
+        "توجه عام": {
+            "السبت": [
+                { startHour: 9, endHour: 11, course: "التحكم البيئي في المنشآت الزراعية", section: "عملي", locs: ["مدرج هندسة 1"] },
+                { startHour: 9, endHour: 11, course: "تصميم آلات زراعية", section: "عملي", locs: ["مدرج هندسة 4"] },
+                { startHour: 11, endHour: 13, course: "معدات التسميد والمكافحة", section: "عملي", locs: ["قاعة تدريس 4"] },
+                { startHour: 13, endHour: 15, course: "هندسة تصنيع السماد العضوي المكمور", section: "عملي", locs: ["قاعة تدريس 1", "قاعة تدريس 5"] }
+            ],
+            "الأحد": [
+                { startHour: 11, endHour: 13, course: "تصميم نظم الري", section: "نظري", locs: ["مدرج هندسة 4"] },
+                { startHour: 13, endHour: 15, course: "تصميم نظم الري", section: "عملي", locs: ["مدرج هندسة 1"] },
+                { startHour: 9, endHour: 11, course: "تصميم آلات زراعية", section: "نظري", locs: ["مدرج هندسة 4"] },
+                { startHour: 13, endHour: 15, course: "هندسة تصنيع السماد العضوي المكمور", section: "نظري", locs: ["مدرج هندسة 3"] },
+                { startHour: 13, endHour: 15, course: "هندسة تصنيع السماد العضوي المكمور", section: "عملي", locs: ["مدرج هندسة 3"] }
+            ],
+            "الإثنين": [
+                { startHour: 11, endHour: 13, course: "التحكم البيئي في المنشآت الزراعية", section: "نظري", locs: ["مدرج هندسة 3"] },
+                { startHour: 13, endHour: 15, course: "تصميم نظم الري", section: "عملي", locs: ["مدرج هندسة 4"] },
+                { startHour: 9, endHour: 11, course: "معدات التسميد والمكافحة", section: "نظري", locs: ["مدرج هندسة 4"] }
+            ],
+            "الثلاثاء": [
+                { startHour: 11, endHour: 13, course: "أساليب البحث العلمي", section: "نظري", locs: ["مدرج هندسة 4"] },
+                { startHour: 11, endHour: 13, course: "أساليب البحث العلمي", section: "عملي", locs: ["مدرج هندسة 4"] },
+                { startHour: 13, endHour: 15, course: "تخطيط وتصميم نظم الصرف الحقلي", section: "عملي", locs: ["قاعة تدريس 2", "قاعة تدريس 5"] }
+            ],
+            "الأربعاء": [
+                { startHour: 13, endHour: 15, course: "التحكم البيئي في المنشآت الزراعية", section: "عملي", locs: ["مدرج هندسة 3"] },
+                { startHour: 11, endHour: 13, course: "تصميم آلات زراعية", section: "عملي", locs: ["مدرج هندسة 4"] },
+                { startHour: 13, endHour: 15, course: "معدات التسميد والمكافحة", section: "عملي", locs: ["قاعة تدريس 2", "قاعة تدريس 5"] },
+                { startHour: 9, endHour: 11, course: "تخطيط وتصميم نظم الصرف الحقلي", section: "نظري", locs: ["مدرج هندسة 4"] },
+                { startHour: 9, endHour: 11, course: "تخطيط وتصميم نظم الصرف الحقلي", section: "عملي", locs: ["مدرج هندسة 4"] },
+                { startHour: 13, endHour: 15, course: "تخطيط وتصميم نظم الصرف الحقلي", section: "عملي", locs: ["قاعة تدريس 1", "قاعة تدريس 5"] }
+            ]
+        }
     }
 };
 
@@ -341,55 +526,80 @@ document.addEventListener("DOMContentLoaded", function() {
     
     const daysMap = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
     const todayIndex = now.getDay();
-    const dayInput = document.getElementById("s_day");
-    if(dayInput) dayInput.value = daysMap[todayIndex];
+    const dayName = daysMap[todayIndex];
+
+    document.getElementById("s_day").value = dayName;
+    document.getElementById("s_hour").value = currentHour;
+    
+    const timeStr = (currentHour <= 12 ? currentHour : currentHour - 12) + ":00 " + (currentHour < 12 ? "صباحاً" : "مساءً");
+    document.getElementById("s_day_time").value = dayName + " - الساعة: " + timeStr;
 });
+
+function getActiveScheduleItems() {
+    const year = document.getElementById("s_year").value;
+    const track = document.getElementById("s_track").value;
+    const day = document.getElementById("s_day").value;
+    const currentHour = parseInt(document.getElementById("s_hour").value) || new Date().getHours();
+
+    if (!year || !day) return [];
+
+    let items = [];
+    if (year === "الفرقة الرابعة") {
+        if (!track) return [];
+        if (scheduleData[year] && scheduleData[year][track] && scheduleData[year][track][day]) {
+            items = scheduleData[year][track][day];
+        }
+    } else {
+        if (scheduleData[year] && scheduleData[year][day]) {
+            items = scheduleData[year][day];
+        }
+    }
+
+    return items.filter(item => currentHour >= item.startHour && currentHour < item.endHour);
+}
 
 function onYearChange() {
     const year = document.getElementById("s_year").value;
     const trackContainer = document.getElementById("track_container");
-    const courseContainer = document.getElementById("course_container");
-    const sectionContainer = document.getElementById("section_container");
     
     document.getElementById("s_track").value = "";
-    document.getElementById("s_course").innerHTML = '<option value="">-- اختر المادة الدراسية --</option>';
-    document.getElementById("s_section").value = "";
-    sectionContainer.style.display = "none";
+    resetDependentDropdowns();
 
     if (year === "الفرقة الرابعة") {
         trackContainer.style.display = "block";
-        courseContainer.style.display = "none";
-    } else if (year) {
-        trackContainer.style.display = "none";
-        courseContainer.style.display = "block";
-        
-        let select = document.getElementById("s_course");
-        coursesData[year].forEach(course => {
-            let opt = document.createElement("option");
-            opt.value = course;
-            opt.textContent = course;
-            select.appendChild(opt);
-        });
     } else {
         trackContainer.style.display = "none";
-        courseContainer.style.display = "none";
+        populateCourses();
     }
 }
 
 function onTrackChange() {
-    const track = document.getElementById("s_track").value;
+    resetDependentDropdowns();
+    populateCourses();
+}
+
+function resetDependentDropdowns() {
+    document.getElementById("s_course").innerHTML = '<option value="">-- اختر المادة الدراسية --</option>';
+    document.getElementById("course_container").style.display = "none";
+
+    document.getElementById("s_section").innerHTML = '<option value="">-- اختر الشق الدراسي --</option>';
+    document.getElementById("section_container").style.display = "none";
+
+    document.getElementById("s_loc").innerHTML = '<option value="">-- اختر المكان --</option>';
+    document.getElementById("loc_container").style.display = "none";
+}
+
+function populateCourses() {
     const courseContainer = document.getElementById("course_container");
-    const sectionContainer = document.getElementById("section_container");
-    
+    const activeItems = getActiveScheduleItems();
+
     let select = document.getElementById("s_course");
     select.innerHTML = '<option value="">-- اختر المادة الدراسية --</option>';
-    document.getElementById("s_section").value = "";
-    sectionContainer.style.display = "none";
 
-    if (track) {
+    if (activeItems.length > 0) {
         courseContainer.style.display = "block";
-        let courses = coursesData["الفرقة الرابعة"][track];
-        courses.forEach(course => {
+        let uniqueCourses = [...new Set(activeItems.map(i => i.course))];
+        uniqueCourses.forEach(course => {
             let opt = document.createElement("option");
             opt.value = course;
             opt.textContent = course;
@@ -397,17 +607,58 @@ function onTrackChange() {
         });
     } else {
         courseContainer.style.display = "none";
+        showMessage("ℹ️ عذراً، ليس لديك أي محاضرات أو سكاشن متاحة في هذا التوقيت اليوم.", "#856404", "#fff3cd");
     }
 }
 
-function toggleSection() {
+function onCourseChange() {
     const course = document.getElementById("s_course").value;
     const sectionContainer = document.getElementById("section_container");
-    if (course !== "") {
+    const activeItems = getActiveScheduleItems();
+
+    let select = document.getElementById("s_section");
+    select.innerHTML = '<option value="">-- اختر الشق الدراسي --</option>';
+    document.getElementById("s_loc").innerHTML = '<option value="">-- اختر المكان --</option>';
+    document.getElementById("loc_container").style.display = "none";
+
+    if (course) {
         sectionContainer.style.display = "block";
+        let matchingSections = activeItems.filter(i => i.course === course);
+        let uniqueSections = [...new Set(matchingSections.map(i => i.section))];
+        
+        uniqueSections.forEach(sec => {
+            let opt = document.createElement("option");
+            opt.value = sec;
+            opt.textContent = sec;
+            select.appendChild(opt);
+        });
     } else {
         sectionContainer.style.display = "none";
-        document.getElementById("s_section").value = "";
+    }
+}
+
+function onSectionChange() {
+    const course = document.getElementById("s_course").value;
+    const section = document.getElementById("s_section").value;
+    const locContainer = document.getElementById("loc_container");
+    const activeItems = getActiveScheduleItems();
+
+    let select = document.getElementById("s_loc");
+    select.innerHTML = '<option value="">-- اختر المكان --</option>';
+
+    if (section) {
+        locContainer.style.display = "block";
+        let matchingItem = activeItems.find(i => i.course === course && i.section === section);
+        if (matchingItem && matchingItem.locs) {
+            matchingItem.locs.forEach(loc => {
+                let opt = document.createElement("option");
+                opt.value = loc;
+                opt.textContent = loc;
+                select.appendChild(opt);
+            });
+        }
+    } else {
+        locContainer.style.display = "none";
     }
 }
 
@@ -430,7 +681,6 @@ function getAdvancedHardwareFingerprint() {
         }
 
         let dynamicSpecs = osInfo + "_" + screenWidth + "x" + screenHeight + "_px" + pixelRatio;
-        
         return dynamicSpecs + " | AndroidID: " + androidIdStr;
     } catch (e) {
         let androidIdStr = (PASSED_DEVICE_SERIAL && PASSED_DEVICE_SERIAL.trim() !== "") ? PASSED_DEVICE_SERIAL.trim() : "unknown_device";
@@ -461,7 +711,7 @@ function showMessage(text, color, bgColor) {
 
 function cleanDigits(inputStr) {
     if (!inputStr) return "";
-    let cleaned = inputStr.toString().replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
+    let cleaned = inputStr.toString().replace(/[\\u200B-\\u200D\\uFEFF]/g, '').trim();
     let arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
     let persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
     for (let i = 0; i < 10; i++) {
@@ -620,11 +870,11 @@ async function verifyAndSubmit() {
                 if (result.status === "success") {
                     showMessage("✅ تم تسجيل حضورك بنجاح في مادة (" + course + " - " + section + ") في (" + loc + ") ليوم " + day + "!", "#28a745", "#d4edda");
                 } else {
-                    showMessage("❌ " + (result.message || "عذراً، حدث خطأ أثناء التسجيل، قد تكون سجلت حضورك ولكن حدث خطأ بسبب ضعف الانترنت لديك، فحاول مجددا واذا ظهرت لك رسالة تفيد بأنك سجلت المادة مسبقا اليوم فاعلم انه تم تسجيل حضورك ولا تقلق."), "#d9534f", "#f2dede");
+                    showMessage("❌ " + (result.message || "عذراً، حدث خطأ أثناء التسجيل، قد تكون سجلت حضورك ولكن حدث خطأ بسبب ضعف الانترنت لديك، فحاول مجددا واذا ظهرت لك رسالة تفيد بأنك سجلت المادة مسبقا اليوم فاعلم انه تم تسجيل حضورك فلا تقلق."), "#d9534f", "#f2dede");
                 }
             })
             .catch((error) => {
-                showMessage("❌ حدث خطأ أثناء الاتصال بالخادم، قد تكون سجلت حضورك ولكن حدث خطأ بسبب ضعف الانترنت لديك، فحاول مجددا واذا ظهرت لك رسالة تفيد بأنك سجلت المادة مسبقا اليوم فاعلم انه تم تسجيل حضورك ولا تقلق.", "#d9534f", "#f2dede");
+                showMessage("❌ حدث خطأ أثناء الاتصال بالخادم، قد تكون سجلت حضورك ولكن حدث خطأ بسبب ضعف الانترنت لديك، فحاول مجددا واذا ظهرت لك رسالة تفيد بأنك سجلت المادة مسبقا اليوم فاعلم انه تم تسجيل حضورك فلا تقلق.", "#d9534f", "#f2dede");
             });
 
         } else {
