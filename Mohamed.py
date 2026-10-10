@@ -99,6 +99,7 @@ st.title("نظام تسجيل الحضور الذكي")
 APP_OPEN_HOUR = 0          
 APP_CLOSE_HOUR = 23   
 
+# تم إضافة مدرجات المحاصيل الثلاثة مع إحداثياتها (يمكنك تعديل الأرقام بدقة حسب إحداثياتها الفعلية)
 LOCATIONS_COORDS = {
     "مدرج هندسة 1": {"lat": 30.719101, "lon": 31.244522},
     "مدرج هندسة 2": {"lat": 30.353500, "lon": 31.224400},
@@ -110,7 +111,10 @@ LOCATIONS_COORDS = {
     "قاعة تدريس 4": {"lat": 30.353250, "lon": 31.224350},
     "قاعة تدريس 5": {"lat": 30.353400, "lon": 31.224500},
     "مدرج إقتصاد 1": {"lat": 30.354000, "lon": 31.225000},
-    "مدرج إقتصاد 2": {"lat": 30.354200, "lon": 31.225200}
+    "مدرج إقتصاد 2": {"lat": 30.354200, "lon": 31.225200},
+    "مدرج محاصيل 1": {"lat": 30.355000, "lon": 31.226000},
+    "مدرج محاصيل 2": {"lat": 30.355200, "lon": 31.226200},
+    "مدرج محاصيل 3": {"lat": 30.355400, "lon": 31.226400}
 }
 
 ALLOWED_RADIUS_METERS = 500
@@ -211,6 +215,9 @@ form_html = """
             <option value="قاعة تدريس 5">قاعة تدريس 5</option>
             <option value="مدرج إقتصاد 1">مدرج إقتصاد 1</option>
             <option value="مدرج إقتصاد 2">مدرج إقتصاد 2</option>
+            <option value="مدرج محاصيل 1">مدرج محاصيل 1</option>
+            <option value="مدرج محاصيل 2">مدرج محاصيل 2</option>
+            <option value="مدرج محاصيل 3">مدرج محاصيل 3</option>
         </select>
     </div>
 
@@ -221,7 +228,7 @@ form_html = """
 
     <div id="otp_box_container" style="margin-bottom: 20px; display: {SHOW_OTP_FIELD};">
         <label style="font-weight: bold; display: block; margin-bottom: 6px; color: #c0392b; font-size: 16px;">🔐 رمز التحقق (OTP) المعلن في القاعة:</label>
-        <input type="text" inputmode="numeric" pattern="[0-9]*" id="s_otp" placeholder="أدخل الرمز التحقق" style="width: 100%; padding: 14px; border: 2px dashed #e74c3c; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: #fff5f5;">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="s_otp" placeholder="أدخل رمز التحقق" style="width: 100%; padding: 14px; border: 2px dashed #e74c3c; border-radius: 8px; font-size: 16px; box-sizing: border-box; background-color: #fff5f5;">
     </div>
 
     <button onclick="verifyAndSubmit()" style="background-color: #28a745; color: white; padding: 16px 20px; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; box-shadow: 0 6px 12px rgba(0,0,0,0.15);">📍 تحقق من الموقع وتسجيل الحضور</button>
@@ -551,7 +558,7 @@ async function verifyAndSubmit() {
         });
 
         if (lowAccuracyFound) {
-            showMessage("🚨 تنبيه أمني: تم رصد دقة غير منطقية لإشارة الـ GPS، تم رفض التسجيل!", "#d9534f", "#f2dede");
+            showMessage("🚨 تنبيه أمني: تم رصد محاولة تسجيل غير قانونية، تم رفض التسجيل!", "#d9534f", "#f2dede");
             return;
         }
 
@@ -613,11 +620,11 @@ async function verifyAndSubmit() {
                 if (result.status === "success") {
                     showMessage("✅ تم تسجيل حضورك بنجاح في مادة (" + course + " - " + section + ") في (" + loc + ") ليوم " + day + "!", "#28a745", "#d4edda");
                 } else {
-                    showMessage("❌ " + (result.message || "عذراً، حدث خطأ أثناء التسجيل."), "#d9534f", "#f2dede");
+                    showMessage("❌ " + (result.message || "عذراً، حدث خطأ أثناء التسجيل، قد تكون سجلت حضورك ولكن حدث خطأ بسبب ضعف الانترنت لديك، فحاول مجددا واذا ظهرت لك رسالة تفيد بأنك سجلت المادة مسبقا اليوم فاعلم انه تم تسجيل حضورك ولا تقلق."), "#d9534f", "#f2dede");
                 }
             })
             .catch((error) => {
-                showMessage("❌ حدث خطأ أثناء الاتصال بالخادم، يرجى المحاولة مرة أخرى.", "#d9534f", "#f2dede");
+                showMessage("❌ حدث خطأ أثناء الاتصال بالخادم، قد تكون سجلت حضورك ولكن حدث خطأ بسبب ضعف الانترنت لديك، فحاول مجددا واذا ظهرت لك رسالة تفيد بأنك سجلت المادة مسبقا اليوم فاعلم انه تم تسجيل حضورك ولا تقلق.", "#d9534f", "#f2dede");
             });
 
         } else {
