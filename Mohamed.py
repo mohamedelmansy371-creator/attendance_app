@@ -53,7 +53,7 @@ if st.button("‹", key="toggle_admin_arrow", help=""):
     st.session_state.show_admin = not st.session_state.show_admin
 
 otp_enabled = True
-current_otp = "778899"
+current_otp = "7777"
 
 if st.session_state.show_admin:
     with st.sidebar:
@@ -73,7 +73,7 @@ if st.session_state.show_admin:
                 otp_enabled = True
                 current_otp = st.text_input(
                     "الرمز الحالي للمحاضرة",
-                    value="778899",
+                    value="7777",
                     help="اكتب الرمز الذي ستعطيه للطلاب في المدرج",
                 )
             else:
@@ -83,7 +83,7 @@ if st.session_state.show_admin:
             if admin_password_input != "":
                 st.error("كلمة المرور غير صحيحة")
             otp_enabled = True
-            current_otp = "778899"
+            current_otp = "7777"
 
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbaqD14H__MwLXFlaIBMFsNWw_A7V3MMulgQtXsS_p-age3plUlHINvTzFNo2L11vP/exec"
 
