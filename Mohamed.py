@@ -96,8 +96,8 @@ has_valid_serial = "true" if (passed_serial and passed_serial != "None" and pass
 
 st.title("نظام تسجيل الحضور الذكي")
 
-APP_OPEN_HOUR = 0          
-APP_CLOSE_HOUR = 23   
+APP_OPEN_HOUR = 9          
+APP_CLOSE_HOUR = 17   
 
 LOCATIONS_COORDS = {
     "مدرج هندسة 1": {"lat": 30.3542980, "lon": 31.2223436},
