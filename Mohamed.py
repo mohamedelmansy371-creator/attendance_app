@@ -53,7 +53,7 @@ if st.button("‹", key="toggle_admin_arrow", help=""):
     st.session_state.show_admin = not st.session_state.show_admin
 
 otp_enabled = True
-current_otp = "9984"
+current_otp = "9112"
 
 if st.session_state.show_admin:
     with st.sidebar:
@@ -73,7 +73,7 @@ if st.session_state.show_admin:
                 otp_enabled = True
                 current_otp = st.text_input(
                     "الرمز الحالي للمحاضرة",
-                    value="9984",
+                    value="9112",
                     help="اكتب الرمز الذي ستعطيه للطلاب في المدرج",
                 )
             else:
@@ -83,7 +83,7 @@ if st.session_state.show_admin:
             if admin_password_input != "":
                 st.error("كلمة المرور غير صحيحة")
             otp_enabled = True
-            current_otp = "9984"
+            current_otp = "9112"
 
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbaqD14H__MwLXFlaIBMFsNWw_A7V3MMulgQtXsS_p-age3plUlHINvTzFNo2L11vP/exec"
 
@@ -116,7 +116,7 @@ LOCATIONS_COORDS = {
     "مدرج محاصيل 3": {"lat": 30.3543029, "lon": 31.2227958}
 }
 
-ALLOWED_RADIUS_METERS = 500
+ALLOWED_RADIUS_METERS = 1000
 SHOW_OTP_FIELD = "block" if otp_enabled else "none"
 SERVER_OTP = str(current_otp).strip()
 locations_json = json.dumps(LOCATIONS_COORDS, ensure_ascii=False)
