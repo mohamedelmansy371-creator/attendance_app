@@ -96,7 +96,7 @@ has_valid_serial = "true" if (passed_serial and passed_serial != "None" and pass
 
 st.title("نظام تسجيل الحضور الذكي")
 
-APP_OPEN_HOUR = 9          
+APP_OPEN_HOUR = 9         
 APP_CLOSE_HOUR = 17   
 
 LOCATIONS_COORDS = {
@@ -235,28 +235,19 @@ const HAS_VALID_SERIAL = {HAS_VALID_SERIAL_JS};
 
 const PASSED_DEVICE_SERIAL = "{PASSED_SERIAL}";
 
-// جدول المحاضرات والسكاشن بناءً على التفاصيل المُرسلة تماماً (مع اعتماد مدرج هندسة 3)
 const scheduleData = {
     "الفرقة الأولى": {
         "الأحد": [
             { startHour: 11, endHour: 13, course: "رياضة عام", section: "نظري", locs: ["مدرج محاصيل 1"] },
             { startHour: 13, endHour: 15, course: "رياضة عام", section: "عملي", locs: ["مدرج هندسة 2"] },
-            { startHour: 13, endHour: 15, course: "رسم هندسي (1)", section: "عملي", locs: ["قاعة تدريس 1", "قاعة تدريس 2"] },
-            { startHour: 9, endHour: 11, course: "جرارات زراعية", section: "نظري", locs: ["مدرج هندسة 3"] },
-            { startHour: 11, endHour: 13, course: "هندسة البيوت المحمية", section: "نظري", locs: ["مدرج هندسة 3"] },
-            { startHour: 11, endHour: 13, course: "تخطيط وتصميم المنشآت الزراعية", section: "نظري", locs: ["مدرج هندسة 3"] },
-            { startHour: 13, endHour: 15, course: "هندسة مزارع الإنتاج الحيواني والداجني", section: "نظري", locs: ["مدرج هندسة 3"] },
-            { startHour: 13, endHour: 15, course: "هندسة مزارع الإنتاج الحيواني والداجني", section: "عملي", locs: ["مدرج هندسة 3"] }
+            { startHour: 13, endHour: 15, course: "رسم هندسي (1)", section: "عملي", locs: ["قاعة تدريس 1", "قاعة تدريس 2"] }
         ],
         "الإثنين": [
             { startHour: 11, endHour: 13, course: "رياضة عام", section: "نظري", locs: ["مدرج محاصيل 2", "مدرج هندسة 4"] },
             { startHour: 9, endHour: 11, course: "ميكانيكا (ديناميكا – استاتيكا)", section: "عملي", locs: ["قاعة تدريس 4"] },
             { startHour: 13, endHour: 15, course: "ميكانيكا (ديناميكا – استاتيكا)", section: "عملي", locs: ["قاعة تدريس 3"] },
             { startHour: 9, endHour: 11, course: "رسم هندسي (1)", section: "عملي", locs: ["قاعة تدريس 1"] },
-            { startHour: 13, endHour: 15, course: "رسم هندسي (1)", section: "عملي", locs: ["قاعة تدريس 2"] },
-            { startHour: 9, endHour: 11, course: "هندسة الري والصرف", section: "نظري", locs: ["مدرج هندسة 3"] },
-            { startHour: 11, endHour: 13, course: "هندسة البيوت المحمية", section: "عملي", locs: ["مدرج هندسة 1"] },
-            { startHour: 11, endHour: 13, course: "تخطيط وتصميم المنشآت الزراعية", section: "عملي", locs: ["قاعة تدريس 3"] }
+            { startHour: 13, endHour: 15, course: "رسم هندسي (1)", section: "عملي", locs: ["قاعة تدريس 2"] }
         ],
         "الثلاثاء": [
             { startHour: 11, endHour: 13, course: "رياضة عام", section: "نظري", locs: ["مدرج محاصيل 1"] },
@@ -264,11 +255,7 @@ const scheduleData = {
             { startHour: 9, endHour: 11, course: "رياضة هندسة", section: "نظري", locs: ["مدرج هندسة 1"] },
             { startHour: 13, endHour: 15, course: "رياضة هندسة", section: "عملي", locs: ["مدرج هندسة 2"] },
             { startHour: 11, endHour: 13, course: "رسم هندسي (1)", section: "عملي", locs: ["قاعة تدريس 1"] },
-            { startHour: 13, endHour: 15, course: "رسم هندسي (1)", section: "عملي", locs: ["قاعة تدريس 1"] },
-            { startHour: 9, endHour: 11, course: "هندسة الري والصرف", section: "عملي", locs: ["مدرج هندسة 4"] },
-            { startHour: 11, endHour: 13, course: "مصطلحات علمية باللغة الإنجليزية", section: "نظري", locs: ["مدرج هندسة 4"] },
-            { startHour: 11, endHour: 13, course: "مصطلحات علمية باللغة الإنجليزية", section: "عملي", locs: ["مدرج هندسة 4"] },
-            { startHour: 13, endHour: 15, course: "تخطيط وتصميم المنشآت الزراعية", section: "عملي", locs: ["قاعة تدريس 4"] }
+            { startHour: 13, endHour: 15, course: "رسم هندسي (1)", section: "عملي", locs: ["قاعة تدريس 1"] }
         ],
         "الأربعاء": [
             { startHour: 11, endHour: 13, course: "رياضة عام", section: "نظري", locs: ["مدرج محاصيل 2", "مدرج هندسة 1"] },
@@ -277,12 +264,7 @@ const scheduleData = {
             { startHour: 13, endHour: 15, course: "أساسيات هندسة النظم الزراعية والحيوية", section: "نظري", locs: ["مدرج هندسة 1"] },
             { startHour: 13, endHour: 15, course: "أساسيات هندسة النظم الزراعية والحيوية", section: "عملي", locs: ["مدرج هندسة 1"] },
             { startHour: 9, endHour: 11, course: "رسم هندسي (1)", section: "نظري", locs: ["مدرج هندسة 1"] },
-            { startHour: 11, endHour: 13, course: "رسم هندسي (1)", section: "عملي", locs: ["قاعة تدريس 1", "قاعة تدريس 2"] },
-            { startHour: 11, endHour: 13, course: "جرارات زراعية", section: "عملي", locs: ["قاعة تدريس 4"] },
-            { startHour: 13, endHour: 15, course: "جرارات زراعية", section: "عملي", locs: ["قاعة تدريس 4"] },
-            { startHour: 15, endHour: 17, course: "هندسة البيوت المحمية", section: "عملي", locs: ["مدرج هندسة 3"] },
-            { startHour: 11, endHour: 13, course: "تخطيط وتصميم المنشآت الزراعية", section: "عملي", locs: ["قاعة تدريس 3"] },
-            { startHour: 13, endHour: 15, course: "تخطيط وتصميم المنشآت الزراعية", section: "عملي", locs: ["قاعة تدريس 3"] }
+            { startHour: 11, endHour: 13, course: "رسم هندسي (1)", section: "عملي", locs: ["قاعة تدريس 1", "قاعة تدريس 2"] }
         ],
         "الخميس": [
             { startHour: 11, endHour: 13, course: "رياضة عام", section: "عملي", locs: ["مدرج هندسة 2", "مدرج إقتصاد 1"] },
@@ -294,8 +276,7 @@ const scheduleData = {
             { startHour: 9, endHour: 11, course: "ميكانيكا (ديناميكا – استاتيكا)", section: "عملي", locs: ["مدرج هندسة 4"] },
             { startHour: 13, endHour: 15, course: "ميكانيكا (ديناميكا – استاتيكا)", section: "عملي", locs: ["مدرج هندسة 2"] },
             { startHour: 9, endHour: 11, course: "رسم هندسي (1)", section: "عملي", locs: ["قاعة تدريس 1"] },
-            { startHour: 13, endHour: 15, course: "رسم هندسي (1)", section: "عملي", locs: ["قاعة تدريس 2"] },
-            { startHour: 11, endHour: 13, course: "جرارات زراعية", section: "عملي", locs: ["مدرج هندسة 4"] }
+            { startHour: 13, endHour: 15, course: "رسم هندسي (1)", section: "عملي", locs: ["قاعة تدريس 2"] }
         ],
         "السبت": [
             { startHour: 9, endHour: 11, course: "رياضة عام", section: "عملي", locs: ["مدرج هندسة 2"] },
@@ -412,16 +393,12 @@ const scheduleData = {
             "الإثنين": [
                 { startHour: 11, endHour: 13, course: "التحكم البيئي في المنشآت الزراعية", section: "نظري", locs: ["مدرج هندسة 3"] },
                 { startHour: 13, endHour: 15, course: "تصميم نظم الري", section: "عملي", locs: ["مدرج هندسة 4"] },
-                { startHour: 13, endHour: 15, course: "ميكانيكا تربة", section: "عملي", locs: ["مدرج هندسة 3"] },
-                { startHour: 9, endHour: 11, course: "هيدروليكا الآبار والمضخات", section: "عملي", locs: ["قاعة تدريس 3"] }
+                { startHour: 13, endHour: 15, course: "ميكانيكا تربة", section: "عملي", locs: ["مدرج هندسة 3"] }
             ],
             "الثلاثاء": [
                 { startHour: 11, endHour: 13, course: "أساليب البحث العلمي", section: "نظري", locs: ["مدرج هندسة 4"] },
                 { startHour: 11, endHour: 13, course: "أساليب البحث العلمي", section: "عملي", locs: ["مدرج هندسة 4"] },
-                { startHour: 13, endHour: 15, course: "تخطيط وتصميم نظم الصرف الحقلي", section: "عملي", locs: ["قاعة تدريس 2", "قاعة تدريس 5"] },
-                { startHour: 13, endHour: 15, course: "هيدروليكا الآبار والمضخات", section: "نظري", locs: ["قاعة تدريس 4", "قاعة تدريس 5"] },
-                { startHour: 11, endHour: 13, course: "هيدروليكا الآبار والمضخات", section: "عملي", locs: ["قاعة تدريس 3", "قاعة تدريس 4", "قاعة تدريس 5"] },
-                { startHour: 13, endHour: 15, course: "هيدروليكا الآبار والمضخات", section: "عملي", locs: ["قاعة تدريس 4", "قاعة تدريس 5"] }
+                { startHour: 13, endHour: 15, course: "تخطيط وتصميم نظم الصرف الحقلي", section: "عملي", locs: ["قاعة تدريس 2", "قاعة تدريس 5"] }
             ],
             "الأربعاء": [
                 { startHour: 13, endHour: 15, course: "التحكم البيئي في المنشآت الزراعية", section: "عملي", locs: ["مدرج هندسة 3"] },
@@ -711,7 +688,7 @@ function showMessage(text, color, bgColor) {
 
 function cleanDigits(inputStr) {
     if (!inputStr) return "";
-    let cleaned = inputStr.toString().replace(/[\\u200B-\\u200D\\uFEFF]/g, '').trim();
+    let cleaned = inputStr.toString().replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
     let arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
     let persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
     for (let i = 0; i < 10; i++) {
@@ -730,7 +707,7 @@ function getSinglePosition() {
         navigator.geolocation.getCurrentPosition(
             (position) => resolve(position),
             (error) => reject(error),
-            { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+            { enableHighAccuracy: true, timeout: 25000, maximumAge: 0 }
         );
     });
 }
@@ -779,61 +756,16 @@ async function verifyAndSubmit() {
     showMessage("⏳ جاري تحديد موقعك الجغرافي...", "#0275d8", "#d9edf7");
 
     try {
-        let samples = [];
-
-        for (let i = 0; i < 3; i++) {
-            try {
-                let pos = await getSinglePosition();
-                samples.push({
-                    lat: pos.coords.latitude,
-                    lon: pos.coords.longitude,
-                    alt: pos.coords.altitude,
-                    acc: pos.coords.accuracy
-                });
-                if (i < 2) {
-                    await new Promise(r => setTimeout(r, 3000));
-                }
-            } catch (e) {}
-        }
-
-        if (samples.length < 2) {
-            throw new Error("يرجى التأكد من تفعيل موقعك الجغرافي");
-        }
-
-        let lowAccuracyFound = false;
-        samples.forEach(s => {
-            if (s.acc !== null && s.acc !== undefined && s.acc < 5) {
-                lowAccuracyFound = true;
-            }
-        });
-
-        if (lowAccuracyFound) {
-            showMessage("🚨 تنبيه أمني: تم رصد محاولة تسجيل غير قانونية، تم رفض التسجيل!", "#d9534f", "#f2dede");
-            return;
-        }
-
-        let isFakeStatic = true;
-        for (let i = 1; i < samples.length; i++) {
-            if (samples[i].lat !== samples[0].lat || samples[i].lon !== samples[0].lon) {
-                isFakeStatic = false;
-                break;
-            }
-        }
-
-        if (isFakeStatic) {
-            showMessage("🚨 تنبيه أمني: تم رصد محاولة تسجيل غير قانونية، تم حظر محاولة التسجيل!", "#d9534f", "#f2dede");
-            return;
-        }
-
-        let bestSample = samples.reduce((prev, curr) => (curr.acc < prev.acc) ? curr : prev);
-        const lat = bestSample.lat;
-        const lon = bestSample.lon;
+        // جلب عينة واحدة مباشرة بكل مرونة ودقة وسرعة
+        let pos = await getSinglePosition();
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
         
         const targetLocCoords = LOCATIONS_COORDS[loc];
         const distance = calculateDistance(targetLocCoords.lat, targetLocCoords.lon, lat, lon);
 
         if (distance <= ALLOWED_RADIUS) {
-            showMessage("⏳ تم اجتياز الفحوصات الأمنية بدقة، جاري تسجيل حضورك...", "#0275d8", "#d9edf7");
+            showMessage("⏳ تم التحقق من الموقع بنجاح، جاري تسجيل حضورك...", "#0275d8", "#d9edf7");
 
             const now = new Date();
             const formattedTime = now.getFullYear() + '-' + 
@@ -870,11 +802,11 @@ async function verifyAndSubmit() {
                 if (result.status === "success") {
                     showMessage("✅ تم تسجيل حضورك بنجاح في مادة (" + course + " - " + section + ") في (" + loc + ") ليوم " + day + "!", "#28a745", "#d4edda");
                 } else {
-                    showMessage("❌ " + (result.message || "عذراً، حدث خطأ أثناء التسجيل، قد تكون سجلت حضورك ولكن حدث خطأ بسبب ضعف الانترنت لديك، فحاول مجددا واذا ظهرت لك رسالة تفيد بأنك سجلت المادة مسبقا اليوم فاعلم انه تم تسجيل حضورك فلا تقلق."), "#d9534f", "#f2dede");
+                    showMessage("❌ " + (result.message || "عذراً، حدث خطأ أثناء التسجيل، وقد تكون سجلت حضورك للمادة وظهرت لك هذه الرسالة التي تراها الآن بسبب ضعف الانترنت لديك، فإذا ظهرت رسالة بعد هذه الرسالة بانك قمت بتسجيل المادة مسبقا اليوم فاعلم انك سجلت حضورك، فلا تقلق."), "#d9534f", "#f2dede");
                 }
             })
             .catch((error) => {
-                showMessage("❌ حدث خطأ أثناء الاتصال بالخادم، قد تكون سجلت حضورك ولكن حدث خطأ بسبب ضعف الانترنت لديك، فحاول مجددا واذا ظهرت لك رسالة تفيد بأنك سجلت المادة مسبقا اليوم فاعلم انه تم تسجيل حضورك فلا تقلق.", "#d9534f", "#f2dede");
+                showMessage("❌ حدث خطأ أثناء الاتصال بالخادم، وقد تكون سجلت حضورك للمادة وظهرت لك هذه الرسالة التي تراها الآن بسبب ضعف الانترنت لديك، فإذا ظهرت رسالة بعد هذه الرسالة بانك قمت بتسجيل المادة مسبقا اليوم فاعلم انك سجلت حضورك، فلا تقلق.", "#d9534f", "#f2dede");
             });
 
         } else {
